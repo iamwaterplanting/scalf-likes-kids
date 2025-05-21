@@ -25,6 +25,7 @@ async function loadGameHistory() {
         if (error) throw error;
 
         gameHistory = history;
+        console.log('Fetched game history:', gameHistory);
         updateActivityTable(gameHistory);
     } catch (error) {
         console.error('Error loading game history:', error);
