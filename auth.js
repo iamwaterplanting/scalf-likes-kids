@@ -79,16 +79,16 @@ async function login(username, password) {
             throw new Error('Invalid credentials');
         }
         
-        // Save to local storage for persistent login
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
-        currentUser = user;
-        
-        // Update UI
-        updateUIForLoggedInUser();
-        
+            // Save to local storage for persistent login
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
+            currentUser = user;
+            
+            // Update UI
+            updateUIForLoggedInUser();
+            
         return user;
     } catch (error) {
-        console.error('Login error:', error);
+            console.error('Login error:', error);
         throw error;
     }
 }
@@ -104,16 +104,16 @@ async function signup(username, password) {
         
         const user = await userOperations.createUser(username, password);
         
-        // Save to local storage for persistent login
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
-        currentUser = user;
-        
-        // Update UI
-        updateUIForLoggedInUser();
-        
+            // Save to local storage for persistent login
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
+            currentUser = user;
+            
+            // Update UI
+            updateUIForLoggedInUser();
+            
         return user;
     } catch (error) {
-        console.error('Signup error:', error);
+            console.error('Signup error:', error);
         throw error;
     }
 }
@@ -158,17 +158,17 @@ async function updateBalance(amount, reason = 'game') {
     
     try {
         const updatedUser = await userOperations.updateBalance(currentUser.username, amount);
-        
+    
         if (updatedUser) {
             currentUser = updatedUser;
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
-            balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance);
-            return true;
-        }
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
+        balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance);
+        return true;
+    }
         return false;
     } catch (error) {
         console.error('Error updating balance:', error);
-        return false;
+    return false;
     }
 }
 
@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 await login(username, password);
-                loginModal.style.display = 'none';
+                    loginModal.style.display = 'none';
             } catch (error) {
                 alert(error.message);
             }
@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 await signup(username, password);
-                signupModal.style.display = 'none';
+                    signupModal.style.display = 'none';
             } catch (error) {
                 alert(error.message);
             }

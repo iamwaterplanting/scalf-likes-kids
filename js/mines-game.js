@@ -314,7 +314,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Display history
             history.forEach(record => {
-                const row = document.createElement('tr');
+            const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${record.user}</td>
                     <td>${record.bet}</td>
