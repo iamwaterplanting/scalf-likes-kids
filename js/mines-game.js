@@ -1,5 +1,4 @@
 // BetaGames Mines Game
-const { gameHistoryOperations } = require('./mongodb');
 
 document.addEventListener('DOMContentLoaded', function() {
     // Game elements
