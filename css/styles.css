@@ -948,4 +948,36 @@ input:checked + .toggle-slider:before {
     border-radius: 50%;
     background: var(--primary-color);
     cursor: pointer;
+}
+
+/* Sidebar icon animations */
+.sidebar .main-nav i {
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.sidebar .main-nav a:hover i {
+    transform: scale(1.2);
+    color: #4287f5;
+}
+
+/* Pulse animation for sidebar icons */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.sidebar .main-nav li.active i {
+    animation: pulse 2s infinite ease-in-out;
+    color: #4287f5;
+}
+
+/* Hover effect for sidebar items */
+.sidebar .main-nav a {
+    transition: all 0.3s ease;
+}
+
+.sidebar .main-nav a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding-left: 25px;
 } 

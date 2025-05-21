@@ -26,7 +26,9 @@ mongoose.connect(MONGODB_URI)
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  balance: { type: Number, default: 10000 },
+  balance: { type: Number, default: 100 },
+  betCount: { type: Number, default: 0 },
+  lastLogin: { type: Date, default: Date.now },
   avatar: { type: String, default: null },
   createdAt: { type: Date, default: Date.now }
 });
@@ -74,7 +76,7 @@ app.post('/api/users/register', async (req, res) => {
     const newUser = new User({
       username,
       password, // In production, hash this password!
-      balance: 10000
+      balance: 100
     });
     
     await newUser.save();

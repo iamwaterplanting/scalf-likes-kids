@@ -110,7 +110,7 @@ async function signup(username, password) {
         const user = {
             username,
             password,
-            balance: 10000,
+            balance: 100,
             avatar: null,
             created_at: new Date().toISOString()
         };

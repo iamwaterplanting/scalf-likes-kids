@@ -395,4 +395,16 @@ window.BetaAuth = {
     updateProfile,
     updateBalance,
     logToDiscord
-}; 
+};
+
+// Function to create a Mock User
+function createMockUser(username, password) {
+    return {
+        id: generateMockId(),
+        username: username,
+        password: password, // In a real app, this would never be stored in plain text
+        balance: 100,
+        avatar: null,
+        createdAt: new Date().toISOString()
+    };
+} 

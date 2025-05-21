@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (currentUser && currentUser.balance) {
                         betAmountInput.value = Math.min(10000, currentUser.balance);
                     } else {
-                        betAmountInput.value = 10000;
+                        betAmountInput.value = 100;
                     }
                 } else {
                     betAmountInput.value = amount;
