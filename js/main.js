@@ -28,10 +28,7 @@ async function loadGameHistory() {
         updateActivityTable(gameHistory);
     } catch (error) {
         console.error('Error loading game history:', error);
-        // Fall back to localStorage if Supabase is unavailable
-        const localHistory = JSON.parse(localStorage.getItem('betagames_history') || '[]');
-        gameHistory = localHistory;
-        updateActivityTable(gameHistory);
+        // Optionally, show an error message in the UI
     }
 }
 
