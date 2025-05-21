@@ -10,24 +10,23 @@ document.addEventListener('DOMContentLoaded', () => {
     animateGameCards();
 });
 
+const { gameHistoryOperations } = require('./js/mongodb');
+
 // Game history and activity tracking
 let gameHistory = [];
 
-// Function to load game history from the server
-function loadGameHistory() {
-    fetch('/api/history')
-        .then(response => response.json())
-        .then(data => {
-            gameHistory = data;
-            updateActivityTable(gameHistory);
-        })
-        .catch(error => {
-            console.error('Error loading game history:', error);
-            // Fall back to localStorage if server is unavailable
-            const localHistory = JSON.parse(localStorage.getItem('betagames_history') || '[]');
-            gameHistory = localHistory;
-            updateActivityTable(gameHistory);
-        });
+// Function to load game history from MongoDB
+async function loadGameHistory() {
+    try {
+        gameHistory = await gameHistoryOperations.getRecentHistory();
+        updateActivityTable(gameHistory);
+    } catch (error) {
+        console.error('Error loading game history:', error);
+        // Fall back to localStorage if MongoDB is unavailable
+        const localHistory = JSON.parse(localStorage.getItem('betagames_history') || '[]');
+        gameHistory = localHistory;
+        updateActivityTable(gameHistory);
+    }
 }
 
 // Function to initialize activity with real data
@@ -183,51 +182,31 @@ function initRedeemCode() {
     }
 }
 
-// Process redeem code using MongoDB
+// Process redeem code using local logic
 function processRedeemCode(code) {
-    // Get the current user
     const currentUser = window.BetaAuth?.getCurrentUser();
     if (!currentUser) {
         alert('You need to be logged in to redeem codes.');
         return;
     }
-    
-    // Send code to server
-    fetch('/api/redeem', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-            code: code,
-            username: currentUser.username
-        }),
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => {
-                throw new Error(err.message || 'Invalid redeem code');
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Update local balance to match server
-        if (window.BetaAuth) {
-            // Update UI with new balance
-            currentUser.balance = data.balance;
-            localStorage.setItem('betagames_user', JSON.stringify(currentUser));
-            document.querySelector('.balance-amount').textContent = new Intl.NumberFormat().format(currentUser.balance);
-        }
-        
-        alert(`Successfully redeemed code for ${data.amount} coins!`);
-        
-        // Log to Discord
-        window.BetaAuth.logToDiscord(`Redeem code "${code}" used for ${data.amount} coins`);
-    })
-    .catch(error => {
-        alert(error.message || 'Error processing redeem code');
-    });
+    let amount = 0;
+    let validCode = true;
+    switch (code.toUpperCase()) {
+        case 'WELCOME': amount = 5000; break;
+        case 'BONUS': amount = 10000; break;
+        case 'VIP': amount = 50000; break;
+        case 'LOL': amount = 100; break;
+        case 'BETAGAMES': amount = 1000; break;
+        case 'FREEMONEY': amount = 2500; break;
+        default: validCode = false;
+    }
+    if (!validCode) {
+        alert('Invalid redeem code');
+        return;
+    }
+    window.BetaAuth.updateBalance(amount, 'redeem');
+    alert(`Successfully redeemed code for ${amount} coins!`);
+    window.BetaAuth.logToDiscord(`Redeem code "${code}" used for ${amount} coins`);
 }
 
 // Add animations to game cards
@@ -246,14 +225,11 @@ function animateGameCards() {
 }
 
 // Track a game bet (to be called from game pages)
-function trackGameBet(gameType, betAmount, result) {
+async function trackGameBet(gameType, betAmount, result) {
     const currentUser = window.BetaAuth?.getCurrentUser();
     if (!currentUser) return;
-    
     const username = currentUser.username;
     const timestamp = new Date();
-    
-    // Create bet record
     const betRecord = {
         user: username,
         game: gameType,
@@ -261,46 +237,25 @@ function trackGameBet(gameType, betAmount, result) {
         result: result,
         time: timestamp
     };
-    
-    // Send to server
-    fetch('/api/history', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(betRecord),
-    })
-    .catch(error => {
+    try {
+        await gameHistoryOperations.addGameHistory(betRecord);
+    } catch (error) {
         console.error('Error saving game history:', error);
-        
-        // Fallback to localStorage if server is unavailable
         gameHistory.unshift(betRecord);
-        
-        // Keep history at a reasonable size
         if (gameHistory.length > 100) {
             gameHistory.pop();
         }
-        
         localStorage.setItem('betagames_history', JSON.stringify(gameHistory));
-    });
-    
-    // Add to local history for immediate UI update
+    }
     gameHistory.unshift(betRecord);
-    
-    // Keep history at a reasonable size
     if (gameHistory.length > 100) {
         gameHistory.pop();
     }
-    
-    // Update activity table
     updateActivityTable(gameHistory);
-    
-    // Log to Discord webhook
     if (window.BetaAuth) {
         const resultText = result >= 0 ? `won ${result}` : `lost ${Math.abs(result)}`;
         window.BetaAuth.logToDiscord(`${username} ${resultText} coins playing ${gameType}`);
     }
-    
     return betRecord;
 }
 

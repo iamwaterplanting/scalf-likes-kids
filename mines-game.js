@@ -1,4 +1,6 @@
 // BetaGames Mines Game
+const { gameHistoryOperations } = require('./js/mongodb');
+
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const gameSetup = document.getElementById('gameSetup');
@@ -478,46 +480,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Add a game to history
-    function addGameToHistory(game) {
-        // Get current user
+    async function addGameToHistory(game) {
         const currentUser = window.BetaAuth?.getCurrentUser();
         if (!currentUser) return;
-        
         game.user = currentUser.username;
-        
-        // Send game history to the server
-        fetch('/api/mines/history', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(game),
-        })
-        .catch(error => {
+        try {
+            await gameHistoryOperations.addGameHistory(game);
+        } catch (error) {
             console.error('Error saving mines game history:', error);
-            
-            // Fallback to localStorage if server is unavailable
             const existingHistory = JSON.parse(localStorage.getItem('mines_history') || '[]');
             existingHistory.unshift(game);
-            
-            // Keep history at a reasonable size
             if (existingHistory.length > 50) {
                 existingHistory.length = 50;
             }
-            
-            // Save history to localStorage
             localStorage.setItem('mines_history', JSON.stringify(existingHistory));
-        });
-        
-        // Add to local history and update UI immediately
+        }
         const localHistory = JSON.parse(localStorage.getItem('mines_history') || '[]');
         localHistory.unshift(game);
         if (localHistory.length > 50) {
             localHistory.length = 50;
         }
         localStorage.setItem('mines_history', JSON.stringify(localHistory));
-        
-        // Update UI
         updateMinesHistoryTable([game, ...JSON.parse(localStorage.getItem('mines_history') || '[]')]);
     }
     
@@ -530,24 +513,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Load mines game history
-    function loadMinesHistory() {
-        // Load from server
-        fetch('/api/mines/history')
-            .then(response => response.json())
-            .then(data => {
-                // Update UI with server data
-                updateMinesHistoryTable(data);
-                
-                // Also update local storage for fallback
-                localStorage.setItem('mines_history', JSON.stringify(data));
-            })
-            .catch(error => {
-                console.error('Error loading mines history:', error);
-                
-                // Fall back to localStorage if server is unavailable
-                const localHistory = JSON.parse(localStorage.getItem('mines_history') || '[]');
-                updateMinesHistoryTable(localHistory);
-            });
+    async function loadMinesHistory() {
+        try {
+            const history = await gameHistoryOperations.getRecentHistory();
+            const minesHistory = history.filter(game => game.game === 'mines');
+            updateMinesHistoryTable(minesHistory);
+        } catch (error) {
+            console.error('Error loading mines history:', error);
+            const localHistory = JSON.parse(localStorage.getItem('mines_history') || '[]');
+            updateMinesHistoryTable(localHistory);
+        }
     }
     
     // Update mines history table

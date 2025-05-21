@@ -1,5 +1,6 @@
 // BetaGames Authentication System
 const LOCAL_STORAGE_KEY = 'betagames_user';
+const { userOperations } = require('./js/mongodb');
 
 // User state
 let currentUser = null;
@@ -24,20 +25,10 @@ const dropdownMenu = document.querySelector('.dropdown-menu');
 // Check if user is already logged in (from localStorage)
 function checkAuthState() {
     const savedUser = localStorage.getItem(LOCAL_STORAGE_KEY);
-    
     if (savedUser) {
         try {
             currentUser = JSON.parse(savedUser);
             updateUIForLoggedInUser();
-            
-            // Validate with server and update online status
-            fetch('/api/users/online', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username: currentUser.username }),
-            }).catch(error => console.error('Error updating online status:', error));
         } catch (error) {
             console.error('Error parsing saved user data:', error);
             logout(); // Clear invalid data
@@ -70,73 +61,38 @@ function updateUIForLoggedInUser() {
 }
 
 // Login function with MongoDB
-function login(username, password) {
-    return new Promise((resolve, reject) => {
-        fetch('/api/users/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, password }),
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => {
-                    throw new Error(err.message || 'Login failed');
-                });
-            }
-            return response.json();
-        })
-        .then(user => {
-            // Save to local storage for persistent login
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
-            currentUser = user;
-            
-            // Update UI
-            updateUIForLoggedInUser();
-            
-            resolve(user);
-        })
-        .catch(error => {
-            console.error('Login error:', error);
-            reject(error);
-        });
-    });
+async function login(username, password) {
+    try {
+        const user = await userOperations.findUser(username);
+        if (!user || user.password !== password) {
+            throw new Error('Invalid credentials');
+        }
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
+        currentUser = user;
+        updateUIForLoggedInUser();
+        return user;
+    } catch (error) {
+        console.error('Login error:', error);
+        throw error;
+    }
 }
 
 // Signup function with MongoDB
-function signup(username, password) {
-    return new Promise((resolve, reject) => {
-        fetch('/api/users/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, password }),
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => {
-                    throw new Error(err.message || 'Signup failed');
-                });
-            }
-            return response.json();
-        })
-        .then(user => {
-            // Save to local storage for persistent login
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
-            currentUser = user;
-            
-            // Update UI
-            updateUIForLoggedInUser();
-            
-            resolve(user);
-        })
-        .catch(error => {
-            console.error('Signup error:', error);
-            reject(error);
-        });
-    });
+async function signup(username, password) {
+    try {
+        const existingUser = await userOperations.findUser(username);
+        if (existingUser) {
+            throw new Error('Username already exists');
+        }
+        const user = await userOperations.createUser(username, password);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
+        currentUser = user;
+        updateUIForLoggedInUser();
+        return user;
+    } catch (error) {
+        console.error('Signup error:', error);
+        throw error;
+    }
 }
 
 // Logout function
@@ -159,60 +115,28 @@ function logout() {
 // Function to update user profile
 function updateProfile(profileData) {
     if (!currentUser) return;
-    
-    // Update current user data
     currentUser = { ...currentUser, ...profileData };
-    
-    // Save to local storage
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
-    
-    // Update UI
     updateUIForLoggedInUser();
-    
-    // Log to Discord webhook (would be server-side in real app)
     logToDiscord(`User ${currentUser.username} updated their profile`);
 }
 
 // Function to update user balance
-function updateBalance(amount, reason = 'game') {
+async function updateBalance(amount, reason = 'game') {
     if (!currentUser) return false;
-    
     const newBalance = currentUser.balance + amount;
-    
-    // Don't allow negative balance for this fake money system
     if (newBalance >= 0) {
-        // Update locally first for immediate feedback
-        currentUser.balance = newBalance;
-        
-        // Save to local storage
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
-        
-        // Update UI
-        balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance);
-        
-        // Update on the server
-        fetch('/api/users/balance', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                username: currentUser.username, 
-                amount: amount,
-                reason: reason
-            }),
-        })
-        .catch(error => {
-            console.error('Error updating balance:', error);
-        });
-        
-        // Log to Discord webhook (would be server-side in real app)
-        const changeText = amount >= 0 ? `gained ${amount}` : `lost ${Math.abs(amount)}`;
-        logToDiscord(`User ${currentUser.username} ${changeText} coins from ${reason}. New balance: ${currentUser.balance}`);
-        
-        return true;
+        // Update in MongoDB
+        const updatedUser = await userOperations.updateBalance(currentUser.username, amount);
+        if (updatedUser) {
+            currentUser.balance = updatedUser.balance;
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
+            balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance);
+            const changeText = amount >= 0 ? `gained ${amount}` : `lost ${Math.abs(amount)}`;
+            logToDiscord(`User ${currentUser.username} ${changeText} coins from ${reason}. New balance: ${currentUser.balance}`);
+            return true;
+        }
     }
-    
     return false;
 }
 
@@ -418,19 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Signup failed: ' + error.message);
                 });
         });
-    }
-    
-    // Update online status periodically (every 2 minutes)
-    if (currentUser) {
-        setInterval(() => {
-            fetch('/api/users/online', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username: currentUser.username }),
-            }).catch(error => console.error('Error updating online status:', error));
-        }, 120000); // 2 minutes
     }
 });
 
