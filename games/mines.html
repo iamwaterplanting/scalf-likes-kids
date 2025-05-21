@@ -293,17 +293,9 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="../js/supabase-config.js"></script>
     <script src="../js/auth.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        if (window.BetaAuth && typeof window.BetaAuth.getCurrentUser === 'function') {
-          window.BetaAuth.getCurrentUser();
-        }
-        if (typeof checkAuthState === 'function') {
-          checkAuthState();
-        }
-      });
-    </script>
     <script src="../js/main.js"></script>
     <script src="../js/mines-game.js"></script>
 </body>
