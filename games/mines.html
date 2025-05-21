@@ -9,19 +9,27 @@
     <style>
         .game-container {
             padding: 20px;
+            background-color: #080f1a;
+            border-radius: 8px;
+            margin: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
         
         .mines-game {
             display: flex;
             gap: 20px;
+            flex-direction: row;
+            width: 100%;
         }
         
         .mines-controls {
-            width: 200px;
+            width: 220px;
             padding: 20px;
             background-color: #0c1321;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
         }
         
         .mines-grid-container {
@@ -31,16 +39,19 @@
             padding: 20px;
             position: relative;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .mines-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             grid-template-rows: repeat(5, 1fr);
-            gap: 10px;
-            height: 400px;
-            max-width: 600px;
-            margin: 0 auto;
+            gap: 8px;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1/1;
         }
         
         .mine-cell {
@@ -62,10 +73,26 @@
         
         .mine-cell.revealed-gem {
             background-color: #1b2838;
+            animation: revealGem 0.3s forwards;
         }
         
         .mine-cell.revealed-mine {
             background-color: #1b2838;
+            animation: revealMine 0.3s forwards;
+        }
+        
+        @keyframes revealGem {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes revealMine {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.1); background-color: #ff3333; }
+            50% { transform: scale(0.9); }
+            75% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
         
         .gem {
@@ -77,6 +104,12 @@
             transform-style: preserve-3d;
             transform: rotateX(20deg);
             box-shadow: 0 0 15px #00ff00;
+            animation: gemGlow 2s infinite alternate;
+        }
+        
+        @keyframes gemGlow {
+            0% { box-shadow: 0 0 5px #00ff00; }
+            100% { box-shadow: 0 0 15px #00ff00; }
         }
         
         .gem::after {
@@ -100,11 +133,24 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 0 15px #ff3333;
+            animation: mineGlow 0.5s infinite alternate;
+        }
+        
+        @keyframes mineGlow {
+            0% { box-shadow: 0 0 5px #ff3333; }
+            100% { box-shadow: 0 0 15px #ff3333; }
         }
         
         .mine::after {
             content: '💥';
             font-size: 20px;
+            animation: explode 0.5s forwards;
+        }
+        
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
         }
         
         .bet-input-container {
@@ -125,6 +171,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
             border-radius: 4px;
+            box-sizing: border-box;
         }
         
         .mines-selector {
@@ -145,6 +192,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
             border-radius: 4px;
+            box-sizing: border-box;
         }
         
         .bet-btn {
@@ -157,11 +205,17 @@
             border-radius: 4px;
             cursor: pointer;
             margin-top: 10px;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-sizing: border-box;
         }
         
         .bet-btn:hover {
             background-color: #00ff00;
+            transform: translateY(-2px);
+        }
+        
+        .bet-btn:active {
+            transform: translateY(1px);
         }
         
         .cashout-btn {
@@ -175,11 +229,19 @@
             cursor: pointer;
             margin-top: 10px;
             display: none;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-sizing: border-box;
+            animation: pulse 1s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
         }
         
         .cashout-btn:hover {
             background-color: #ff6666;
+            animation-play-state: paused;
         }
         
         .mines-stats {
@@ -211,18 +273,24 @@
         
         .manual-btn {
             flex: 1;
-            padding: 5px;
+            padding: 8px 0;
             font-size: 12px;
             background-color: rgba(255, 255, 255, 0.1);
             border: none;
             border-radius: 4px;
             color: white;
             cursor: pointer;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-sizing: border-box;
         }
         
         .manual-btn:hover {
             background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .manual-btn:active {
+            transform: translateY(1px);
         }
         
         .fairness {
@@ -245,6 +313,11 @@
             color: rgba(255, 255, 255, 0.5);
             cursor: pointer;
             font-size: 12px;
+            transition: color 0.2s ease;
+        }
+        
+        .fairness-btn:hover {
+            color: rgba(255, 255, 255, 0.8);
         }
     </style>
 </head>
