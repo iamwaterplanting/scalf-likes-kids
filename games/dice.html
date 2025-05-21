@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dice Game - BetaGames</title>
+    <title>Crypto Dice Game - BetaGames</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -21,8 +21,9 @@
                     <li><a href="roulette.html"><i class="fas fa-circle"></i> Roulette</a></li>
                     <li><a href="mines.html"><i class="fas fa-bomb"></i> Mines</a></li>
                     <li><a href="plinko.html"><i class="fas fa-sort-amount-down"></i> Plinko</a></li>
-                    <li><a href="slots.html"><i class="fas fa-slot-machine"></i> Slots</a></li>
-                    <li><a href="blackjack.html"><i class="fas fa-playing-card"></i> Blackjack</a></li>
+                    <li><a href="slots.html"><i class="fas fa-solid fa-slot-machine"></i> Slots</a></li>
+                    <li><a href="blackjack.html"><i class="fas fa-solid fa-cards"></i> Blackjack</a></li>
+                    <li><a href="flappybird.html"><i class="fas fa-solid fa-dove"></i> Flappy Bird</a></li>
                 </ul>
             </nav>
             <div class="redeem-code">
@@ -56,10 +57,13 @@
 
             <!-- Game Container -->
             <div class="game-container">
-                <h1 class="game-title">Dice</h1>
-                <h2 class="section-subtitle">Betting Options</h2>
+                <h1 class="game-title">Crypto Dice</h1>
                 
                 <div class="dice-game">
+                    <div class="result-display">
+                        <div class="result-value" id="diceResult">0.00</div>
+                    </div>
+                    
                     <div class="betting-container">
                         <div class="bet-row">
                             <div class="bet-column">
@@ -74,45 +78,41 @@
                             </div>
                         </div>
                         
-                        <div class="bet-row">
-                            <div class="bet-column">
-                                <label for="targetNumber">Target Number</label>
-                                <select id="targetNumber">
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                    <option value="6">6</option>
-                                </select>
-                            </div>
-                            
-                            <div class="bet-column">
-                                <label for="betType">Bet Type</label>
-                                <select id="betType">
-                                    <option value="exact">Exact Number (5x)</option>
-                                    <option value="over">Over Number (2x)</option>
-                                    <option value="under">Under Number (2x)</option>
-                                </select>
+                        <div class="bet-type-selection">
+                            <div class="bet-type-buttons">
+                                <button class="bet-type-button active" id="rollUnderButton">Roll Under</button>
+                                <button class="bet-type-button" id="rollOverButton">Roll Over</button>
                             </div>
                         </div>
                         
-                        <div class="bet-info">
-                            <div class="info-item">
-                                <span>Potential Win: <span id="potentialWin">500</span></span>
+                        <div class="slider-container">
+                            <label for="targetNumber">Target Number: <span id="targetNumberDisplay">50</span></label>
+                            <input type="range" id="targetNumber" min="1" max="99" value="50" class="dice-slider">
+                            <div class="slider-labels">
+                                <span>1</span>
+                                <span>25</span>
+                                <span>50</span>
+                                <span>75</span>
+                                <span>99</span>
                             </div>
-                            <div class="info-item">
-                                <span>Win Chance: <span id="winChance">16.67%</span></span>
+                        </div>
+                        
+                        <div class="stats-display">
+                            <div class="stat-item">
+                                <span>Multiplier</span>
+                                <span id="multiplier">2.00x</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Win Chance</span>
+                                <span id="winChance">50.00%</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>Potential Win</span>
+                                <span id="potentialWin">200</span>
                             </div>
                         </div>
                         
                         <button id="rollButton" class="roll-button">ROLL DICE</button>
-                    </div>
-                    
-                    <div class="dice-display">
-                        <div class="dice" id="diceDisplay">
-                            <div class="dice-dot center"></div>
-                        </div>
                     </div>
                     
                     <div class="result-section" id="resultSection" style="display: none;">
@@ -120,8 +120,8 @@
                             <h3>Result</h3>
                         </div>
                         <div class="result-content">
-                            <div class="result-display">
-                                <div class="result-number" id="resultNumber">6</div>
+                            <div class="result-info">
+                                <div class="result-number" id="resultNumber">0.00</div>
                                 <div class="result-text" id="resultText">You Won!</div>
                             </div>
                             <div class="result-amount" id="resultAmount">+500</div>
@@ -142,7 +142,8 @@
                                 <th>Bet</th>
                                 <th>Target</th>
                                 <th>Result</th>
-                                <th>Outcome</th>
+                                <th>Multiplier</th>
+                                <th>Payout</th>
                                 <th>Time</th>
                             </tr>
                         </thead>
@@ -248,14 +249,8 @@
         .game-title {
             font-size: 28px;
             color: #fff;
-            margin-bottom: 5px;
-        }
-        
-        .section-subtitle {
-            font-size: 18px;
-            color: #8f9bb3;
             margin-bottom: 20px;
-            font-weight: normal;
+            text-align: center;
         }
         
         .dice-game {
@@ -263,21 +258,36 @@
             flex-direction: column;
         }
         
+        .result-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 0;
+            margin-bottom: 20px;
+            background-color: #1c2639;
+            border-radius: 8px;
+        }
+        
+        .result-value {
+            font-size: 48px;
+            font-weight: bold;
+            color: #4287f5;
+            text-shadow: 0 0 10px rgba(66, 135, 245, 0.5);
+        }
+        
         .betting-container {
-            padding: 15px;
+            padding: 20px;
             background-color: #1c2639;
             border-radius: 8px;
             margin-bottom: 20px;
         }
         
         .bet-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         .bet-column {
-            flex: 1;
+            width: 100%;
         }
         
         .bet-column label {
@@ -287,10 +297,9 @@
             font-weight: bold;
         }
         
-        .bet-column input[type="number"],
-        .bet-column select {
+        .bet-column input[type="number"] {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background-color: #0d1321;
             border: 1px solid #2c3e50;
             border-radius: 4px;
@@ -307,35 +316,119 @@
         .bet-shortcut {
             background-color: #0d1321;
             border: 1px solid #2c3e50;
-            padding: 5px 10px;
+            padding: 8px 12px;
             border-radius: 4px;
             color: #fff;
             cursor: pointer;
+            flex: 1;
+            text-align: center;
         }
         
         .bet-shortcut:hover {
             background-color: #263752;
         }
         
-        .bet-info {
+        .bet-type-selection {
+            margin-bottom: 20px;
+        }
+        
+        .bet-type-buttons {
+            display: flex;
+            gap: 0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .bet-type-button {
+            flex: 1;
+            padding: 12px 0;
+            background-color: #0d1321;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .bet-type-button.active {
+            background-color: #4287f5;
+        }
+        
+        .slider-container {
+            margin-bottom: 20px;
+        }
+        
+        .slider-container label {
+            display: block;
+            margin-bottom: 15px;
+            color: #fff;
+            font-size: 16px;
+        }
+        
+        #targetNumberDisplay {
+            font-weight: bold;
+            color: #4287f5;
+        }
+        
+        .dice-slider {
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, #ff4444, #ffff00, #44ff44);
+            border-radius: 4px;
+            -webkit-appearance: none;
+            outline: none;
+            margin-bottom: 10px;
+        }
+        
+        .dice-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background-color: #fff;
+            border: 2px solid #4287f5;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(66, 135, 245, 0.8);
+        }
+        
+        .slider-labels {
             display: flex;
             justify-content: space-between;
-            margin: 15px 0;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
         }
         
-        .info-item {
-            font-size: 16px;
+        .stats-display {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            background-color: #0d1321;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .stat-item span:first-child {
+            display: block;
+            margin-bottom: 5px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+        
+        .stat-item span:last-child {
+            display: block;
             color: #fff;
-        }
-        
-        .info-item span span {
             font-weight: bold;
-            color: #4caf50;
+            font-size: 18px;
         }
         
         .roll-button {
             width: 100%;
-            padding: 12px 0;
+            padding: 15px 0;
             background-color: #00c851;
             color: #fff;
             border: none;
@@ -344,81 +437,11 @@
             font-weight: bold;
             cursor: pointer;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .roll-button:hover {
             background-color: #00a844;
-        }
-        
-        .dice-display {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 30px 0;
-        }
-        
-        .dice {
-            width: 100px;
-            height: 100px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            position: relative;
-        }
-        
-        .dice.spinning {
-            animation: dice-spin 0.5s linear infinite;
-        }
-        
-        @keyframes dice-spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .dice-dot {
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            background-color: #1c1f30;
-            border-radius: 50%;
-        }
-        
-        .center {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        .top-left {
-            top: 20%;
-            left: 20%;
-        }
-        
-        .top-right {
-            top: 20%;
-            right: 20%;
-        }
-        
-        .middle-left {
-            top: 50%;
-            left: 20%;
-            transform: translateY(-50%);
-        }
-        
-        .middle-right {
-            top: 50%;
-            right: 20%;
-            transform: translateY(-50%);
-        }
-        
-        .bottom-left {
-            bottom: 20%;
-            left: 20%;
-        }
-        
-        .bottom-right {
-            bottom: 20%;
-            right: 20%;
         }
         
         .result-section {
@@ -432,6 +455,7 @@
             font-size: 18px;
             margin-bottom: 15px;
             color: #fff;
+            text-align: center;
         }
         
         .result-content {
@@ -441,7 +465,7 @@
             margin-bottom: 20px;
         }
         
-        .result-display {
+        .result-info {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -456,6 +480,11 @@
         
         .result-text {
             font-size: 18px;
+        }
+        
+        .result-amount {
+            font-size: 28px;
+            font-weight: bold;
         }
         
         .game-button {
@@ -511,6 +540,17 @@
         .activity-table th {
             font-weight: normal;
             color: rgba(255, 255, 255, 0.7);
+        }
+        
+        /* Animation for result */
+        @keyframes rolling {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .rolling {
+            animation: rolling 0.2s infinite;
         }
     </style>
 </body>

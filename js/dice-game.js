@@ -1,31 +1,35 @@
-// BetaGames Dice Game
+// BetaGames Crypto Dice Game
 document.addEventListener('DOMContentLoaded', () => {
     // Elements
-    const diceDisplay = document.getElementById('diceDisplay');
+    const diceResult = document.getElementById('diceResult');
     const betAmountInput = document.getElementById('betAmount');
-    const targetNumberSelect = document.getElementById('targetNumber');
-    const betTypeSelect = document.getElementById('betType');
+    const targetNumberSlider = document.getElementById('targetNumber');
+    const targetNumberDisplay = document.getElementById('targetNumberDisplay');
+    const rollUnderButton = document.getElementById('rollUnderButton');
+    const rollOverButton = document.getElementById('rollOverButton');
     const rollButton = document.getElementById('rollButton');
     const resultSection = document.getElementById('resultSection');
     const resultNumber = document.getElementById('resultNumber');
     const resultText = document.getElementById('resultText');
     const resultAmount = document.getElementById('resultAmount');
     const playAgainButton = document.getElementById('playAgainButton');
-    const potentialWin = document.getElementById('potentialWin');
     const winChance = document.getElementById('winChance');
+    const multiplier = document.getElementById('multiplier');
+    const potentialWin = document.getElementById('potentialWin');
     const betShortcuts = document.querySelectorAll('.bet-shortcut');
     const gameHistoryBody = document.getElementById('gameHistoryBody');
     
     // Game state
     let isRolling = false;
     let gameHistory = [];
+    let currentBetType = 'under'; // 'under' or 'over'
     
     // Initialize the game
     init();
     
     function init() {
-        // Set default dice display (1)
-        updateDiceDisplay(1);
+        // Set default dice display
+        updateDiceDisplay('0.00');
         
         // Update potential win and odds
         updatePotentialWinAndOdds();
@@ -43,12 +47,29 @@ document.addEventListener('DOMContentLoaded', () => {
             betAmountInput.addEventListener('input', updatePotentialWinAndOdds);
         }
         
-        if (targetNumberSelect) {
-            targetNumberSelect.addEventListener('change', updatePotentialWinAndOdds);
+        if (targetNumberSlider) {
+            targetNumberSlider.addEventListener('input', () => {
+                targetNumberDisplay.textContent = targetNumberSlider.value;
+                updatePotentialWinAndOdds();
+            });
         }
         
-        if (betTypeSelect) {
-            betTypeSelect.addEventListener('change', updatePotentialWinAndOdds);
+        if (rollUnderButton) {
+            rollUnderButton.addEventListener('click', () => {
+                rollUnderButton.classList.add('active');
+                rollOverButton.classList.remove('active');
+                currentBetType = 'under';
+                updatePotentialWinAndOdds();
+            });
+        }
+        
+        if (rollOverButton) {
+            rollOverButton.addEventListener('click', () => {
+                rollOverButton.classList.add('active');
+                rollUnderButton.classList.remove('active');
+                currentBetType = 'over';
+                updatePotentialWinAndOdds();
+            });
         }
         
         // Bet shortcuts
@@ -75,66 +96,42 @@ document.addEventListener('DOMContentLoaded', () => {
         loadGameHistory();
     }
     
-    // Update the dice display based on number
+    // Update the dice display
     function updateDiceDisplay(number) {
-        if (!diceDisplay) return;
-        
-        // Clear existing dots
-        diceDisplay.innerHTML = '';
-        
-        // Add new dots based on the number
-        switch(number) {
-            case 1:
-                diceDisplay.innerHTML = '<div class="dice-dot center"></div>';
-                break;
-            case 2:
-                diceDisplay.innerHTML = '<div class="dice-dot top-left"></div><div class="dice-dot bottom-right"></div>';
-                break;
-            case 3:
-                diceDisplay.innerHTML = '<div class="dice-dot top-left"></div><div class="dice-dot center"></div><div class="dice-dot bottom-right"></div>';
-                break;
-            case 4:
-                diceDisplay.innerHTML = '<div class="dice-dot top-left"></div><div class="dice-dot top-right"></div><div class="dice-dot bottom-left"></div><div class="dice-dot bottom-right"></div>';
-                break;
-            case 5:
-                diceDisplay.innerHTML = '<div class="dice-dot top-left"></div><div class="dice-dot top-right"></div><div class="dice-dot center"></div><div class="dice-dot bottom-left"></div><div class="dice-dot bottom-right"></div>';
-                break;
-            case 6:
-                diceDisplay.innerHTML = '<div class="dice-dot top-left"></div><div class="dice-dot top-right"></div><div class="dice-dot middle-left"></div><div class="dice-dot middle-right"></div><div class="dice-dot bottom-left"></div><div class="dice-dot bottom-right"></div>';
-                break;
-        }
+        if (!diceResult) return;
+        diceResult.textContent = number;
     }
     
     // Update potential win and odds display
     function updatePotentialWinAndOdds() {
-        if (!potentialWin || !winChance || !betAmountInput || !targetNumberSelect || !betTypeSelect) return;
+        if (!winChance || !multiplier || !potentialWin || !betAmountInput || !targetNumberSlider) return;
         
         const betAmount = parseInt(betAmountInput.value) || 0;
-        const targetNumber = parseInt(targetNumberSelect.value);
-        const betType = betTypeSelect.value;
+        const targetNumber = parseInt(targetNumberSlider.value);
         
-        let multiplier = 0;
-        let chance = 0;
+        let winChanceValue = 0;
+        let multiplierValue = 0;
         
-        // Calculate multiplier and chance based on bet type
-        switch(betType) {
-            case 'exact':
-                multiplier = 5;
-                chance = 1/6 * 100; // 16.67%
-                break;
-            case 'over':
-                multiplier = 2;
-                chance = (6 - targetNumber) / 6 * 100;
-                break;
-            case 'under':
-                multiplier = 2;
-                chance = targetNumber / 6 * 100;
-                break;
+        // Calculate win chance and multiplier based on bet type
+        if (currentBetType === 'under') {
+            // For "Roll Under", win chance is the target number (e.g., roll under 75 = 75% chance)
+            winChanceValue = targetNumber;
+        } else {
+            // For "Roll Over", win chance is 100 - target number (e.g., roll over 25 = 75% chance)
+            winChanceValue = 100 - targetNumber;
         }
         
-        // Update displays
-        potentialWin.textContent = formatCurrency(betAmount * multiplier);
-        winChance.textContent = chance.toFixed(2) + '%';
+        // Calculate multiplier with house edge (5%)
+        // Formula: (100 / win chance) * 0.95
+        multiplierValue = (100 / winChanceValue) * 0.95;
+        
+        // Update UI
+        winChance.textContent = winChanceValue.toFixed(2) + '%';
+        multiplier.textContent = multiplierValue.toFixed(2) + 'x';
+        
+        // Calculate potential win
+        const potentialWinAmount = Math.floor(betAmount * multiplierValue);
+        potentialWin.textContent = formatCurrency(potentialWinAmount);
     }
     
     // Handle the roll button click
@@ -150,8 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Get bet details
         const betAmount = parseInt(betAmountInput.value) || 0;
-        const targetNumber = parseInt(targetNumberSelect.value);
-        const betType = betTypeSelect.value;
+        const targetNumber = parseInt(targetNumberSlider.value);
         
         // Validate bet amount
         if (betAmount < 10) {
@@ -171,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Start rolling animation
         isRolling = true;
-        diceDisplay.classList.add('spinning');
+        diceResult.classList.add('rolling');
         rollButton.disabled = true;
         
         // Hide result section if visible
@@ -179,79 +175,80 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Simulate roll with animation
         const rollDuration = 2000; // 2 seconds
-        const rollInterval = 100; // Change dice every 100ms
+        const rollInterval = 50; // Change number every 50ms
         let rollTime = 0;
         
         const rollAnimation = setInterval(() => {
-            // Random number between 1-6
-            const randomNumber = Math.floor(Math.random() * 6) + 1;
+            // Random number between 0.00 and 99.99
+            const randomNumber = (Math.random() * 100).toFixed(2);
             updateDiceDisplay(randomNumber);
             
             rollTime += rollInterval;
             
             if (rollTime >= rollDuration) {
                 clearInterval(rollAnimation);
-                finishRoll(betAmount, targetNumber, betType);
+                finishRoll(betAmount, targetNumber);
             }
         }, rollInterval);
     }
     
     // Finish the roll and determine result
-    function finishRoll(betAmount, targetNumber, betType) {
-        // Generate the final result (1-6)
-        const result = Math.floor(Math.random() * 6) + 1;
+    function finishRoll(betAmount, targetNumber) {
+        // Generate the final result (0.00-99.99)
+        const result = (Math.random() * 100).toFixed(2);
+        const resultValue = parseFloat(result);
         
         // Update dice display with result
         updateDiceDisplay(result);
         
-        // Remove spinning class
-        diceDisplay.classList.remove('spinning');
+        // Remove rolling class
+        diceResult.classList.remove('rolling');
         
         // Determine if won based on bet type
         let won = false;
         
-        switch(betType) {
-            case 'exact':
-                won = (result === targetNumber);
-                break;
-            case 'over':
-                won = (result > targetNumber);
-                break;
-            case 'under':
-                won = (result < targetNumber);
-                break;
+        if (currentBetType === 'under') {
+            won = (resultValue < targetNumber);
+        } else { // over
+            won = (resultValue > targetNumber);
         }
         
-        // Calculate win/loss amount
-        let multiplier = 0;
+        // Calculate multiplier and win/loss amount
+        let winChanceValue = 0;
+        let multiplierValue = 0;
         
-        if (won) {
-            multiplier = betType === 'exact' ? 5 : 2;
-        } else {
-            multiplier = -1;
+        if (currentBetType === 'under') {
+            winChanceValue = targetNumber;
+        } else { // over
+            winChanceValue = 100 - targetNumber;
         }
         
-        const outcomeAmount = betAmount * multiplier;
+        multiplierValue = (100 / winChanceValue) * 0.95; // 5% house edge
+        
+        // Calculate outcome
+        const outcomeAmount = won ? Math.floor(betAmount * multiplierValue) : -betAmount;
         
         // Update user balance
         if (window.BetaAuth) {
-            window.BetaAuth.updateBalance(outcomeAmount, 'Dice Game');
+            window.BetaAuth.updateBalance(outcomeAmount, 'Crypto Dice Game');
         }
         
         // Show result
         resultNumber.textContent = result;
         resultText.textContent = won ? 'You Won!' : 'You Lost!';
-        resultText.style.color = won ? 'var(--success-color)' : 'var(--danger-color)';
+        resultText.style.color = won ? '#44ff44' : '#ff4444';
         resultAmount.textContent = formatCurrency(outcomeAmount);
-        resultAmount.style.color = won ? 'var(--success-color)' : 'var(--danger-color)';
+        resultAmount.style.color = won ? '#44ff44' : '#ff4444';
         resultSection.style.display = 'block';
         
         // Add to game history
         addGameToHistory({
             user: window.BetaAuth?.getCurrentUser()?.username || 'Guest',
             bet: betAmount,
-            target: `${betType} ${targetNumber}`,
+            type: currentBetType === 'under' ? 'Roll Under' : 'Roll Over',
+            target: targetNumber,
             result: result,
+            multiplier: multiplierValue.toFixed(2) + 'x',
             outcome: outcomeAmount,
             time: new Date()
         });
@@ -272,8 +269,8 @@ document.addEventListener('DOMContentLoaded', () => {
             resultSection.style.display = 'none';
         }
         
-        if (diceDisplay) {
-            updateDiceDisplay(1);
+        if (diceResult) {
+            updateDiceDisplay('0.00');
         }
     }
     
@@ -308,7 +305,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Bet cell
             const betCell = document.createElement('td');
-            betCell.textContent = formatCurrency(game.bet);
+            betCell.textContent = formatNumber(game.bet);
+            
+            // Type and target cell
+            const typeCell = document.createElement('td');
+            typeCell.textContent = game.type;
             
             // Target cell
             const targetCell = document.createElement('td');
@@ -318,10 +319,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const resultCell = document.createElement('td');
             resultCell.textContent = game.result;
             
+            // Multiplier cell
+            const multiplierCell = document.createElement('td');
+            multiplierCell.textContent = game.multiplier;
+            
             // Outcome cell
             const outcomeCell = document.createElement('td');
             outcomeCell.textContent = formatCurrency(game.outcome);
-            outcomeCell.style.color = game.outcome >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+            outcomeCell.style.color = game.outcome >= 0 ? '#44ff44' : '#ff4444';
             
             // Time cell
             const timeCell = document.createElement('td');
@@ -330,8 +335,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Append cells to row
             row.appendChild(userCell);
             row.appendChild(betCell);
+            row.appendChild(typeCell);
             row.appendChild(targetCell);
             row.appendChild(resultCell);
+            row.appendChild(multiplierCell);
             row.appendChild(outcomeCell);
             row.appendChild(timeCell);
             
@@ -346,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load initial game history with random data
     function loadGameHistory() {
         // Add some random games to history
-        const betTypes = ['exact', 'over', 'under'];
+        const betTypes = ['Roll Under', 'Roll Over'];
         const usernames = ['Player123', 'LuckyGuy', 'BigWinner', 'CasinoKing', 'RollTheDice', 'BetaPlayer'];
         
         // Get current user if available
@@ -358,39 +365,40 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < 10; i++) {
             const username = usernames[Math.floor(Math.random() * usernames.length)];
             const bet = Math.floor(Math.random() * 1000) + 100;
-            const targetNumber = Math.floor(Math.random() * 6) + 1;
             const betType = betTypes[Math.floor(Math.random() * betTypes.length)];
-            const result = Math.floor(Math.random() * 6) + 1;
+            const targetNumber = Math.floor(Math.random() * 98) + 1; // 1-99
+            const result = (Math.random() * 100).toFixed(2);
+            const resultValue = parseFloat(result);
             
             // Determine if won based on bet type
             let won = false;
-            switch(betType) {
-                case 'exact':
-                    won = (result === targetNumber);
-                    break;
-                case 'over':
-                    won = (result > targetNumber);
-                    break;
-                case 'under':
-                    won = (result < targetNumber);
-                    break;
+            if (betType === 'Roll Under') {
+                won = (resultValue < targetNumber);
+            } else { // Roll Over
+                won = (resultValue > targetNumber);
             }
             
-            // Calculate outcome
-            let multiplier = 0;
-            if (won) {
-                multiplier = betType === 'exact' ? 5 : 2;
-            } else {
-                multiplier = -1;
+            // Calculate multiplier
+            let winChanceValue = 0;
+            if (betType === 'Roll Under') {
+                winChanceValue = targetNumber;
+            } else { // Roll Over
+                winChanceValue = 100 - targetNumber;
             }
-            const outcome = bet * multiplier;
+            
+            const multiplierValue = (100 / winChanceValue) * 0.95; // 5% house edge
+            
+            // Calculate outcome
+            const outcome = won ? Math.floor(bet * multiplierValue) : -bet;
             
             // Add to history
             gameHistory.push({
                 user: username,
                 bet: bet,
-                target: `${betType} ${targetNumber}`,
+                type: betType,
+                target: targetNumber,
                 result: result,
+                multiplier: multiplierValue.toFixed(2) + 'x',
                 outcome: outcome,
                 time: new Date(Date.now() - Math.floor(Math.random() * 3600000)) // Within the last hour
             });
@@ -411,6 +419,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const formatted = new Intl.NumberFormat().format(Math.abs(Math.round(amount)));
         return amount >= 0 ? `+${formatted}` : `-${formatted}`;
+    }
+    
+    // Format number helper
+    function formatNumber(number) {
+        return new Intl.NumberFormat().format(number);
     }
     
     // Format time helper
