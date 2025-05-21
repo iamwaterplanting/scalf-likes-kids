@@ -13,21 +13,31 @@ document.addEventListener('DOMContentLoaded', () => {
 // Game history and activity tracking
 let gameHistory = [];
 
-// Function to load game history from localStorage
-function loadGameHistory() {
+// Function to load game history from Supabase
+async function loadGameHistory() {
     try {
-        gameHistory = JSON.parse(localStorage.getItem('betagames_history') || '[]');
+        const { data: history, error } = await window.SupabaseDB
+            .from('game_history')
+            .select('*')
+            .order('time', { ascending: false })
+            .limit(100);
+
+        if (error) throw error;
+
+        gameHistory = history;
         updateActivityTable(gameHistory);
     } catch (error) {
         console.error('Error loading game history:', error);
-        gameHistory = [];
+        // Fall back to localStorage if Supabase is unavailable
+        const localHistory = JSON.parse(localStorage.getItem('betagames_history') || '[]');
+        gameHistory = localHistory;
         updateActivityTable(gameHistory);
     }
 }
 
 // Function to initialize activity with real data
 function initRealActivity() {
-    // Load history from localStorage
+    // Load history from Supabase
     loadGameHistory();
 }
 
@@ -225,7 +235,7 @@ async function trackGameBet(gameType, betAmount, result) {
     if (!currentUser) return;
     
     const username = currentUser.username;
-    const timestamp = new Date();
+    const timestamp = new Date().toISOString();
     const betRecord = {
         user: username,
         game: gameType,
@@ -234,17 +244,37 @@ async function trackGameBet(gameType, betAmount, result) {
         time: timestamp
     };
     
-    // Add to game history
-    gameHistory.unshift(betRecord);
-    if (gameHistory.length > 100) {
-        gameHistory.pop();
+    try {
+        // Save to Supabase
+        const { data: savedRecord, error } = await window.SupabaseDB
+            .from('game_history')
+            .insert([betRecord])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Add to local history
+        gameHistory.unshift(savedRecord);
+        if (gameHistory.length > 100) {
+            gameHistory.pop();
+        }
+        
+        // Update activity table
+        updateActivityTable(gameHistory);
+        
+        return savedRecord;
+    } catch (error) {
+        console.error('Error saving game history:', error);
+        // Fall back to localStorage
+        gameHistory.unshift(betRecord);
+        if (gameHistory.length > 100) {
+            gameHistory.pop();
+        }
+        localStorage.setItem('betagames_history', JSON.stringify(gameHistory));
+        updateActivityTable(gameHistory);
+        return betRecord;
     }
-    localStorage.setItem('betagames_history', JSON.stringify(gameHistory));
-    
-    // Update activity table
-    updateActivityTable(gameHistory);
-    
-    return betRecord;
 }
 
 // Export functions for use in game pages

@@ -1,6 +1,5 @@
 // BetaGames Authentication System
 const LOCAL_STORAGE_KEY = 'betagames_user';
-const USERS_STORAGE_KEY = 'betagames_users';
 
 // User state
 let currentUser = null;
@@ -23,14 +22,31 @@ const balanceAmount = document.querySelector('.balance-amount');
 const dropdownMenu = document.querySelector('.dropdown-menu');
 
 // Check if user is already logged in (from localStorage)
-function checkAuthState() {
+async function checkAuthState() {
     const savedUser = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (savedUser) {
         try {
             currentUser = JSON.parse(savedUser);
-            updateUIForLoggedInUser();
+            // Verify user still exists in Supabase
+            const { data: user, error } = await window.SupabaseDB
+                .from('users')
+                .select('*')
+                .eq('username', currentUser.username)
+                .single();
+
+            if (error) throw error;
+
+            if (user) {
+                // Update local user with latest data from Supabase
+                currentUser = { ...currentUser, ...user };
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
+                updateUIForLoggedInUser();
+            } else {
+                // User no longer exists in Supabase
+                logout();
+            }
         } catch (error) {
-            console.error('Error parsing saved user data:', error);
+            console.error('Error checking auth state:', error);
             logout(); // Clear invalid data
         }
     }
@@ -57,49 +73,64 @@ function updateUIForLoggedInUser() {
     }
 }
 
-// Login function with localStorage
+// Login function with Supabase
 async function login(username, password) {
     try {
-        const users = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
-        const user = users.find(u => u.username === username && u.password === password);
-        
-        if (!user) {
-            throw new Error('Invalid credentials');
-        }
-        
+        const { data: user, error } = await window.SupabaseDB
+            .from('users')
+            .select('*')
+            .eq('username', username)
+            .eq('password', password)
+            .single();
+
+        if (error) throw error;
+        if (!user) throw new Error('Invalid credentials');
+
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
         currentUser = user;
         updateUIForLoggedInUser();
         return user;
     } catch (error) {
         console.error('Login error:', error);
-        throw error;
+        throw new Error('Invalid credentials');
     }
 }
 
-// Signup function with localStorage
+// Signup function with Supabase
 async function signup(username, password) {
     try {
-        const users = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
-        
-        if (users.some(u => u.username === username)) {
-            throw new Error('Username already exists');
-        }
-        
+        // Check if username exists
+        const { data: existingUser, error: checkError } = await window.SupabaseDB
+            .from('users')
+            .select('username')
+            .eq('username', username)
+            .single();
+
+        if (checkError && checkError.code !== 'PGRST116') throw checkError;
+        if (existingUser) throw new Error('Username already exists');
+
         const user = {
             username,
             password,
             balance: 10000,
             avatar: null,
-            createdAt: new Date()
+            created_at: new Date().toISOString()
         };
-        
-        users.push(user);
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
-        currentUser = user;
+
+        // Save to Supabase
+        const { data: newUser, error: insertError } = await window.SupabaseDB
+            .from('users')
+            .insert([user])
+            .select()
+            .single();
+
+        if (insertError) throw insertError;
+
+        // Save to localStorage
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newUser));
+        currentUser = newUser;
         updateUIForLoggedInUser();
-        return user;
+        return newUser;
     } catch (error) {
         console.error('Signup error:', error);
         throw error;
@@ -119,20 +150,28 @@ function logout() {
 }
 
 // Function to update user profile
-function updateProfile(profileData) {
+async function updateProfile(profileData) {
     if (!currentUser) return;
     
-    const users = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
-    const userIndex = users.findIndex(u => u.username === currentUser.username);
-    
-    if (userIndex !== -1) {
-        users[userIndex] = { ...users[userIndex], ...profileData };
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    try {
+        // Update in Supabase
+        const { data: updatedUser, error } = await window.SupabaseDB
+            .from('users')
+            .update(profileData)
+            .eq('username', currentUser.username)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Update local data
+        currentUser = { ...currentUser, ...updatedUser };
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
+        updateUIForLoggedInUser();
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        throw error;
     }
-    
-    currentUser = { ...currentUser, ...profileData };
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
-    updateUIForLoggedInUser();
 }
 
 // Function to update user balance
@@ -141,18 +180,26 @@ async function updateBalance(amount, reason = 'game') {
     
     const newBalance = currentUser.balance + amount;
     if (newBalance >= 0) {
-        const users = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
-        const userIndex = users.findIndex(u => u.username === currentUser.username);
-        
-        if (userIndex !== -1) {
-            users[userIndex].balance = newBalance;
-            localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+        try {
+            // Update in Supabase
+            const { data: updatedUser, error } = await window.SupabaseDB
+                .from('users')
+                .update({ balance: newBalance })
+                .eq('username', currentUser.username)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            // Update local data
+            currentUser.balance = newBalance;
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
+            balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance);
+            return true;
+        } catch (error) {
+            console.error('Error updating balance:', error);
+            return false;
         }
-        
-        currentUser.balance = newBalance;
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
-        balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance);
-        return true;
     }
     return false;
 }

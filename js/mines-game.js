@@ -25,24 +25,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Game state
     let gameState = {
         isPlaying: false,
-        betAmount: 100,
-        minesCount: 3,
-        gridSize: 5,
-        gemsFound: 0,
-        totalWin: 0,
-        nextReward: 0,
+        currentBet: 0,
         mines: [],
-        revealed: []
+        revealed: [],
+        multiplier: 1,
+        profit: 0
     };
     
     // Initialize game
-    init();
+    initGame();
     
-    function init() {
+    function initGame() {
         // Set default values
-        betAmount.value = gameState.betAmount;
-        minesCount.value = gameState.minesCount;
-        gridSize.value = gameState.gridSize;
+        betAmount.value = gameState.currentBet;
+        minesCount.value = gameState.mines.length;
+        gridSize.value = Math.sqrt(gameState.mines.length);
         
         // Event listeners
         startGameBtn.addEventListener('click', startGame);
@@ -68,174 +65,148 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         // Load game history
-        loadGameHistory();
+        loadMinesHistory();
     }
     
     // Start a new game
-    async function startGame() {
-        // Check if user is logged in
+    function startGame() {
         const currentUser = window.BetaAuth?.getCurrentUser();
         if (!currentUser) {
-            alert('Please login to play!');
+            alert('Please log in to play');
             return;
         }
         
-        // Get game settings
-        gameState.betAmount = parseInt(betAmount.value) || 100;
-        gameState.minesCount = parseInt(minesCount.value) || 3;
-        gameState.gridSize = parseInt(gridSize.value) || 5;
-        
-        // Validate settings
-        if (gameState.betAmount < 10) {
-            alert('Minimum bet is 10 coins.');
+        if (currentUser.balance < gameState.currentBet) {
+            alert('Insufficient balance');
             return;
         }
         
-        if (gameState.betAmount > 10000) {
-            alert('Maximum bet is 10,000 coins.');
-            return;
-        }
+        // Reset game state
+        gameState = {
+            isPlaying: true,
+            currentBet: gameState.currentBet,
+            mines: [],
+            revealed: [],
+            multiplier: 1,
+            profit: 0
+        };
         
-        if (gameState.betAmount > currentUser.balance) {
-            alert('Not enough coins in your balance.');
-            return;
-        }
-        
-        if (gameState.minesCount >= gameState.gridSize * gameState.gridSize) {
-            alert('Too many mines for this grid size!');
-            return;
-        }
-        
-        // Deduct bet amount
-        await window.BetaAuth.updateBalance(-gameState.betAmount, 'mines');
-        
-        // Initialize game state
-        gameState.isPlaying = true;
-        gameState.gemsFound = 0;
-        gameState.totalWin = 0;
-        gameState.nextReward = gameState.betAmount;
-        gameState.mines = [];
-        gameState.revealed = [];
-        
-        // Place mines randomly
-        const totalCells = gameState.gridSize * gameState.gridSize;
-        while (gameState.mines.length < gameState.minesCount) {
-            const mine = Math.floor(Math.random() * totalCells);
-            if (!gameState.mines.includes(mine)) {
-                gameState.mines.push(mine);
-            }
-        }
+        // Generate mines
+        const mineCount = parseInt(minesCount.value) || 3;
+        generateMines(mineCount);
         
         // Update UI
-        gameSetup.style.display = 'none';
-        gamePlay.style.display = 'block';
-        gameResult.style.display = 'none';
+        updateUI();
         
-        gameBetAmount.textContent = formatCurrency(gameState.betAmount);
-        gameMinesCount.textContent = gameState.minesCount;
-        nextReward.textContent = formatCurrency(gameState.nextReward);
-        totalWin.textContent = formatCurrency(gameState.totalWin);
-        
-        // Create grid
-        createGrid();
+        // Deduct bet amount
+        window.BetaAuth.updateBalance(-gameState.currentBet, 'mines_bet');
     }
     
-    // Create the mines grid
-    function createGrid() {
-        minesGrid.innerHTML = '';
-        minesGrid.style.gridTemplateColumns = `repeat(${gameState.gridSize}, 1fr)`;
-        
-        for (let i = 0; i < gameState.gridSize * gameState.gridSize; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'mine-cell';
-            cell.dataset.index = i;
-            
-            cell.addEventListener('click', () => revealCell(i));
-            
-            minesGrid.appendChild(cell);
+    // Generate random mine positions
+    function generateMines(count) {
+        const positions = new Set();
+        while (positions.size < count) {
+            positions.add(Math.floor(Math.random() * gameState.mines.length));
         }
+        gameState.mines = Array.from(positions);
+        minesCount.value = gameState.mines.length;
+        gridSize.value = Math.sqrt(gameState.mines.length);
+        
+        // Update UI
+        updateUI();
     }
     
     // Reveal a cell
-    async function revealCell(index) {
-        if (!gameState.isPlaying || gameState.revealed.includes(index)) return;
+    function revealCell(index) {
+        if (gameState.revealed.includes(index)) return;
         
         const cell = minesGrid.children[index];
         gameState.revealed.push(index);
         
         if (gameState.mines.includes(index)) {
             // Hit a mine
-            gameState.isPlaying = false;
-            cell.classList.add('mine');
-            
-            // Reveal all mines
-            gameState.mines.forEach(mineIndex => {
-                if (mineIndex !== index) {
-                    minesGrid.children[mineIndex].classList.add('mine');
-                }
-            });
-            
-            // Show result
-            showResult(false);
+            gameOver(false);
         } else {
-            // Found a gem
-            cell.classList.add('gem');
-            gameState.gemsFound++;
+            // Safe cell
+            cell.classList.add('revealed');
             
-            // Calculate next reward
-            const multiplier = 1 + (gameState.gemsFound * 0.1);
-            gameState.nextReward = Math.floor(gameState.betAmount * multiplier);
-            gameState.totalWin = gameState.nextReward;
+            // Update multiplier and profit
+            updateMultiplier();
             
             // Update UI
-            nextReward.textContent = formatCurrency(gameState.nextReward);
-            totalWin.textContent = formatCurrency(gameState.totalWin);
+            updateUI();
         }
+    }
+    
+    // Update multiplier based on revealed cells
+    function updateMultiplier() {
+        const mineCount = gameState.mines.length;
+        const revealedCount = gameState.revealed.length;
+        
+        // Calculate multiplier based on mine count and revealed cells
+        const baseMultiplier = 1 + (mineCount * 0.2);
+        const revealedBonus = revealedCount * 0.1;
+        
+        gameState.multiplier = baseMultiplier + revealedBonus;
+        gameState.profit = Math.floor(gameState.currentBet * gameState.multiplier);
+        
+        // Update UI
+        updateUI();
     }
     
     // Cash out
-    async function cashout() {
+    function cashout() {
         if (!gameState.isPlaying) return;
         
+        // Add winnings to balance
+        window.BetaAuth.updateBalance(gameState.profit, 'mines_win');
+        
+        // Record game result
+        addGameToHistory(true);
+        
+        // Reset game state
         gameState.isPlaying = false;
         
-        // Add winnings to balance
-        await window.BetaAuth.updateBalance(gameState.totalWin, 'mines');
-        
-        // Show result
-        showResult(true);
+        // Update UI
+        updateUI();
     }
     
-    // Show game result
-    async function showResult(won) {
-        gamePlay.style.display = 'none';
-        gameResult.style.display = 'block';
-        
-        if (won) {
-            resultText.textContent = 'You Won!';
-            resultAmount.textContent = `+${formatCurrency(gameState.totalWin)}`;
-            resultAmount.className = 'win';
-        } else {
-            resultText.textContent = 'You Lost!';
-            resultAmount.textContent = `-${formatCurrency(gameState.betAmount)}`;
-            resultAmount.className = 'loss';
+    // Game over
+    function gameOver(won) {
+        if (!won) {
+            // Record loss
+            addGameToHistory(false);
         }
         
-        // Add to game history
-        const gameData = {
-            user: window.BetaAuth?.getCurrentUser()?.username || 'Guest',
-            game: 'mines',
-            bet: gameState.betAmount,
-            mines: gameState.minesCount,
-            gemsFound: gameState.gemsFound,
-            outcome: won ? gameState.totalWin : -gameState.betAmount,
-            grid: gameState.gridSize
-        };
+        // Reset game state
+        gameState.isPlaying = false;
         
-        await gameHistoryOperations.addGameHistory(gameData);
+        // Update UI
+        updateUI();
+    }
+    
+    // Update UI elements
+    function updateUI() {
+        const multiplierDisplay = document.getElementById('currentMultiplier');
+        const profitDisplay = document.getElementById('currentProfit');
+        const cashoutButton = document.getElementById('cashoutBtn');
+        const startButton = document.getElementById('startGameBtn');
         
-        // Reload game history
-        loadGameHistory();
+        if (multiplierDisplay) {
+            multiplierDisplay.textContent = gameState.multiplier.toFixed(2) + 'x';
+        }
+        
+        if (profitDisplay) {
+            profitDisplay.textContent = gameState.profit;
+        }
+        
+        if (cashoutButton) {
+            cashoutButton.disabled = !gameState.isPlaying;
+        }
+        
+        if (startButton) {
+            startButton.disabled = gameState.isPlaying;
+        }
     }
     
     // Reset the game
@@ -247,62 +218,130 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset game state
         gameState = {
             isPlaying: false,
-            betAmount: 100,
-            minesCount: 3,
-            gridSize: 5,
-            gemsFound: 0,
-            totalWin: 0,
-            nextReward: 0,
+            currentBet: 0,
             mines: [],
-            revealed: []
+            revealed: [],
+            multiplier: 1,
+            profit: 0
         };
         
         // Reset UI
-        betAmount.value = gameState.betAmount;
-        minesCount.value = gameState.minesCount;
-        gridSize.value = gameState.gridSize;
+        betAmount.value = gameState.currentBet;
+        minesCount.value = gameState.mines.length;
+        gridSize.value = Math.sqrt(gameState.mines.length);
     }
     
-    // Load game history
-    async function loadGameHistory() {
+    // Add game to history
+    async function addGameToHistory(won) {
+        const currentUser = window.BetaAuth?.getCurrentUser();
+        if (!currentUser) return;
+        
+        const gameRecord = {
+            user: currentUser.username,
+            game: 'mines',
+            bet: gameState.currentBet,
+            result: won ? gameState.profit : -gameState.currentBet,
+            time: new Date().toISOString(),
+            details: {
+                mineCount: gameState.mines.length,
+                revealedCount: gameState.revealed.length,
+                multiplier: gameState.multiplier
+            }
+        };
+        
         try {
-            const history = await gameHistoryOperations.getRecentHistory();
-            const minesHistory = history.filter(game => game.game === 'mines');
-            updateGameHistoryTable(minesHistory);
+            // Save to Supabase
+            const { data: savedRecord, error } = await window.SupabaseDB
+                .from('game_history')
+                .insert([gameRecord])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            // Update local history
+            const historyTable = document.getElementById('minesHistoryBody');
+            if (historyTable) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${gameRecord.user}</td>
+                    <td>${gameRecord.bet}</td>
+                    <td>${gameRecord.result >= 0 ? '+' + gameRecord.result : gameRecord.result}</td>
+                    <td>${gameRecord.details.mineCount} mines</td>
+                    <td>${gameRecord.details.revealedCount} revealed</td>
+                    <td>${gameRecord.details.multiplier.toFixed(2)}x</td>
+                `;
+                historyTable.insertBefore(row, historyTable.firstChild);
+            }
         } catch (error) {
-            console.error('Error loading game history:', error);
+            console.error('Error saving game history:', error);
+            // Fall back to local storage
+            const history = JSON.parse(localStorage.getItem('mines_history') || '[]');
+            history.unshift(gameRecord);
+            localStorage.setItem('mines_history', JSON.stringify(history));
+            
+            // Update local history display
+            const historyTable = document.getElementById('minesHistoryBody');
+            if (historyTable) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${gameRecord.user}</td>
+                    <td>${gameRecord.bet}</td>
+                    <td>${gameRecord.result >= 0 ? '+' + gameRecord.result : gameRecord.result}</td>
+                    <td>${gameRecord.details.mineCount} mines</td>
+                    <td>${gameRecord.details.revealedCount} revealed</td>
+                    <td>${gameRecord.details.multiplier.toFixed(2)}x</td>
+                `;
+                historyTable.insertBefore(row, historyTable.firstChild);
+            }
         }
     }
     
-    // Update game history table
-    function updateGameHistoryTable(history) {
-        if (!gameHistoryBody) return;
+    // Load mines game history
+    async function loadMinesHistory() {
+        const historyTable = document.getElementById('minesHistoryBody');
+        if (!historyTable) return;
         
-        gameHistoryBody.innerHTML = '';
-        
-        history.forEach(game => {
-            const row = document.createElement('tr');
-            
-            row.innerHTML = `
-                <td>${game.user}</td>
-                <td>${formatCurrency(game.bet)}</td>
-                <td>${game.mines}</td>
-                <td>${game.gemsFound}</td>
-                <td class="${game.outcome >= 0 ? 'win' : 'loss'}">${formatCurrency(game.outcome)}</td>
-                <td>${formatTime(game.time)}</td>
-            `;
-            
-            gameHistoryBody.appendChild(row);
-        });
-    }
-    
-    // Format currency
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat().format(amount);
-    }
-    
-    // Format time
-    function formatTime(date) {
-        return new Date(date).toLocaleString();
+        try {
+            // Load from Supabase
+            const { data: history, error } = await window.SupabaseDB
+                .from('game_history')
+                .select('*')
+                .eq('game', 'mines')
+                .order('time', { ascending: false })
+                .limit(10);
+
+            if (error) throw error;
+
+            // Display history
+            history.forEach(record => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${record.user}</td>
+                    <td>${record.bet}</td>
+                    <td>${record.result >= 0 ? '+' + record.result : record.result}</td>
+                    <td>${record.details.mineCount} mines</td>
+                    <td>${record.details.revealedCount} revealed</td>
+                    <td>${record.details.multiplier.toFixed(2)}x</td>
+                `;
+                historyTable.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Error loading mines history:', error);
+            // Fall back to local storage
+            const history = JSON.parse(localStorage.getItem('mines_history') || '[]');
+            history.slice(0, 10).forEach(record => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${record.user}</td>
+                    <td>${record.bet}</td>
+                    <td>${record.result >= 0 ? '+' + record.result : record.result}</td>
+                    <td>${record.details.mineCount} mines</td>
+                    <td>${record.details.revealedCount} revealed</td>
+                    <td>${record.details.multiplier.toFixed(2)}x</td>
+                `;
+                historyTable.appendChild(row);
+            });
+        }
     }
 }); 
