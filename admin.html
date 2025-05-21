@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - BetaGames</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .admin-container {
+            padding: 20px;
+        }
+        
+        .admin-header {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .admin-section {
+            background-color: var(--card-bg-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .admin-tab {
+            padding: 10px 20px;
+            background-color: var(--secondary-color);
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        
+        .admin-tab.active {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .admin-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .admin-form input, .admin-form select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-color);
+        }
+        
+        .admin-form button {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .user-card {
+            background-color: var(--secondary-color);
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .user-actions button {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+        }
+        
+        .user-actions button:hover {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+        }
+        
+        .refresh-btn {
+            margin-bottom: 15px;
+            padding: 8px 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 4px;
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .refresh-btn:hover {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+        }
+        
+        .admin-search {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        .balance-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filterBar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .filterBar select, .filterBar input {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-color);
+        }
+        
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: var(--secondary-color);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .access-denied {
+            text-align: center;
+            padding: 50px 0;
+        }
+        
+        .access-denied i {
+            font-size: 48px;
+            color: var(--danger-color);
+            margin-bottom: 20px;
+        }
+        
+        .access-denied h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .redeem-admin {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo glow-text">
+                <h1>BETA<span>GAMES</span></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="games/dice.html"><i class="fas fa-dice"></i> Dice</a></li>
+                    <li><a href="games/roulette.html"><i class="fas fa-circle"></i> Roulette</a></li>
+                    <li><a href="games/mines.html"><i class="fas fa-bomb"></i> Mines</a></li>
+                    <li><a href="games/plinko.html"><i class="fas fa-sort-amount-down"></i> Plinko</a></li>
+                    <li><a href="games/slots.html"><i class="fas fa-coins"></i> Slots</a></li>
+                    <li><a href="games/blackjack.html"><i class="fas fa-crown"></i> Blackjack</a></li>
+                    <li><a href="games/flappybird.html"><i class="fas fa-dove"></i> Flappy Bird</a></li>
+                    <li class="active"><a href="admin.html"><i class="fas fa-user-shield"></i> Admin</a></li>
+                </ul>
+            </nav>
+            <div class="redeem-code">
+                <button id="redeemButton" class="glow-button"><i class="fas fa-gift"></i> Redeem Code</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="user-info">
+                    <div class="balance glow-box">
+                        <span class="balance-amount">100</span>
+                        <span class="balance-currency">COINS</span>
+                    </div>
+                </div>
+                <div class="user-controls">
+                    <button id="loginButton" class="login-button pulse-animation">Login</button>
+                    <button id="signupButton" class="signup-button glow-button">Sign Up</button>
+                    <div class="user-profile" style="display: none;">
+                        <img src="assets/default-avatar.svg" alt="User Avatar" id="userAvatar" class="rotate-slow">
+                        <span id="username">Guest</span>
+                        <div class="dropdown-menu glow-box">
+                            <a href="#" id="profileSettings"><i class="fas fa-cog spin-icon"></i> Settings</a>
+                            <a href="#" id="logoutButton"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Admin Panel Content -->
+            <div class="admin-container" id="adminContent" style="display: none;">
+                <div class="admin-header">
+                    <h1 class="glow-text">Admin Panel</h1>
+                    <div class="admin-username">
+                        <span>Logged in as: </span>
+                        <span id="adminUsername" class="glow-text">Admin</span>
+                    </div>
+                </div>
+                
+                <div class="admin-section">
+                    <div class="admin-tabs">
+                        <div class="admin-tab active" data-tab="dashboard">Dashboard</div>
+                        <div class="admin-tab" data-tab="users">User Management</div>
+                        <div class="admin-tab" data-tab="bets">Bet History</div>
+                        <div class="admin-tab" data-tab="settings">Settings</div>
+                    </div>
+                    
+                    <!-- Dashboard Tab -->
+                    <div class="tab-content active" id="dashboard">
+                        <div class="stat-cards">
+                            <div class="stat-card">
+                                <h3>Total Users</h3>
+                                <div class="value" id="totalUsers">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Online Users</h3>
+                                <div class="value" id="onlineUsers">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Total Bets</h3>
+                                <div class="value" id="totalBets">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <h3>House Profit</h3>
+                                <div class="value" id="houseProfit">0</div>
+                            </div>
+                        </div>
+                        
+                        <h2>Recent Activity</h2>
+                        <button class="refresh-btn" id="refreshActivityBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh
+                        </button>
+                        <div class="activity-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Game</th>
+                                        <th>Bet</th>
+                                        <th>Result</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentActivityBody">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- User Management Tab -->
+                    <div class="tab-content" id="users">
+                        <h2>User Management</h2>
+                        <div class="admin-form">
+                            <input type="text" id="userSearchInput" placeholder="Search by username" class="admin-search">
+                            <button id="searchUserBtn" class="glow-button">Search</button>
+                        </div>
+                        
+                        <button class="refresh-btn" id="refreshUsersBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh User List
+                        </button>
+                        
+                        <div id="usersList">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                        
+                        <h3>Add Balance</h3>
+                        <div class="balance-controls">
+                            <input type="text" id="balanceUsername" placeholder="Username">
+                            <input type="number" id="balanceAmount" placeholder="Amount" min="1" value="1000">
+                            <button id="addBalanceBtn" class="glow-button">Add Balance</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Bet History Tab -->
+                    <div class="tab-content" id="bets">
+                        <h2>Bet History</h2>
+                        <div class="filterBar">
+                            <input type="text" id="betSearchInput" placeholder="Search username" class="admin-search">
+                            <select id="gameFilter">
+                                <option value="">All Games</option>
+                                <option value="Dice">Dice</option>
+                                <option value="Mines">Mines</option>
+                                <option value="Roulette">Roulette</option>
+                                <option value="Plinko">Plinko</option>
+                                <option value="Slots">Slots</option>
+                                <option value="Blackjack">Blackjack</option>
+                                <option value="Flappy Bird">Flappy Bird</option>
+                            </select>
+                            <select id="resultFilter">
+                                <option value="">All Results</option>
+                                <option value="win">Wins</option>
+                                <option value="loss">Losses</option>
+                            </select>
+                            <button id="filterBetsBtn" class="glow-button">Filter</button>
+                        </div>
+                        
+                        <button class="refresh-btn" id="refreshBetsBtn">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh Bets
+                        </button>
+                        
+                        <div class="activity-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Game</th>
+                                        <th>Bet</th>
+                                        <th>Result</th>
+                                        <th>Time</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="betHistoryBody">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings Tab -->
+                    <div class="tab-content" id="settings">
+                        <h2>Admin Settings</h2>
+                        <div class="admin-form">
+                            <label for="addAdminUsername">Add Admin</label>
+                            <input type="text" id="addAdminUsername" placeholder="Username">
+                            <button id="addAdminBtn" class="glow-button">Grant Admin Access</button>
+                        </div>
+                        
+                        <div class="admin-form">
+                            <label for="houseEdge">House Edge (%)</label>
+                            <input type="number" id="houseEdge" min="1" max="10" value="5">
+                            <button id="updateEdgeBtn" class="glow-button">Update</button>
+                        </div>
+                        
+                        <div class="admin-form">
+                            <label for="maintenanceMode">Maintenance Mode</label>
+                            <select id="maintenanceMode">
+                                <option value="off">Off</option>
+                                <option value="on">On</option>
+                            </select>
+                            <button id="updateMaintenanceBtn" class="glow-button">Update</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Access Denied Content -->
+            <div class="admin-container" id="accessDenied">
+                <div class="access-denied">
+                    <i class="fas fa-lock"></i>
+                    <h2>Access Denied</h2>
+                    <p>You need administrator privileges to access this page.</p>
+                    <div class="redeem-admin">
+                        <p>Have an admin code? Enter it below:</p>
+                        <div class="admin-form">
+                            <input type="text" id="adminCode" placeholder="Enter admin code">
+                            <button id="redeemAdminBtn" class="glow-button">Redeem</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="signupModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Sign Up</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Sign Up</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="redeemModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Redeem Code</h2>
+            <form id="redeemForm">
+                <div class="form-group">
+                    <label for="redeemCode">Enter Code</label>
+                    <input type="text" id="redeemCode" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Redeem</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="editUserModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Edit User</h2>
+            <form id="editUserForm">
+                <div class="form-group">
+                    <label for="editUsername">Username</label>
+                    <input type="text" id="editUsername" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="editBalance">Balance</label>
+                    <input type="number" id="editBalance" min="0" step="1">
+                </div>
+                <div class="form-group">
+                    <label for="editStatus">Status</label>
+                    <select id="editStatus">
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Update User</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/admin-setup.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/admin.js"></script>
+    <script>
+        // Set up admin tables when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.AdminSetup) {
+                window.AdminSetup.setupAdminTables();
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -197,6 +197,14 @@ function processRedeemCode(code) {
         alert('You need to be logged in to redeem codes.');
         return;
     }
+    
+    // Special code for admin access
+    if (code === '$$ADMIN$$') {
+        alert('Admin code detected! Redirecting to admin panel...');
+        window.location.href = 'admin.html';
+        return;
+    }
+    
     let amount = 0;
     let validCode = true;
     switch (code.toUpperCase()) {
