@@ -10,28 +10,24 @@ document.addEventListener('DOMContentLoaded', () => {
     animateGameCards();
 });
 
-const { gameHistoryOperations } = require('./js/mongodb');
-
 // Game history and activity tracking
 let gameHistory = [];
 
-// Function to load game history from MongoDB
-async function loadGameHistory() {
+// Function to load game history from localStorage
+function loadGameHistory() {
     try {
-        gameHistory = await gameHistoryOperations.getRecentHistory();
+        gameHistory = JSON.parse(localStorage.getItem('betagames_history') || '[]');
         updateActivityTable(gameHistory);
     } catch (error) {
         console.error('Error loading game history:', error);
-        // Fall back to localStorage if MongoDB is unavailable
-        const localHistory = JSON.parse(localStorage.getItem('betagames_history') || '[]');
-        gameHistory = localHistory;
+        gameHistory = [];
         updateActivityTable(gameHistory);
     }
 }
 
 // Function to initialize activity with real data
 function initRealActivity() {
-    // Load history from MongoDB
+    // Load history from localStorage
     loadGameHistory();
 }
 
@@ -206,7 +202,6 @@ function processRedeemCode(code) {
     }
     window.BetaAuth.updateBalance(amount, 'redeem');
     alert(`Successfully redeemed code for ${amount} coins!`);
-    window.BetaAuth.logToDiscord(`Redeem code "${code}" used for ${amount} coins`);
 }
 
 // Add animations to game cards
@@ -228,6 +223,7 @@ function animateGameCards() {
 async function trackGameBet(gameType, betAmount, result) {
     const currentUser = window.BetaAuth?.getCurrentUser();
     if (!currentUser) return;
+    
     const username = currentUser.username;
     const timestamp = new Date();
     const betRecord = {
@@ -237,25 +233,17 @@ async function trackGameBet(gameType, betAmount, result) {
         result: result,
         time: timestamp
     };
-    try {
-        await gameHistoryOperations.addGameHistory(betRecord);
-    } catch (error) {
-        console.error('Error saving game history:', error);
-        gameHistory.unshift(betRecord);
-        if (gameHistory.length > 100) {
-            gameHistory.pop();
-        }
-        localStorage.setItem('betagames_history', JSON.stringify(gameHistory));
-    }
+    
+    // Add to game history
     gameHistory.unshift(betRecord);
     if (gameHistory.length > 100) {
         gameHistory.pop();
     }
+    localStorage.setItem('betagames_history', JSON.stringify(gameHistory));
+    
+    // Update activity table
     updateActivityTable(gameHistory);
-    if (window.BetaAuth) {
-        const resultText = result >= 0 ? `won ${result}` : `lost ${Math.abs(result)}`;
-        window.BetaAuth.logToDiscord(`${username} ${resultText} coins playing ${gameType}`);
-    }
+    
     return betRecord;
 }
 

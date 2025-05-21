@@ -1,6 +1,6 @@
 // BetaGames Authentication System
 const LOCAL_STORAGE_KEY = 'betagames_user';
-const { userOperations } = require('./js/mongodb');
+const USERS_STORAGE_KEY = 'betagames_users';
 
 // User state
 let currentUser = null;
@@ -54,19 +54,19 @@ function updateUIForLoggedInUser() {
         if (currentUser.balance) {
             balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance);
         }
-        
-        // Log to Discord webhook (would be server-side in real app)
-        logToDiscord(`User ${currentUser.username} logged in`);
     }
 }
 
-// Login function with MongoDB
+// Login function with localStorage
 async function login(username, password) {
     try {
-        const user = await userOperations.findUser(username);
-        if (!user || user.password !== password) {
+        const users = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
+        const user = users.find(u => u.username === username && u.password === password);
+        
+        if (!user) {
             throw new Error('Invalid credentials');
         }
+        
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
         currentUser = user;
         updateUIForLoggedInUser();
@@ -77,14 +77,25 @@ async function login(username, password) {
     }
 }
 
-// Signup function with MongoDB
+// Signup function with localStorage
 async function signup(username, password) {
     try {
-        const existingUser = await userOperations.findUser(username);
-        if (existingUser) {
+        const users = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
+        
+        if (users.some(u => u.username === username)) {
             throw new Error('Username already exists');
         }
-        const user = await userOperations.createUser(username, password);
+        
+        const user = {
+            username,
+            password,
+            balance: 10000,
+            avatar: null,
+            createdAt: new Date()
+        };
+        
+        users.push(user);
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
         currentUser = user;
         updateUIForLoggedInUser();
@@ -98,12 +109,7 @@ async function signup(username, password) {
 // Logout function
 function logout() {
     localStorage.removeItem(LOCAL_STORAGE_KEY);
-    
-    // Log to Discord webhook (would be server-side in real app)
-    if (currentUser) {
-        logToDiscord(`User ${currentUser.username} logged out`);
-        currentUser = null;
-    }
+    currentUser = null;
     
     // Reset UI
     loginButton.style.display = 'block';
@@ -115,27 +121,38 @@ function logout() {
 // Function to update user profile
 function updateProfile(profileData) {
     if (!currentUser) return;
+    
+    const users = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
+    const userIndex = users.findIndex(u => u.username === currentUser.username);
+    
+    if (userIndex !== -1) {
+        users[userIndex] = { ...users[userIndex], ...profileData };
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    }
+    
     currentUser = { ...currentUser, ...profileData };
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
     updateUIForLoggedInUser();
-    logToDiscord(`User ${currentUser.username} updated their profile`);
 }
 
 // Function to update user balance
 async function updateBalance(amount, reason = 'game') {
     if (!currentUser) return false;
+    
     const newBalance = currentUser.balance + amount;
     if (newBalance >= 0) {
-        // Update in MongoDB
-        const updatedUser = await userOperations.updateBalance(currentUser.username, amount);
-        if (updatedUser) {
-            currentUser.balance = updatedUser.balance;
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
-            balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance);
-            const changeText = amount >= 0 ? `gained ${amount}` : `lost ${Math.abs(amount)}`;
-            logToDiscord(`User ${currentUser.username} ${changeText} coins from ${reason}. New balance: ${currentUser.balance}`);
-            return true;
+        const users = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || '[]');
+        const userIndex = users.findIndex(u => u.username === currentUser.username);
+        
+        if (userIndex !== -1) {
+            users[userIndex].balance = newBalance;
+            localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
         }
+        
+        currentUser.balance = newBalance;
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
+        balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance);
+        return true;
     }
     return false;
 }
@@ -150,25 +167,6 @@ function toggleDropdown(e) {
     } else {
         dropdownMenu.classList.remove('show-dropdown');
     }
-}
-
-// Function to log events to Discord webhook (mock)
-function logToDiscord(message) {
-    // In a real app, this would be a server-side function
-    console.log('[Discord Webhook Log]', message);
-    
-    // If you had a real Discord webhook URL, you would use fetch:
-    /*
-    fetch('YOUR_DISCORD_WEBHOOK_URL', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            content: message
-        }),
-    }).catch(error => console.error('Error sending webhook:', error));
-    */
 }
 
 // Event Listeners
@@ -250,79 +248,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Close modals when clicking outside
-    window.addEventListener('click', (e) => {
-        if (e.target === loginModal) {
-            loginModal.style.display = 'none';
-        }
-        if (e.target === signupModal) {
-            signupModal.style.display = 'none';
-        }
-        
-        // Close settings modal if exists
-        const settingsModal = document.getElementById('settingsModal');
-        if (settingsModal && e.target === settingsModal) {
-            settingsModal.style.display = 'none';
-        }
-        
-        // Close change password modal if exists
-        const changePasswordModal = document.getElementById('changePasswordModal');
-        if (changePasswordModal && e.target === changePasswordModal) {
-            changePasswordModal.style.display = 'none';
-        }
-    });
-    
-    // Handle change password form if exists
-    const changePasswordForm = document.getElementById('changePasswordForm');
-    if (changePasswordForm) {
-        changePasswordForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-            
-            if (newPassword !== confirmNewPassword) {
-                alert('New passwords do not match!');
-                return;
-            }
-            
-            // In a real app, this would validate against the server
-            // For demo, we'll just pretend it worked
-            
-            alert('Password changed successfully!');
-            
-            // Reset form and close modal
-            changePasswordForm.reset();
-            
-            const changePasswordModal = document.getElementById('changePasswordModal');
-            if (changePasswordModal) {
-                changePasswordModal.style.display = 'none';
-            }
-        });
-    }
-    
     // Login form submit
     if (loginForm) {
-        loginForm.addEventListener('submit', (e) => {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
             
-            login(username, password)
-                .then(() => {
-                    loginModal.style.display = 'none';
-                    loginForm.reset();
-                })
-                .catch(error => {
-                    alert('Login failed: ' + error.message);
-                });
+            try {
+                await login(username, password);
+                loginModal.style.display = 'none';
+                loginForm.reset();
+            } catch (error) {
+                alert(error.message);
+            }
         });
     }
     
     // Signup form submit
     if (signupForm) {
-        signupForm.addEventListener('submit', (e) => {
+        signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('signupUsername').value;
             const password = document.getElementById('signupPassword').value;
@@ -333,14 +278,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
-            signup(username, password)
-                .then(() => {
-                    signupModal.style.display = 'none';
-                    signupForm.reset();
-                })
-                .catch(error => {
-                    alert('Signup failed: ' + error.message);
-                });
+            try {
+                await signup(username, password);
+                signupModal.style.display = 'none';
+                signupForm.reset();
+            } catch (error) {
+                alert(error.message);
+            }
         });
     }
 });
@@ -352,6 +296,5 @@ window.BetaAuth = {
     signup,
     logout,
     updateProfile,
-    updateBalance,
-    logToDiscord
+    updateBalance
 }; 
