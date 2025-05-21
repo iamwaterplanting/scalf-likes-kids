@@ -439,28 +439,40 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
     // Add CSS for the dice if not already in styles.css
     const diceCSS = `
+        .game-container {
+            background-color: #141b2d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .game-title {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
         .dice-game {
             display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
+            flex-direction: column;
+            gap: 20px;
             margin-top: 20px;
         }
         
         .dice-display {
-            flex: 1;
-            min-width: 200px;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 20px 0;
+            margin-bottom: 20px;
         }
         
         .dice {
-            width: 150px;
-            height: 150px;
+            width: 100px;
+            height: 100px;
             background-color: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             position: relative;
         }
         
@@ -475,8 +487,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         .dice-dot {
             position: absolute;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             background-color: #1c1f30;
             border-radius: 50%;
         }
@@ -520,15 +532,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         .betting-options {
-            flex: 2;
-            min-width: 300px;
+            width: 100%;
         }
         
-        .bet-section, .result-section {
-            background-color: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 20px;
+        .bet-section h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        .bet-controls {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
             margin-bottom: 20px;
+        }
+        
+        .bet-input {
+            margin-bottom: 15px;
+        }
+        
+        .bet-input label {
+            display: block;
+            margin-bottom: 8px;
+            color: #fff;
+            font-size: 16px;
+        }
+        
+        .bet-input input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #1c2639;
+            border: 1px solid #2c3e50;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 16px;
+        }
+        
+        .bet-input select {
+            width: 100%;
+            padding: 10px;
+            background-color: #1c2639;
+            border: 1px solid #2c3e50;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 16px;
+            appearance: auto;
         }
         
         .bet-shortcuts {
@@ -538,39 +587,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         .bet-shortcut {
-            background-color: rgba(255, 255, 255, 0.1);
-            border: none;
+            background-color: #1c2639;
+            border: 1px solid #2c3e50;
             padding: 5px 10px;
-            border-radius: 5px;
-            color: var(--text-color);
+            border-radius: 4px;
+            color: #fff;
             cursor: pointer;
         }
         
         .bet-shortcut:hover {
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: #263752;
         }
         
         .odds-display {
             margin: 20px 0;
             display: flex;
-            gap: 20px;
+            flex-direction: column;
+            gap: 10px;
         }
         
         .odds-item {
-            background-color: rgba(255, 255, 255, 0.05);
-            padding: 10px 15px;
-            border-radius: 5px;
-            flex: 1;
+            display: flex;
+            font-size: 16px;
+            color: #fff;
         }
         
         .odds-item span:first-child {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-right: 5px;
+            margin-right: 10px;
         }
         
-        .result-header {
+        #potentialWin, #winChance {
+            font-weight: bold;
+        }
+        
+        .game-button {
+            width: 100%;
+            padding: 12px 0;
+            background-color: #00c851;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+        
+        .game-button:hover {
+            background-color: #00a844;
+        }
+        
+        .result-section {
+            background-color: #1c2639;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .result-header h3 {
+            font-size: 18px;
             margin-bottom: 15px;
+            color: #fff;
         }
         
         .result-content {
@@ -587,18 +665,71 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         .result-number {
-            font-size: 48px;
+            font-size: 32px;
             font-weight: bold;
             margin-bottom: 5px;
+            color: #fff;
         }
         
         .result-text {
-            font-size: 20px;
+            font-size: 18px;
         }
         
         .result-amount {
-            font-size: 36px;
+            font-size: 24px;
             font-weight: bold;
+        }
+        
+        .game-history {
+            background-color: #141b2d;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .game-history h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        .history-table {
+            overflow-x: auto;
+        }
+        
+        .history-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .history-table th,
+        .history-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #2c3e50;
+            color: #fff;
+        }
+        
+        .history-table th {
+            font-weight: normal;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Color classes */
+        .var(--success-color) {
+            color: #00c851;
+        }
+        
+        .var(--danger-color) {
+            color: #ff4444;
         }
     `;
     

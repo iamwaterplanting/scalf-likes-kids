@@ -57,78 +57,76 @@
             <!-- Game Container -->
             <div class="game-container">
                 <h1 class="game-title">Dice</h1>
+                <h2 class="section-subtitle">Betting Options</h2>
                 
                 <div class="dice-game">
+                    <div class="betting-container">
+                        <div class="bet-row">
+                            <div class="bet-column">
+                                <label for="betAmount">Bet Amount</label>
+                                <input type="number" id="betAmount" min="10" max="10000" value="100">
+                                <div class="bet-shortcuts">
+                                    <button class="bet-shortcut" data-amount="100">100</button>
+                                    <button class="bet-shortcut" data-amount="500">500</button>
+                                    <button class="bet-shortcut" data-amount="1000">1000</button>
+                                    <button class="bet-shortcut" data-amount="max">MAX</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bet-row">
+                            <div class="bet-column">
+                                <label for="targetNumber">Target Number</label>
+                                <select id="targetNumber">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                </select>
+                            </div>
+                            
+                            <div class="bet-column">
+                                <label for="betType">Bet Type</label>
+                                <select id="betType">
+                                    <option value="exact">Exact Number (5x)</option>
+                                    <option value="over">Over Number (2x)</option>
+                                    <option value="under">Under Number (2x)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="bet-info">
+                            <div class="info-item">
+                                <span>Potential Win: <span id="potentialWin">500</span></span>
+                            </div>
+                            <div class="info-item">
+                                <span>Win Chance: <span id="winChance">16.67%</span></span>
+                            </div>
+                        </div>
+                        
+                        <button id="rollButton" class="roll-button">ROLL DICE</button>
+                    </div>
+                    
                     <div class="dice-display">
                         <div class="dice" id="diceDisplay">
-                            <div class="dice-dot"></div>
+                            <div class="dice-dot center"></div>
                         </div>
                     </div>
                     
-                    <div class="betting-options">
-                        <div class="bet-section">
-                            <h3>Betting Options</h3>
-                            <div class="bet-controls">
-                                <div class="bet-input">
-                                    <label for="betAmount">Bet Amount</label>
-                                    <input type="number" id="betAmount" min="10" max="10000" value="100">
-                                    <div class="bet-shortcuts">
-                                        <button class="bet-shortcut" data-amount="100">100</button>
-                                        <button class="bet-shortcut" data-amount="500">500</button>
-                                        <button class="bet-shortcut" data-amount="1000">1000</button>
-                                        <button class="bet-shortcut" data-amount="max">MAX</button>
-                                    </div>
-                                </div>
-                                
-                                <div class="bet-input">
-                                    <label for="targetNumber">Target Number</label>
-                                    <select id="targetNumber">
-                                        <option value="1">1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                        <option value="5">5</option>
-                                        <option value="6">6</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="bet-input">
-                                    <label for="betType">Bet Type</label>
-                                    <select id="betType">
-                                        <option value="exact">Exact Number (5x)</option>
-                                        <option value="over">Over Number (2x)</option>
-                                        <option value="under">Under Number (2x)</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="odds-display">
-                                <div class="odds-item">
-                                    <span>Potential Win:</span>
-                                    <span id="potentialWin">500</span>
-                                </div>
-                                <div class="odds-item">
-                                    <span>Win Chance:</span>
-                                    <span id="winChance">16.67%</span>
-                                </div>
-                            </div>
-                            
-                            <button id="rollButton" class="game-button">ROLL DICE</button>
+                    <div class="result-section" id="resultSection" style="display: none;">
+                        <div class="result-header">
+                            <h3>Result</h3>
                         </div>
-                        
-                        <div class="result-section" id="resultSection" style="display: none;">
-                            <div class="result-header">
-                                <h3>Result</h3>
+                        <div class="result-content">
+                            <div class="result-display">
+                                <div class="result-number" id="resultNumber">6</div>
+                                <div class="result-text" id="resultText">You Won!</div>
                             </div>
-                            <div class="result-content">
-                                <div class="result-display">
-                                    <div class="result-number" id="resultNumber">6</div>
-                                    <div class="result-text" id="resultText">You Won!</div>
-                                </div>
-                                <div class="result-amount" id="resultAmount">+500</div>
-                            </div>
-                            <button id="playAgainButton" class="game-button">PLAY AGAIN</button>
+                            <div class="result-amount" id="resultAmount">+500</div>
                         </div>
+                        <button id="playAgainButton" class="game-button">PLAY AGAIN</button>
                     </div>
                 </div>
             </div>
@@ -238,5 +236,282 @@
     <script src="../js/auth.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/dice-game.js"></script>
+    
+    <style>
+        .game-container {
+            background-color: #141b2d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .game-title {
+            font-size: 28px;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        
+        .section-subtitle {
+            font-size: 18px;
+            color: #8f9bb3;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+        
+        .dice-game {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .betting-container {
+            padding: 15px;
+            background-color: #1c2639;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .bet-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .bet-column {
+            flex: 1;
+        }
+        
+        .bet-column label {
+            display: block;
+            margin-bottom: 8px;
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        .bet-column input[type="number"],
+        .bet-column select {
+            width: 100%;
+            padding: 10px;
+            background-color: #0d1321;
+            border: 1px solid #2c3e50;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 16px;
+        }
+        
+        .bet-shortcuts {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .bet-shortcut {
+            background-color: #0d1321;
+            border: 1px solid #2c3e50;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+        }
+        
+        .bet-shortcut:hover {
+            background-color: #263752;
+        }
+        
+        .bet-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        
+        .info-item {
+            font-size: 16px;
+            color: #fff;
+        }
+        
+        .info-item span span {
+            font-weight: bold;
+            color: #4caf50;
+        }
+        
+        .roll-button {
+            width: 100%;
+            padding: 12px 0;
+            background-color: #00c851;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        
+        .roll-button:hover {
+            background-color: #00a844;
+        }
+        
+        .dice-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 0;
+        }
+        
+        .dice {
+            width: 100px;
+            height: 100px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .dice.spinning {
+            animation: dice-spin 0.5s linear infinite;
+        }
+        
+        @keyframes dice-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .dice-dot {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background-color: #1c1f30;
+            border-radius: 50%;
+        }
+        
+        .center {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .top-left {
+            top: 20%;
+            left: 20%;
+        }
+        
+        .top-right {
+            top: 20%;
+            right: 20%;
+        }
+        
+        .middle-left {
+            top: 50%;
+            left: 20%;
+            transform: translateY(-50%);
+        }
+        
+        .middle-right {
+            top: 50%;
+            right: 20%;
+            transform: translateY(-50%);
+        }
+        
+        .bottom-left {
+            bottom: 20%;
+            left: 20%;
+        }
+        
+        .bottom-right {
+            bottom: 20%;
+            right: 20%;
+        }
+        
+        .result-section {
+            background-color: #1c2639;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .result-header h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        .result-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .result-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .result-number {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .result-text {
+            font-size: 18px;
+        }
+        
+        .game-button {
+            width: 100%;
+            padding: 12px 0;
+            background-color: #00c851;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        
+        .game-history, 
+        .recent-activity {
+            background-color: #141b2d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .game-history h2,
+        .recent-activity h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        .history-table,
+        .activity-table {
+            overflow-x: auto;
+        }
+        
+        .history-table table,
+        .activity-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .history-table th,
+        .history-table td,
+        .activity-table th,
+        .activity-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #2c3e50;
+            color: #fff;
+        }
+        
+        .history-table th,
+        .activity-table th {
+            font-weight: normal;
+            color: rgba(255, 255, 255, 0.7);
+        }
+    </style>
 </body>
 </html> 
