@@ -1,5 +1,7 @@
 // BetaGames Main JS
+console.log('main.js loaded');
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded event fired');
     // Initialize real game activity history
     initRealActivity();
     
@@ -15,6 +17,7 @@ let gameHistory = [];
 
 // Function to load game history from Supabase
 async function loadGameHistory() {
+    console.log('loadGameHistory called');
     try {
         const { data: history, error } = await window.SupabaseDB
             .from('game_history')
@@ -35,6 +38,7 @@ async function loadGameHistory() {
 
 // Function to initialize activity with real data
 function initRealActivity() {
+    console.log('initRealActivity called');
     // Load history from Supabase
     loadGameHistory();
 }
