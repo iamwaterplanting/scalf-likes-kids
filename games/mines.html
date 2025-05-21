@@ -6,6 +6,278 @@
     <title>Mines - BetaGames</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .game-container {
+            padding: 20px;
+        }
+        
+        .mines-game {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .mines-controls {
+            width: 200px;
+            padding: 20px;
+            background-color: #0c1321;
+            border-radius: 8px;
+        }
+        
+        .mines-grid-container {
+            flex-grow: 1;
+            background-color: #0c1321;
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .mines-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 10px;
+            height: 400px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .mine-cell {
+            aspect-ratio: 1/1;
+            background-color: #1b2838;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .mine-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+        
+        .mine-cell.revealed-gem {
+            background-color: #1b2838;
+        }
+        
+        .mine-cell.revealed-mine {
+            background-color: #1b2838;
+        }
+        
+        .gem {
+            width: 70%;
+            height: 70%;
+            background-color: #00ff00;
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(20deg);
+            box-shadow: 0 0 15px #00ff00;
+        }
+        
+        .gem::after {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            width: 70%;
+            height: 70%;
+            background-color: rgba(255, 255, 255, 0.4);
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+        }
+        
+        .mine {
+            width: 60%;
+            height: 60%;
+            background-color: #ff3333;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px #ff3333;
+        }
+        
+        .mine::after {
+            content: '💥';
+            font-size: 20px;
+        }
+        
+        .bet-input-container {
+            margin-bottom: 20px;
+        }
+        
+        .bet-input-container label {
+            display: block;
+            margin-bottom: 5px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+        
+        .bet-input {
+            width: 100%;
+            padding: 10px;
+            background-color: #1b2838;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 4px;
+        }
+        
+        .mines-selector {
+            margin-bottom: 20px;
+        }
+        
+        .mines-selector label {
+            display: block;
+            margin-bottom: 5px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+        
+        .mines-selector select {
+            width: 100%;
+            padding: 10px;
+            background-color: #1b2838;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 4px;
+        }
+        
+        .bet-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #00cc00;
+            color: black;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .cashout-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #ff3333;
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .mines-stats {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 15px;
+        }
+        
+        .mines-stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .mines-stat-item span:first-child {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .mines-stat-item span:last-child {
+            color: white;
+            font-weight: bold;
+        }
+        
+        .manual-controls {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+        }
+        
+        .manual-btn {
+            flex: 1;
+            padding: 5px;
+            font-size: 12px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .recommended {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 100;
+        }
+        
+        .fairness {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .fairness-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .fairness-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .recommended-text {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .recommended-text::before {
+            content: "";
+            position: absolute;
+            left: -20px;
+            top: 0;
+            width: 40px;
+            height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: skewX(-25deg);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { left: -20px; }
+            100% { left: 100%; }
+        }
+        
+        .recommended-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 2px;
+        }
+        
+        .verified {
+            font-weight: bold;
+            color: #00FF00;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -21,9 +293,9 @@
                     <li><a href="roulette.html"><i class="fas fa-circle"></i> Roulette</a></li>
                     <li class="active"><a href="mines.html"><i class="fas fa-bomb"></i> Mines</a></li>
                     <li><a href="plinko.html"><i class="fas fa-sort-amount-down"></i> Plinko</a></li>
-                    <li><a href="slots.html"><i class="fas fa-slot-machine"></i> Slots</a></li>
-                    <li><a href="blackjack.html"><i class="fas fa-playing-card"></i> Blackjack</a></li>
-                    <li><a href="flappybird.html"><i class="fas fa-bird"></i> Flappy Bird</a></li>
+                    <li><a href="slots.html"><i class="fas fa-coins"></i> Slots</a></li>
+                    <li><a href="blackjack.html"><i class="fas fa-crown"></i> Blackjack</a></li>
+                    <li><a href="flappybird.html"><i class="fas fa-dove"></i> Flappy Bird</a></li>
                 </ul>
             </nav>
             <div class="redeem-code">
@@ -57,138 +329,69 @@
 
             <!-- Game Container -->
             <div class="game-container">
-                <h1 class="game-title glow-text">Mines</h1>
-                <p class="game-description">Navigate through a minefield and collect gems to win. Watch out for mines!</p>
-                
                 <div class="mines-game">
-                    <div id="gameSetup">
-                        <div class="game-settings-form glow-box">
-                            <div class="setting-group">
-                                <h3>Bet Settings</h3>
-                                <div class="setting-item">
-                                    <label for="betAmount">Bet Amount</label>
-                                    <input type="number" id="betAmount" min="10" max="10000" value="100" class="bet-input">
-                                </div>
-                                <div class="setting-item">
-                                    <div>Bet Shortcuts</div>
-                                    <div class="bet-shortcuts">
-                                        <button class="bet-shortcut" data-amount="100">100</button>
-                                        <button class="bet-shortcut" data-amount="500">500</button>
-                                        <button class="bet-shortcut" data-amount="1000">1000</button>
-                                        <button class="bet-shortcut" data-amount="max">MAX</button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="setting-group">
-                                <h3>Game Settings</h3>
-                                <div class="setting-item">
-                                    <label for="minesCount">Number of Mines</label>
-                                    <select id="minesCount">
-                                        <option value="1">1 Mine</option>
-                                        <option value="3" selected>3 Mines</option>
-                                        <option value="5">5 Mines</option>
-                                        <option value="10">10 Mines</option>
-                                        <option value="15">15 Mines</option>
-                                        <option value="20">20 Mines</option>
-                                    </select>
-                                </div>
-                                <div class="setting-item">
-                                    <label for="gridSize">Grid Size</label>
-                                    <select id="gridSize">
-                                        <option value="3">3x3 (9 cells)</option>
-                                        <option value="4">4x4 (16 cells)</option>
-                                        <option value="5" selected>5x5 (25 cells)</option>
-                                    </select>
-                                </div>
-                            </div>
+                    <div class="mines-controls">
+                        <div class="bet-input-container">
+                            <label for="betAmount">Bet Amount</label>
+                            <input type="number" id="betAmount" min="10" value="50" step="10" class="bet-input">
                         </div>
                         
-                        <button id="startGameBtn" class="game-button glow-button pulse-animation">START GAME</button>
-                    </div>
-                    
-                    <div id="gamePlay" style="display: none;">
+                        <div class="mines-selector">
+                            <label for="minesCount">Mines</label>
+                            <select id="minesCount">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3" selected>3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="15">15</option>
+                                <option value="20">20</option>
+                            </select>
+                        </div>
+                        
+                        <div class="manual-controls">
+                            <button class="manual-btn" data-amount="1/2">1/2</button>
+                            <button class="manual-btn" data-amount="2x">2x</button>
+                            <button class="manual-btn" data-amount="max">MAX</button>
+                        </div>
+                        
+                        <button id="betButton" class="bet-btn">Bet</button>
+                        <button id="cashoutBtn" class="cashout-btn">Cashout</button>
+                        
                         <div class="mines-stats">
                             <div class="mines-stat-item">
-                                <span>Bet Amount:</span>
-                                <span id="gameBetAmount">100</span>
+                                <span>Next Gem:</span>
+                                <span id="nextGemAmount">0.00</span>
                             </div>
                             <div class="mines-stat-item">
-                                <span>Mines:</span>
-                                <span id="gameMinesCount">3</span>
-                            </div>
-                            <div class="mines-stat-item">
-                                <span>Next Reward:</span>
-                                <span id="nextReward">110</span>
-                            </div>
-                            <div class="mines-stat-item">
-                                <span>Total Win:</span>
-                                <span id="totalWin">0</span>
+                                <span>Total Profit:</span>
+                                <span id="totalProfit">0.00</span>
                             </div>
                         </div>
-                        
+                    </div>
+                    
+                    <div class="mines-grid-container">
                         <div class="mines-grid" id="minesGrid">
                             <!-- Grid cells will be added dynamically -->
                         </div>
                         
-                        <div class="mines-actions">
-                            <button id="cashoutBtn" class="cashout-btn glow-button">CASH OUT</button>
-                        </div>
-                    </div>
-                    
-                    <div id="gameResult" style="display: none;">
-                        <div class="result-display">
-                            <div class="result-text" id="resultText"></div>
-                            <div class="result-amount" id="resultAmount"></div>
-                        </div>
-                        
-                        <div class="mines-actions">
-                            <button id="playAgainBtn" class="game-button glow-button">PLAY AGAIN</button>
+                        <div class="recommended">
+                            <div class="recommended-text">
+                                <div class="recommended-label">Recommended</div>
+                                <div class="verified">casino.guide</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Game History -->
-            <div class="game-history">
-                <h2>Game History</h2>
-                <div class="history-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Bet</th>
-                                <th>Mines</th>
-                                <th>Gems Found</th>
-                                <th>Outcome</th>
-                                <th>Time</th>
-                            </tr>
-                        </thead>
-                        <tbody id="gameHistoryBody">
-                            <!-- Will be populated by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Global Recent Activity -->
-            <div class="recent-activity glow-box slide-in">
-                <h2 class="section-title">Recent Activity</h2>
-                <div class="activity-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Game</th>
-                                <th>Bet</th>
-                                <th>Result</th>
-                                <th>Time</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recentActivityBody">
-                            <!-- Will be populated by JavaScript -->
-                        </tbody>
-                    </table>
+                
+                <div class="fairness">
+                    <div class="fairness-controls">
+                        <button class="fairness-btn"><i class="fas fa-cog"></i></button>
+                        <button class="fairness-btn"><i class="fas fa-star"></i></button>
+                        <button class="fairness-btn"><i class="fas fa-info-circle"></i></button>
+                    </div>
+                    <span>Fairness</span>
                 </div>
             </div>
         </div>
@@ -245,71 +448,6 @@
                     <input type="text" id="redeemCode" required>
                 </div>
                 <button type="submit" class="submit-btn glow-button">Redeem</button>
-            </form>
-        </div>
-    </div>
-    
-    <div class="modal" id="settingsModal">
-        <div class="modal-content glow-box">
-            <span class="close">&times;</span>
-            <h2>Settings</h2>
-            <div class="settings-container">
-                <div class="setting-group">
-                    <h3>Account Settings</h3>
-                    <div class="setting-item">
-                        <span>Change Password</span>
-                        <button id="changePasswordBtn" class="small-button">Change</button>
-                    </div>
-                    <div class="setting-item">
-                        <span>Clear Game History</span>
-                        <button id="clearHistoryBtn" class="small-button">Clear</button>
-                    </div>
-                </div>
-                
-                <div class="setting-group">
-                    <h3>Game Settings</h3>
-                    <div class="setting-item">
-                        <span>Sound Effects</span>
-                        <label class="sound-toggle">
-                            <input type="checkbox" id="soundToggle" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <span>Volume</span>
-                        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="80">
-                    </div>
-                    <div class="setting-item">
-                        <span>Animations</span>
-                        <label class="sound-toggle">
-                            <input type="checkbox" id="animationToggle" checked>
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-            <button id="saveSettingsBtn" class="submit-btn glow-button">Save Settings</button>
-        </div>
-    </div>
-    
-    <div class="modal" id="changePasswordModal">
-        <div class="modal-content glow-box">
-            <span class="close">&times;</span>
-            <h2>Change Password</h2>
-            <form id="changePasswordForm">
-                <div class="form-group">
-                    <label for="currentPassword">Current Password</label>
-                    <input type="password" id="currentPassword" required>
-                </div>
-                <div class="form-group">
-                    <label for="newPassword">New Password</label>
-                    <input type="password" id="newPassword" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirmNewPassword">Confirm New Password</label>
-                    <input type="password" id="confirmNewPassword" required>
-                </div>
-                <button type="submit" class="submit-btn glow-button">Change Password</button>
             </form>
         </div>
     </div>
