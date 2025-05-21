@@ -1,4 +1,3 @@
-// BetaGames Flappy Bird Game with Betting
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const flappyBirdCanvas = document.getElementById('flappyBirdCanvas');
