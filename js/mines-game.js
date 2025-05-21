@@ -1,25 +1,11 @@
 // BetaGames Mines Game
 document.addEventListener('DOMContentLoaded', () => {
     // Game elements
-    const gameSetup = document.getElementById('gameSetup');
-    const gamePlay = document.getElementById('gamePlay');
-    const gameResult = document.getElementById('gameResult');
     const minesGrid = document.getElementById('minesGrid');
     const betAmount = document.getElementById('betAmount');
     const minesCount = document.getElementById('minesCount');
-    const gridSize = document.getElementById('gridSize');
-    const startGameBtn = document.getElementById('startGameBtn');
-    const cashoutBtn = document.getElementById('cashoutBtn');
-    const playAgainBtn = document.getElementById('playAgainBtn');
-    const gameBetAmount = document.getElementById('gameBetAmount');
-    const gameMinesCount = document.getElementById('gameMinesCount');
-    const nextReward = document.getElementById('nextReward');
-    const totalWin = document.getElementById('totalWin');
-    const resultText = document.getElementById('resultText');
-    const resultAmount = document.getElementById('resultAmount');
-    const gameHistoryBody = document.getElementById('gameHistoryBody');
-    const betShortcuts = document.querySelectorAll('.bet-shortcut');
     const betButton = document.getElementById('betButton');
+    const cashoutBtn = document.getElementById('cashoutBtn');
     const nextGemAmount = document.getElementById('nextGemAmount');
     const totalProfit = document.getElementById('totalProfit');
     const manualBtns = document.querySelectorAll('.manual-btn');
@@ -42,34 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function initGame() {
         // Set default values
         betAmount.value = gameState.currentBet;
-        minesCount.value = gameState.mines.length;
-        gridSize.value = Math.sqrt(gameState.mines.length);
-        
-        // Event listeners
-        startGameBtn.addEventListener('click', startGame);
-        cashoutBtn.addEventListener('click', cashout);
-        playAgainBtn.addEventListener('click', resetGame);
-        
-        // Bet shortcuts
-        betShortcuts.forEach(shortcut => {
-            shortcut.addEventListener('click', () => {
-                const amount = shortcut.dataset.amount;
-                
-                if (amount === 'max') {
-                    const currentUser = window.BetaAuth?.getCurrentUser();
-                    if (currentUser && currentUser.balance) {
-                        betAmount.value = Math.min(10000, currentUser.balance);
-                    } else {
-                        betAmount.value = 10000;
-                    }
-                } else {
-                    betAmount.value = amount;
-                }
-            });
-        });
-        
-        // Load game history
-        loadMinesHistory();
         
         // Clear existing grid
         while (minesGrid.firstChild) {
@@ -375,77 +333,5 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error recording game history:', error);
         }
-    }
-    
-    // Load mines game history
-    async function loadMinesHistory() {
-        const historyTable = document.getElementById('minesHistoryBody');
-        if (!historyTable) return;
-        
-        try {
-            // Load from Supabase
-            const { data: history, error } = await window.SupabaseDB
-                .from('game_history')
-                .select('*')
-                .eq('game', 'mines')
-                .order('time', { ascending: false })
-                .limit(10);
-
-            if (error) throw error;
-
-            // Display history
-            history.forEach(record => {
-            const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${record.user}</td>
-                    <td>${record.bet}</td>
-                    <td>${record.result >= 0 ? '+' + record.result : record.result}</td>
-                    <td>${record.details.mineCount} mines</td>
-                    <td>${record.details.revealedCount} revealed</td>
-                    <td>${record.details.multiplier.toFixed(2)}x</td>
-                `;
-                historyTable.appendChild(row);
-            });
-        } catch (error) {
-            console.error('Error loading mines history:', error);
-            // Fall back to local storage
-            const history = JSON.parse(localStorage.getItem('mines_history') || '[]');
-            history.slice(0, 10).forEach(record => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${record.user}</td>
-                    <td>${record.bet}</td>
-                    <td>${record.result >= 0 ? '+' + record.result : record.result}</td>
-                    <td>${record.details.mineCount} mines</td>
-                    <td>${record.details.revealedCount} revealed</td>
-                    <td>${record.details.multiplier.toFixed(2)}x</td>
-                `;
-                historyTable.appendChild(row);
-            });
-        }
-    }
-    
-    // Reset the game
-    function resetGame() {
-        gameSetup.style.display = 'block';
-        gamePlay.style.display = 'none';
-        gameResult.style.display = 'none';
-        
-        // Reset game state
-        gameState = {
-            isPlaying: false,
-            currentBet: 50,
-            mines: [],
-            revealedCells: [],
-            minePositions: [],
-            totalCells: 25,
-            nextPayout: 0,
-            currentProfit: 0
-        };
-        
-        // Reset UI
-        betAmount.value = gameState.currentBet;
-        minesCount.value = gameState.mines.length;
-        gridSize.value = Math.sqrt(gameState.mines.length);
     }
 }); 
