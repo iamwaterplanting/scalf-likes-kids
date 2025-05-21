@@ -294,6 +294,16 @@
     </div>
 
     <script src="../js/auth.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (window.BetaAuth && typeof window.BetaAuth.getCurrentUser === 'function') {
+          window.BetaAuth.getCurrentUser();
+        }
+        if (typeof checkAuthState === 'function') {
+          checkAuthState();
+        }
+      });
+    </script>
     <script src="../js/main.js"></script>
     <script src="../js/mines-game.js"></script>
 </body>

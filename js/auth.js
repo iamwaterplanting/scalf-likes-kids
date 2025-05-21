@@ -23,32 +23,30 @@ const dropdownMenu = document.querySelector('.dropdown-menu');
 
 // Check if user is already logged in (from localStorage)
 async function checkAuthState() {
-    const savedUser = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedUser) {
-        try {
-            currentUser = JSON.parse(savedUser);
-            // Verify user still exists in Supabase
-            const { data: user, error } = await window.SupabaseDB
-                .from('users')
-                .select('*')
-                .eq('username', currentUser.username)
-                .single();
+    let savedUser = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!savedUser) {
+        // No user in localStorage, show login/signup UI
+        logout();
+        return;
+    }
+    try {
+        savedUser = JSON.parse(savedUser);
+        // Always fetch the latest user data from Supabase
+        const { data: user, error } = await window.SupabaseDB
+            .from('users')
+            .select('*')
+            .eq('username', savedUser.username)
+            .single();
 
-            if (error) throw error;
-
-            if (user) {
-                // Update local user with latest data from Supabase
-                currentUser = { ...currentUser, ...user };
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
-                updateUIForLoggedInUser();
-            } else {
-                // User no longer exists in Supabase
-                logout();
-            }
-        } catch (error) {
-            console.error('Error checking auth state:', error);
-            logout(); // Clear invalid data
+        if (error || !user) {
+            logout();
+            return;
         }
+        currentUser = user;
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
+        updateUIForLoggedInUser();
+    } catch (error) {
+        logout();
     }
 }
 
