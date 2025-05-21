@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dice Game - BetaGames</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>BETA<span>GAMES</span></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="../index.html"><i class="fas fa-home"></i> Home</a></li>
+                    <li class="active"><a href="dice.html"><i class="fas fa-dice"></i> Dice</a></li>
+                    <li><a href="roulette.html"><i class="fas fa-circle"></i> Roulette</a></li>
+                    <li><a href="mines.html"><i class="fas fa-bomb"></i> Mines</a></li>
+                    <li><a href="plinko.html"><i class="fas fa-sort-amount-down"></i> Plinko</a></li>
+                    <li><a href="slots.html"><i class="fas fa-slot-machine"></i> Slots</a></li>
+                    <li><a href="blackjack.html"><i class="fas fa-playing-card"></i> Blackjack</a></li>
+                </ul>
+            </nav>
+            <div class="redeem-code">
+                <button id="redeemButton"><i class="fas fa-gift"></i> Redeem Code</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="user-info">
+                    <div class="balance">
+                        <span class="balance-amount">10,000</span>
+                        <span class="balance-currency">COINS</span>
+                    </div>
+                </div>
+                <div class="user-controls">
+                    <button id="loginButton" class="login-button">Login</button>
+                    <button id="signupButton" class="signup-button">Sign Up</button>
+                    <div class="user-profile" style="display: none;">
+                        <img src="../assets/default-avatar.svg" alt="User Avatar" id="userAvatar">
+                        <span id="username">Guest</span>
+                        <div class="dropdown-menu">
+                            <a href="#" id="profileSettings"><i class="fas fa-cog"></i> Settings</a>
+                            <a href="#" id="logoutButton"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Game Container -->
+            <div class="game-container">
+                <h1 class="game-title">Dice</h1>
+                
+                <div class="dice-game">
+                    <div class="dice-display">
+                        <div class="dice" id="diceDisplay">
+                            <div class="dice-dot"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="betting-options">
+                        <div class="bet-section">
+                            <h3>Betting Options</h3>
+                            <div class="bet-controls">
+                                <div class="bet-input">
+                                    <label for="betAmount">Bet Amount</label>
+                                    <input type="number" id="betAmount" min="10" max="10000" value="100">
+                                    <div class="bet-shortcuts">
+                                        <button class="bet-shortcut" data-amount="100">100</button>
+                                        <button class="bet-shortcut" data-amount="500">500</button>
+                                        <button class="bet-shortcut" data-amount="1000">1000</button>
+                                        <button class="bet-shortcut" data-amount="max">MAX</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="bet-input">
+                                    <label for="targetNumber">Target Number</label>
+                                    <select id="targetNumber">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="bet-input">
+                                    <label for="betType">Bet Type</label>
+                                    <select id="betType">
+                                        <option value="exact">Exact Number (5x)</option>
+                                        <option value="over">Over Number (2x)</option>
+                                        <option value="under">Under Number (2x)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="odds-display">
+                                <div class="odds-item">
+                                    <span>Potential Win:</span>
+                                    <span id="potentialWin">500</span>
+                                </div>
+                                <div class="odds-item">
+                                    <span>Win Chance:</span>
+                                    <span id="winChance">16.67%</span>
+                                </div>
+                            </div>
+                            
+                            <button id="rollButton" class="game-button">ROLL DICE</button>
+                        </div>
+                        
+                        <div class="result-section" id="resultSection" style="display: none;">
+                            <div class="result-header">
+                                <h3>Result</h3>
+                            </div>
+                            <div class="result-content">
+                                <div class="result-display">
+                                    <div class="result-number" id="resultNumber">6</div>
+                                    <div class="result-text" id="resultText">You Won!</div>
+                                </div>
+                                <div class="result-amount" id="resultAmount">+500</div>
+                            </div>
+                            <button id="playAgainButton" class="game-button">PLAY AGAIN</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Game History -->
+            <div class="game-history">
+                <h2>Game History</h2>
+                <div class="history-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Bet</th>
+                                <th>Target</th>
+                                <th>Result</th>
+                                <th>Outcome</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gameHistoryBody">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="signupModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Sign Up</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">Sign Up</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="redeemModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Redeem Code</h2>
+            <form id="redeemForm">
+                <div class="form-group">
+                    <label for="redeemCode">Enter Code</label>
+                    <input type="text" id="redeemCode" required>
+                </div>
+                <button type="submit" class="submit-btn">Redeem</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/dice.js"></script>
+</body>
+</html> 

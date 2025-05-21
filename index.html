@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetaGames - Play With Fake Currency</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo glow-text">
+                <h1>BETA<span>GAMES</span></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li class="active"><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="games/dice.html"><i class="fas fa-dice"></i> Dice</a></li>
+                    <li><a href="games/roulette.html"><i class="fas fa-circle"></i> Roulette</a></li>
+                    <li><a href="games/mines.html"><i class="fas fa-bomb"></i> Mines</a></li>
+                    <li><a href="games/plinko.html"><i class="fas fa-sort-amount-down"></i> Plinko</a></li>
+                    <li><a href="games/slots.html"><i class="fas fa-slot-machine"></i> Slots</a></li>
+                    <li><a href="games/blackjack.html"><i class="fas fa-playing-card"></i> Blackjack</a></li>
+                    <li><a href="games/flappybird.html"><i class="fas fa-bird"></i> Flappy Bird</a></li>
+                </ul>
+            </nav>
+            <div class="redeem-code">
+                <button id="redeemButton" class="glow-button"><i class="fas fa-gift"></i> Redeem Code</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="user-info">
+                    <div class="balance glow-box">
+                        <span class="balance-amount">10,000</span>
+                        <span class="balance-currency">COINS</span>
+                    </div>
+                </div>
+                <div class="user-controls">
+                    <button id="loginButton" class="login-button pulse-animation">Login</button>
+                    <button id="signupButton" class="signup-button glow-button">Sign Up</button>
+                    <div class="user-profile" style="display: none;">
+                        <img src="assets/default-avatar.svg" alt="User Avatar" id="userAvatar" class="rotate-slow">
+                        <span id="username">Guest</span>
+                        <div class="dropdown-menu glow-box">
+                            <a href="#" id="profileSettings"><i class="fas fa-cog spin-icon"></i> Settings</a>
+                            <a href="#" id="logoutButton"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Featured Game Banner -->
+            <div class="featured-banner slide-in">
+                <div class="banner-content">
+                    <h2 class="glow-text">BETAGAMES</h2>
+                    <p>Experience the thrill of gambling without real money!</p>
+                    <div class="banner-buttons">
+                        <a href="games/flappybird.html" class="btn-primary glow-button">PLAY FLAPPY BIRD</a>
+                        <a href="games/dice.html" class="btn-secondary pulse-animation">ROLL DICE</a>
+                    </div>
+                </div>
+                <div class="floating-coins">
+                    <div class="coin coin1"></div>
+                    <div class="coin coin2"></div>
+                    <div class="coin coin3"></div>
+                    <div class="coin coin4"></div>
+                    <div class="coin coin5"></div>
+                </div>
+            </div>
+
+            <!-- Game Cards -->
+            <div class="game-cards">
+                <h2 class="section-title slide-in">Popular Games</h2>
+                <div class="card-container">
+                    <div class="game-card glow-box-hover" data-game="dice">
+                        <div class="card-image">
+                            <img src="assets/dice-icon.svg" alt="Dice Game" class="floating">
+                        </div>
+                        <div class="card-info">
+                            <h3>DICE</h3>
+                            <p>Roll the dice and win big!</p>
+                            <a href="games/dice.html" class="play-btn glow-button">PLAY</a>
+                        </div>
+                    </div>
+                    <div class="game-card glow-box-hover" data-game="roulette">
+                        <div class="card-image">
+                            <img src="assets/roulette-icon.svg" alt="Roulette Game" class="rotate-slow">
+                        </div>
+                        <div class="card-info">
+                            <h3>ROULETTE</h3>
+                            <p>Spin the wheel and test your luck!</p>
+                            <a href="games/roulette.html" class="play-btn glow-button">PLAY</a>
+                        </div>
+                    </div>
+                    <div class="game-card glow-box-hover" data-game="mines">
+                        <div class="card-image">
+                            <img src="assets/mines-icon.svg" alt="Mines Game" class="pulse-slow">
+                        </div>
+                        <div class="card-info">
+                            <h3>MINES</h3>
+                            <p>Navigate through a minefield of prizes!</p>
+                            <a href="games/mines.html" class="play-btn glow-button">PLAY</a>
+                        </div>
+                    </div>
+                    <div class="game-card glow-box-hover" data-game="plinko">
+                        <div class="card-image">
+                            <img src="assets/plinko-icon.svg" alt="Plinko Game" class="bounce-slow">
+                        </div>
+                        <div class="card-info">
+                            <h3>PLINKO</h3>
+                            <p>Drop balls and watch them bounce!</p>
+                            <a href="games/plinko.html" class="play-btn glow-button">PLAY</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-container margin-top">
+                    <div class="game-card glow-box-hover" data-game="slots">
+                        <div class="card-image">
+                            <img src="assets/slots-icon.svg" alt="Slots Game" class="pulse-animation">
+                        </div>
+                        <div class="card-info">
+                            <h3>SLOTS</h3>
+                            <p>Spin the reels and match symbols!</p>
+                            <a href="games/slots.html" class="play-btn glow-button">PLAY</a>
+                        </div>
+                    </div>
+                    <div class="game-card glow-box-hover" data-game="blackjack">
+                        <div class="card-image">
+                            <img src="assets/blackjack-icon.svg" alt="Blackjack Game" class="floating">
+                        </div>
+                        <div class="card-info">
+                            <h3>BLACKJACK</h3>
+                            <p>Play cards against the dealer!</p>
+                            <a href="games/blackjack.html" class="play-btn glow-button">PLAY</a>
+                        </div>
+                    </div>
+                    <div class="game-card glow-box-hover" data-game="flappybird">
+                        <div class="card-image">
+                            <img src="assets/flappy-icon.svg" alt="Flappy Bird Game" class="bounce-slow">
+                        </div>
+                        <div class="card-info">
+                            <h3>FLAPPY BIRD</h3>
+                            <p>Fly through pipes and multiply your bet!</p>
+                            <a href="games/flappybird.html" class="play-btn glow-button">PLAY</a>
+                        </div>
+                    </div>
+                    <div class="game-card glow-box-hover coming-soon">
+                        <div class="card-image">
+                            <i class="fas fa-dice-d20 fa-3x pulse-animation" style="color: var(--primary-color);"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>CRASH</h3>
+                            <p>Watch the multiplier go up before it crashes!</p>
+                            <span class="coming-soon-badge">SOON</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coming Soon Section -->
+            <div class="game-cards">
+                <h2 class="section-title slide-in margin-top">Coming Soon</h2>
+                <div class="card-container">
+                    <div class="game-card glow-box-hover coming-soon">
+                        <div class="card-image">
+                            <i class="fas fa-trophy fa-3x pulse-animation" style="color: var(--primary-color);"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>TOURNAMENTS</h3>
+                            <p>Compete against other players for big prizes!</p>
+                            <span class="coming-soon-badge">SOON</span>
+                        </div>
+                    </div>
+                    <div class="game-card glow-box-hover coming-soon">
+                        <div class="card-image">
+                            <i class="fas fa-rocket fa-3x bounce-slow" style="color: var(--primary-color);"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>ROCKET RACE</h3>
+                            <p>Place your bets on how high the rocket will go!</p>
+                            <span class="coming-soon-badge">SOON</span>
+                        </div>
+                    </div>
+                    <div class="game-card glow-box-hover coming-soon">
+                        <div class="card-image">
+                            <i class="fas fa-dice-three fa-3x rotate-slow" style="color: var(--primary-color);"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>HILO</h3>
+                            <p>Guess if the next card will be higher or lower!</p>
+                            <span class="coming-soon-badge">SOON</span>
+                        </div>
+                    </div>
+                    <div class="game-card glow-box-hover coming-soon">
+                        <div class="card-image">
+                            <i class="fas fa-hand-holding-usd fa-3x floating" style="color: var(--primary-color);"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>GIVEAWAYS</h3>
+                            <p>Join free giveaways for a chance to win big!</p>
+                            <span class="coming-soon-badge">SOON</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity glow-box slide-in">
+                <h2 class="section-title">Recent Activity</h2>
+                <div class="activity-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Game</th>
+                                <th>Bet</th>
+                                <th>Result</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentActivityBody">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="signupModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Sign Up</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Sign Up</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="redeemModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Redeem Code</h2>
+            <form id="redeemForm">
+                <div class="form-group">
+                    <label for="redeemCode">Enter Code</label>
+                    <input type="text" id="redeemCode" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Redeem</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/animations.js"></script>
+</body>
+</html> 

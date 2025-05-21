@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18e77c" />
+      <stop offset="100%" stop-color="#2568ef" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="85" fill="#1c1f30" stroke="url(#gradient)" stroke-width="6"/>
+  <!-- Wheel sections -->
+  <path d="M100,100 L100,15 A85,85 0 0,1 173,58 Z" fill="#f15a5a"/>
+  <path d="M100,100 L173,58 A85,85 0 0,1 173,142 Z" fill="#000000"/>
+  <path d="M100,100 L173,142 A85,85 0 0,1 100,185 Z" fill="#f15a5a"/>
+  <path d="M100,100 L100,185 A85,85 0 0,1 27,142 Z" fill="#000000"/>
+  <path d="M100,100 L27,142 A85,85 0 0,1 27,58 Z" fill="#f15a5a"/>
+  <path d="M100,100 L27,58 A85,85 0 0,1 100,15 Z" fill="#000000"/>
+  <!-- Center and ball -->
+  <circle cx="100" cy="100" r="15" fill="url(#gradient)"/>
+  <circle cx="150" cy="50" r="10" fill="#ffffff"/>
+</svg> 

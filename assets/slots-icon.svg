@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18e77c" />
+      <stop offset="100%" stop-color="#2568ef" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Machine body -->
+  <rect x="30" y="30" width="140" height="140" rx="10" fill="#1c1f30" stroke="url(#gradient)" stroke-width="4"/>
+  
+  <!-- Display windows -->
+  <rect x="45" y="50" width="30" height="60" rx="5" fill="#000000" stroke="url(#gradient)" stroke-width="2"/>
+  <rect x="85" y="50" width="30" height="60" rx="5" fill="#000000" stroke="url(#gradient)" stroke-width="2"/>
+  <rect x="125" y="50" width="30" height="60" rx="5" fill="#000000" stroke="url(#gradient)" stroke-width="2"/>
+  
+  <!-- Symbols -->
+  <text x="55" y="85" font-family="Arial" font-size="25" fill="url(#gradient)" text-anchor="middle">7</text>
+  <text x="100" y="85" font-family="Arial" font-size="25" fill="#f15a5a" text-anchor="middle">♥</text>
+  <text x="140" y="85" font-family="Arial" font-size="25" fill="#ffd700" text-anchor="middle">$</text>
+  
+  <!-- Handle -->
+  <rect x="170" y="70" width="10" height="40" rx="5" fill="url(#gradient)"/>
+  <circle cx="175" cy="120" r="10" fill="url(#gradient)"/>
+  
+  <!-- Bottom row with buttons -->
+  <rect x="45" y="130" width="110" height="20" rx="5" fill="#000000" stroke="url(#gradient)" stroke-width="2"/>
+  <circle cx="60" cy="140" r="6" fill="#f15a5a"/>
+  <circle cx="85" cy="140" r="6" fill="#ffd700"/>
+  <circle cx="110" cy="140" r="6" fill="url(#gradient)"/>
+  <circle cx="135" cy="140" r="6" fill="#ffffff"/>
+</svg> 

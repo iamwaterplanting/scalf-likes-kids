@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18e77c" />
+      <stop offset="100%" stop-color="#2568ef" />
+    </linearGradient>
+  </defs>
+  <!-- Board background -->
+  <path d="M40,20 L160,20 L180,180 L20,180 Z" fill="#1c1f30" stroke="url(#gradient)" stroke-width="4"/>
+  
+  <!-- Pegs -->
+  <circle cx="60" cy="50" r="5" fill="url(#gradient)"/>
+  <circle cx="100" cy="50" r="5" fill="url(#gradient)"/>
+  <circle cx="140" cy="50" r="5" fill="url(#gradient)"/>
+  
+  <circle cx="80" cy="80" r="5" fill="url(#gradient)"/>
+  <circle cx="120" cy="80" r="5" fill="url(#gradient)"/>
+  
+  <circle cx="60" cy="110" r="5" fill="url(#gradient)"/>
+  <circle cx="100" cy="110" r="5" fill="url(#gradient)"/>
+  <circle cx="140" cy="110" r="5" fill="url(#gradient)"/>
+  
+  <circle cx="80" cy="140" r="5" fill="url(#gradient)"/>
+  <circle cx="120" cy="140" r="5" fill="url(#gradient)"/>
+  
+  <!-- Ball -->
+  <circle cx="100" cy="30" r="10" fill="#ffffff"/>
+  
+  <!-- Bottom sections -->
+  <path d="M40,180 L60,180 L60,165 L40,165 Z" fill="#f15a5a"/>
+  <path d="M60,180 L80,180 L80,165 L60,165 Z" fill="#000000"/>
+  <path d="M80,180 L100,180 L100,165 L80,165 Z" fill="#f15a5a"/>
+  <path d="M100,180 L120,180 L120,165 L100,165 Z" fill="#000000"/>
+  <path d="M120,180 L140,180 L140,165 L120,165 Z" fill="#f15a5a"/>
+  <path d="M140,180 L160,180 L160,165 L140,165 Z" fill="#000000"/>
+</svg> 

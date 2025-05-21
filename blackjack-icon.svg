@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18e77c" />
+      <stop offset="100%" stop-color="#2568ef" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Table -->
+  <ellipse cx="100" cy="120" rx="90" ry="60" fill="#1c1f30" stroke="url(#gradient)" stroke-width="4"/>
+  
+  <!-- Cards -->
+  <!-- Ace of Spades -->
+  <rect x="60" y="70" width="40" height="60" rx="5" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+  <text x="65" y="85" font-family="Arial" font-size="15" fill="#000000">A</text>
+  <text x="80" y="110" font-family="Arial" font-size="20" fill="#000000">♠</text>
+  
+  <!-- Face down card -->
+  <rect x="100" y="70" width="40" height="60" rx="5" fill="#1c1f30" stroke="url(#gradient)" stroke-width="1"/>
+  <path d="M105,75 L135,125 M135,75 L105,125" stroke="url(#gradient)" stroke-width="2"/>
+  
+  <!-- Chips -->
+  <circle cx="70" cy="140" r="12" fill="#f15a5a" stroke="#ffffff" stroke-width="1"/>
+  <circle cx="90" cy="145" r="12" fill="#ffd700" stroke="#ffffff" stroke-width="1"/>
+  <circle cx="110" cy="140" r="12" fill="#2568ef" stroke="#ffffff" stroke-width="1"/>
+  <circle cx="130" cy="145" r="12" fill="#000000" stroke="#ffffff" stroke-width="1"/>
+  
+  <!-- Value indication -->
+  <text x="100" y="40" font-family="Arial" font-size="18" font-weight="bold" fill="url(#gradient)" text-anchor="middle">21</text>
+</svg> 
