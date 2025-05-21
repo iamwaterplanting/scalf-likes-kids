@@ -31,7 +31,7 @@ const userOperations = {
         const user = {
             username,
             password,
-            balance: 10000,
+            balance: 100,
             avatar: null,
             createdAt: new Date()
         };
