@@ -118,7 +118,13 @@ document.addEventListener('DOMContentLoaded', () => {
             winChanceValue = targetNumber;
         } else {
             // For "Roll Over", win chance is 100 - target number (e.g., roll over 25 = 75% chance)
+            // When target is 99, win chance should be 1% (100-99), not 1
             winChanceValue = 100 - targetNumber;
+            
+            // Ensure win chance is never 0 (which would cause division by zero)
+            if (winChanceValue <= 0) {
+                winChanceValue = 1;
+            }
         }
         
         // Calculate multiplier with house edge (5%)
@@ -221,6 +227,10 @@ document.addEventListener('DOMContentLoaded', () => {
             winChanceValue = targetNumber;
         } else { // over
             winChanceValue = 100 - targetNumber;
+            // Ensure win chance is never 0 (which would cause division by zero)
+            if (winChanceValue <= 0) {
+                winChanceValue = 1;
+            }
         }
         
         multiplierValue = (100 / winChanceValue) * 0.95; // 5% house edge
