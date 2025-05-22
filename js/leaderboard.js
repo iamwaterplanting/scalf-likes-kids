@@ -55,12 +55,18 @@ async function loadLeaderboard() {
             const rank = index + 1;
             const avatarUrl = player.avatar_url || '../assets/default-avatar.svg';
             
+            // Check if user is owner
+            const isOwner = window.BetaAdmin && window.BetaAdmin.isOwner && window.BetaAdmin.isOwner(player.username);
+            
             const listItem = document.createElement('li');
             listItem.innerHTML = `
                 <div class="player-rank rank-${rank}">${rank}</div>
                 <img src="${avatarUrl}" alt="${player.username}" class="player-avatar">
                 <div class="player-info">
-                    <div class="player-name">${player.username}</div>
+                    <div class="player-name">
+                        ${player.username}
+                        ${isOwner ? '<i class="fas fa-crown" style="color: gold; margin-left: 5px; font-size: 0.8em;"></i>' : ''}
+                    </div>
                     <div class="player-balance">${player.balance.toLocaleString()} coins</div>
                 </div>
             `;

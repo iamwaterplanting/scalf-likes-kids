@@ -198,11 +198,9 @@ function processRedeemCode(code) {
         return;
     }
     
-    // Special code for admin access
+    // Admin code check is now handled by admin.js - Skip admin code here
     if (code === '$$ADMIN$$') {
-        alert('Admin code detected! Redirecting to admin panel...');
-        window.location.href = 'admin.html';
-        return;
+        return; // Let admin.js handle this
     }
     
     // Get redeem history from localStorage

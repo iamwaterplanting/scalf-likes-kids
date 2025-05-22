@@ -397,28 +397,48 @@ function renderChatMessages() {
 // Add a message to the UI
 function addMessageToUI(message) {
     if (!chatMessagesList) {
-        console.error('Chat messages list element not found when adding message!');
+        console.error('Chat messages list element not found!');
         return;
     }
     
-    console.log('Adding message to UI:', message);
-    
     const li = document.createElement('li');
-    li.className = 'chat-message';
+    li.className = message.username === 'System' ? 'chat-message system-message' : 'chat-message';
     
-    if (message.username === 'System') {
-        li.className += ' system-message';
+    // Check if user is owner
+    const isOwner = window.BetaAdmin && window.BetaAdmin.isOwner && window.BetaAdmin.isOwner(message.username);
+    
+    // Check if user is admin
+    const isAdmin = window.BetaAdmin && window.BetaAdmin.isAdmin && window.BetaAdmin.adminUsers && window.BetaAdmin.adminUsers.includes(message.username);
+    
+    const usernameSpan = document.createElement('div');
+    usernameSpan.className = 'username';
+    
+    // Add crown icon for owner
+    if (isOwner) {
+        usernameSpan.innerHTML = `${escapeHTML(message.username)} <i class="fas fa-crown" style="color: gold; font-size: 0.8em;"></i>`;
+    } else if (isAdmin) {
+        usernameSpan.innerHTML = `${escapeHTML(message.username)} <span style="color: var(--primary-color); font-size: 0.8em;">[Admin]</span>`;
+    } else {
+        usernameSpan.textContent = message.username;
     }
     
-    const time = new Date(message.created_at);
-    const timeStr = formatTime(time);
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'time';
+    timeSpan.textContent = formatTime(new Date(message.created_at));
     
-    li.innerHTML = `
-        <div class="username">${escapeHTML(message.username)}<span class="time">${timeStr}</span></div>
-        <div class="message-text">${escapeHTML(message.message)}</div>
-    `;
+    usernameSpan.appendChild(timeSpan);
+    
+    const messageText = document.createElement('div');
+    messageText.className = 'message-text';
+    messageText.textContent = message.message;
+    
+    li.appendChild(usernameSpan);
+    li.appendChild(messageText);
     
     chatMessagesList.appendChild(li);
+    
+    // Scroll to bottom
+    scrollToBottom();
 }
 
 // Subscribe to new messages

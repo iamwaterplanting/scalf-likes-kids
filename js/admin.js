@@ -1,754 +1,1038 @@
 // BetaGames Admin Panel
+console.log('Admin module loaded');
+
+// Admin state
+let adminState = {
+    isAdmin: false,
+    adminUsers: [],
+    onlineUsers: [],
+    owner: null,
+    bannedUsers: []
+};
+
+// Initialize admin functionality
 document.addEventListener('DOMContentLoaded', () => {
-    // DOM Elements
-    const adminContent = document.getElementById('adminContent');
-    const accessDenied = document.getElementById('accessDenied');
-    const adminCode = document.getElementById('adminCode');
-    const redeemAdminBtn = document.getElementById('redeemAdminBtn');
-    const adminUsername = document.getElementById('adminUsername');
-    const adminTabs = document.querySelectorAll('.admin-tab');
-    const tabContents = document.querySelectorAll('.tab-content');
+    // Add event listener for the redeem form to catch admin code
+    setupAdminCode();
     
-    // User management elements
-    const userSearchInput = document.getElementById('userSearchInput');
-    const searchUserBtn = document.getElementById('searchUserBtn');
-    const refreshUsersBtn = document.getElementById('refreshUsersBtn');
-    const usersList = document.getElementById('usersList');
-    const balanceUsername = document.getElementById('balanceUsername');
-    const balanceAmount = document.getElementById('balanceAmount');
-    const addBalanceBtn = document.getElementById('addBalanceBtn');
+    // Check if user is already admin (from localStorage)
+    checkAdminStatus();
     
-    // Bet history elements
-    const betSearchInput = document.getElementById('betSearchInput');
-    const gameFilter = document.getElementById('gameFilter');
-    const resultFilter = document.getElementById('resultFilter');
-    const filterBetsBtn = document.getElementById('filterBetsBtn');
-    const refreshBetsBtn = document.getElementById('refreshBetsBtn');
-    const betHistoryBody = document.getElementById('betHistoryBody');
-    
-    // Dashboard elements
-    const totalUsers = document.getElementById('totalUsers');
-    const onlineUsers = document.getElementById('onlineUsers');
-    const totalBets = document.getElementById('totalBets');
-    const houseProfit = document.getElementById('houseProfit');
-    const refreshActivityBtn = document.getElementById('refreshActivityBtn');
-    const recentActivityBody = document.getElementById('recentActivityBody');
-    
-    // Settings elements
-    const addAdminUsername = document.getElementById('addAdminUsername');
-    const addAdminBtn = document.getElementById('addAdminBtn');
-    const houseEdge = document.getElementById('houseEdge');
-    const updateEdgeBtn = document.getElementById('updateEdgeBtn');
-    const maintenanceMode = document.getElementById('maintenanceMode');
-    const updateMaintenanceBtn = document.getElementById('updateMaintenanceBtn');
-    
-    // Edit user modal elements
-    const editUserModal = document.getElementById('editUserModal');
-    const editUsername = document.getElementById('editUsername');
-    const editBalance = document.getElementById('editBalance');
-    const editStatus = document.getElementById('editStatus');
-    const editUserForm = document.getElementById('editUserForm');
-    
-    // Local state
-    let isAdmin = false;
-    let allUsers = [];
-    let allBets = [];
-    
-    // Check if user is admin
-    function checkAdminStatus() {
-        const currentUser = window.BetaAuth?.getCurrentUser();
-        if (!currentUser) {
-            showAccessDenied();
-            return;
-        }
+    // Initialize mock online users for demo
+    initMockUsers();
+});
+
+// Setup admin code detection
+function setupAdminCode() {
+    const redeemForm = document.getElementById('redeemForm');
+    if (redeemForm) {
+        const originalSubmitHandler = redeemForm.onsubmit;
         
-        getAdminRights(currentUser.username)
-            .then(isUserAdmin => {
-                if (isUserAdmin) {
-                    isAdmin = true;
-                    showAdminPanel(currentUser.username);
-                    loadDashboard();
-                } else {
-                    showAccessDenied();
+        redeemForm.onsubmit = function(e) {
+            const codeInput = document.getElementById('redeemCode');
+            if (!codeInput) return originalSubmitHandler ? originalSubmitHandler.call(this, e) : true;
+            
+            const code = codeInput.value.trim();
+            
+            // Check for admin code
+            if (code === "$$ADMIN$$") {
+                e.preventDefault();
+                showAdminPasswordPrompt();
+                codeInput.value = '';
+                
+                // Close the redeem modal
+                const redeemModal = document.getElementById('redeemModal');
+                if (redeemModal) {
+                    redeemModal.style.display = 'none';
                 }
-            })
-            .catch(error => {
-                console.error('Error checking admin status:', error);
-                showAccessDenied();
-            });
-    }
-    
-    // Show admin panel
-    function showAdminPanel(username) {
-        if (accessDenied) accessDenied.style.display = 'none';
-        if (adminContent) {
-            adminContent.style.display = 'block';
-            if (adminUsername) adminUsername.textContent = username;
-        }
-    }
-    
-    // Show access denied
-    function showAccessDenied() {
-        if (adminContent) adminContent.style.display = 'none';
-        if (accessDenied) accessDenied.style.display = 'block';
-    }
-    
-    // Check if user has admin rights
-    async function getAdminRights(username) {
-        try {
-            const { data, error } = await window.SupabaseDB
-                .from('admin_users')
-                .select('*')
-                .eq('username', username)
-                .single();
-                
-            if (error && error.code !== 'PGRST116') throw error;
-            
-            return !!data;
-        } catch (error) {
-            console.error('Error checking admin rights:', error);
-            return false;
-        }
-    }
-    
-    // Grant admin rights to a user
-    async function grantAdminRights(username) {
-        try {
-            const { data, error } = await window.SupabaseDB
-                .from('admin_users')
-                .insert([{ username, granted_at: new Date().toISOString() }]);
-                
-            if (error) throw error;
-            
-            return true;
-        } catch (error) {
-            console.error('Error granting admin rights:', error);
-            return false;
-        }
-    }
-    
-    // Load dashboard data
-    async function loadDashboard() {
-        // Load users count
-        try {
-            const { count: userCount, error: userError } = await window.SupabaseDB
-                .from('users')
-                .select('*', { count: 'exact', head: true });
-                
-            if (userError) throw userError;
-            
-            totalUsers.textContent = userCount || 0;
-        } catch (error) {
-            console.error('Error loading users count:', error);
-        }
-        
-        // Load online users count
-        try {
-            // Consider users who were active in the last 10 minutes
-            const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-            const { count: onlineCount, error: onlineError } = await window.SupabaseDB
-                .from('user_sessions')
-                .select('*', { count: 'exact', head: true })
-                .gt('last_active', tenMinutesAgo);
-                
-            if (onlineError) throw onlineError;
-            
-            onlineUsers.textContent = onlineCount || 0;
-        } catch (error) {
-            console.error('Error loading online users count:', error);
-        }
-        
-        // Load bets count
-        try {
-            const { count: betCount, error: betError } = await window.SupabaseDB
-                .from('game_history')
-                .select('*', { count: 'exact', head: true });
-                
-            if (betError) throw betError;
-            
-            totalBets.textContent = betCount || 0;
-        } catch (error) {
-            console.error('Error loading bets count:', error);
-        }
-        
-        // Calculate house profit
-        try {
-            const { data: bets, error: betError } = await window.SupabaseDB
-                .from('game_history')
-                .select('bet, result');
-                
-            if (betError) throw betError;
-            
-            const profit = bets.reduce((sum, bet) => {
-                return sum + bet.bet - bet.result;
-            }, 0);
-            
-            houseProfit.textContent = new Intl.NumberFormat().format(profit);
-        } catch (error) {
-            console.error('Error calculating house profit:', error);
-        }
-        
-        // Load recent activity
-        loadRecentActivity();
-    }
-    
-    // Load recent activity
-    async function loadRecentActivity() {
-        try {
-            const { data: activities, error } = await window.SupabaseDB
-                .from('game_history')
-                .select('*')
-                .order('time', { ascending: false })
-                .limit(10);
-                
-            if (error) throw error;
-            
-            updateActivityTable(activities, recentActivityBody);
-        } catch (error) {
-            console.error('Error loading recent activity:', error);
-        }
-    }
-    
-    // Update activity table
-    function updateActivityTable(activities, tableBody) {
-        if (!tableBody) return;
-        
-        // Clear existing rows
-        tableBody.innerHTML = '';
-        
-        if (!activities || activities.length === 0) {
-            const emptyRow = document.createElement('tr');
-            const emptyCell = document.createElement('td');
-            emptyCell.colSpan = 5;
-            emptyCell.textContent = 'No activity found';
-            emptyCell.style.textAlign = 'center';
-            emptyRow.appendChild(emptyCell);
-            tableBody.appendChild(emptyRow);
-            return;
-        }
-        
-        // Add rows
-        activities.forEach(activity => {
-            const row = document.createElement('tr');
-            
-            // User cell
-            const userCell = document.createElement('td');
-            userCell.textContent = activity.username;
-            
-            // Game cell
-            const gameCell = document.createElement('td');
-            gameCell.textContent = activity.game;
-            
-            // Bet cell
-            const betCell = document.createElement('td');
-            betCell.textContent = formatCurrency(activity.bet);
-            
-            // Result cell
-            const resultCell = document.createElement('td');
-            resultCell.textContent = formatCurrency(activity.result);
-            resultCell.style.color = activity.result >= activity.bet ? 'var(--success-color)' : 'var(--danger-color)';
-            
-            // Time cell
-            const timeCell = document.createElement('td');
-            timeCell.textContent = formatTime(new Date(activity.time));
-            
-            // Append cells to row
-            row.appendChild(userCell);
-            row.appendChild(gameCell);
-            row.appendChild(betCell);
-            row.appendChild(resultCell);
-            row.appendChild(timeCell);
-            
-            // Add actions cell if it's the bet history table
-            if (tableBody === betHistoryBody) {
-                const actionsCell = document.createElement('td');
-                const viewBtn = document.createElement('button');
-                viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
-                viewBtn.title = 'View Details';
-                viewBtn.addEventListener('click', () => {
-                    alert(`Bet Details:\nUser: ${activity.username}\nGame: ${activity.game}\nBet: ${activity.bet}\nResult: ${activity.result}\nTime: ${new Date(activity.time).toLocaleString()}`);
-                });
-                actionsCell.appendChild(viewBtn);
-                row.appendChild(actionsCell);
-            }
-            
-            // Append row to table
-            tableBody.appendChild(row);
-        });
-    }
-    
-    // Load users list
-    async function loadUsers(searchTerm = '') {
-        try {
-            let query = window.SupabaseDB
-                .from('users')
-                .select('*');
-                
-            if (searchTerm) {
-                query = query.ilike('username', `%${searchTerm}%`);
-            }
-            
-            const { data: users, error } = await query;
-            
-            if (error) throw error;
-            
-            allUsers = users;
-            updateUsersList(users);
-        } catch (error) {
-            console.error('Error loading users:', error);
-        }
-    }
-    
-    // Update users list
-    function updateUsersList(users) {
-        if (!usersList) return;
-        
-        // Clear existing list
-        usersList.innerHTML = '';
-        
-        if (!users || users.length === 0) {
-            usersList.innerHTML = '<p style="text-align: center;">No users found</p>';
-            return;
-        }
-        
-        // Add user cards
-        users.forEach(user => {
-            const userCard = document.createElement('div');
-            userCard.className = 'user-card';
-            
-            const userInfo = document.createElement('div');
-            userInfo.className = 'user-info';
-            userInfo.innerHTML = `
-                <h3>${user.username}</h3>
-                <p>Balance: ${formatCurrency(user.balance)}</p>
-                <p>Created: ${formatTime(new Date(user.created_at))}</p>
-            `;
-            
-            const userActions = document.createElement('div');
-            userActions.className = 'user-actions';
-            
-            const editBtn = document.createElement('button');
-            editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
-            editBtn.addEventListener('click', () => {
-                showEditUserModal(user);
-            });
-            
-            userActions.appendChild(editBtn);
-            userCard.appendChild(userInfo);
-            userCard.appendChild(userActions);
-            usersList.appendChild(userCard);
-        });
-    }
-    
-    // Show edit user modal
-    function showEditUserModal(user) {
-        if (!editUserModal) return;
-        
-        editUsername.value = user.username;
-        editBalance.value = user.balance;
-        editStatus.value = user.status || 'active';
-        
-        editUserModal.style.display = 'flex';
-    }
-    
-    // Add balance to user
-    async function addBalance(username, amount) {
-        try {
-            // Get current user
-            const { data: user, error: userError } = await window.SupabaseDB
-                .from('users')
-                .select('balance')
-                .eq('username', username)
-                .single();
-                
-            if (userError) throw userError;
-            
-            // Calculate new balance
-            const newBalance = user.balance + amount;
-            
-            // Update balance
-            const { data: updatedUser, error: updateError } = await window.SupabaseDB
-                .from('users')
-                .update({ balance: newBalance })
-                .eq('username', username)
-                .select()
-                .single();
-                
-            if (updateError) throw updateError;
-            
-            alert(`Added ${amount} coins to ${username}. New balance: ${newBalance}`);
-            return true;
-        } catch (error) {
-            console.error('Error adding balance:', error);
-            alert(`Error adding balance: ${error.message}`);
-            return false;
-        }
-    }
-    
-    // Load bet history
-    async function loadBetHistory(filter = {}) {
-        try {
-            let query = window.SupabaseDB
-                .from('game_history')
-                .select('*')
-                .order('time', { ascending: false });
-                
-            // Apply filters
-            if (filter.username) {
-                query = query.ilike('user', `%${filter.username}%`);
-            }
-            
-            if (filter.game) {
-                query = query.eq('game', filter.game);
-            }
-            
-            if (filter.result === 'win') {
-                query = query.gt('result', 0);
-            } else if (filter.result === 'loss') {
-                query = query.lt('result', 0);
-            }
-            
-            const { data: bets, error } = await query;
-            
-            if (error) throw error;
-            
-            allBets = bets;
-            updateActivityTable(bets, betHistoryBody);
-        } catch (error) {
-            console.error('Error loading bet history:', error);
-        }
-    }
-    
-    // Add new admin user
-    async function addAdmin(username) {
-        try {
-            // Check if user exists
-            const { data: user, error: userError } = await window.SupabaseDB
-                .from('users')
-                .select('username')
-                .eq('username', username)
-                .single();
-                
-            if (userError) {
-                alert(`User ${username} not found`);
                 return false;
             }
             
-            // Add admin rights
-            const granted = await grantAdminRights(username);
+            // Otherwise, proceed with original handler
+            return originalSubmitHandler ? originalSubmitHandler.call(this, e) : true;
+        };
+    }
+}
+
+// Check if user is admin from localStorage
+function checkAdminStatus() {
+    const isAdmin = localStorage.getItem('betaGames_isAdmin') === 'true';
+    if (isAdmin) {
+        adminState.isAdmin = true;
+        // Load admin data
+        try {
+            const adminUsers = JSON.parse(localStorage.getItem('betaGames_adminUsers') || '[]');
+            const bannedUsers = JSON.parse(localStorage.getItem('betaGames_bannedUsers') || '[]');
+            const owner = localStorage.getItem('betaGames_owner');
             
-            if (granted) {
-                alert(`Admin rights granted to ${username}`);
-                return true;
-            } else {
-                alert('Error granting admin rights');
-                return false;
-            }
+            adminState.adminUsers = adminUsers;
+            adminState.bannedUsers = bannedUsers;
+            adminState.owner = owner;
         } catch (error) {
-            console.error('Error adding admin:', error);
-            alert(`Error adding admin: ${error.message}`);
-            return false;
+            console.error('Error loading admin data:', error);
         }
     }
+}
+
+// Save admin state to localStorage
+function saveAdminState() {
+    localStorage.setItem('betaGames_isAdmin', adminState.isAdmin.toString());
+    localStorage.setItem('betaGames_adminUsers', JSON.stringify(adminState.adminUsers));
+    localStorage.setItem('betaGames_bannedUsers', JSON.stringify(adminState.bannedUsers));
+    localStorage.setItem('betaGames_owner', adminState.owner || '');
+}
+
+// Show admin password prompt
+function showAdminPasswordPrompt() {
+    // Create password prompt modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'adminPasswordModal';
+    modal.style.display = 'flex';
     
-    // Format currency helper
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat().format(amount);
-    }
+    modal.innerHTML = `
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Whats the pass good lookin?!</h2>
+            <div class="form-group">
+                <input type="password" id="adminPassword" placeholder="Enter admin password" autocomplete="off">
+            </div>
+            <button id="adminPasswordSubmit" class="submit-btn glow-button">Access Admin</button>
+        </div>
+    `;
     
-    // Format time helper
-    function formatTime(date) {
-        // If within last 24 hours, show relative time
-        const now = new Date();
-        const diffMs = now - date;
-        const diffHr = diffMs / (1000 * 60 * 60);
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    const closeBtn = modal.querySelector('.close');
+    const submitBtn = document.getElementById('adminPasswordSubmit');
+    const passwordInput = document.getElementById('adminPassword');
+    
+    closeBtn.addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+    
+    submitBtn.addEventListener('click', () => {
+        verifyAdminPassword();
+    });
+    
+    passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            verifyAdminPassword();
+        }
+    });
+    
+    // Focus the password input
+    passwordInput.focus();
+    
+    // Function to verify password
+    function verifyAdminPassword() {
+        const password = passwordInput.value.trim();
         
-        if (diffHr < 24) {
-            const diffMin = Math.floor(diffMs / (1000 * 60));
-            
-            if (diffMin < 60) {
-                return `${diffMin}m ago`;
-            } else {
-                const hours = Math.floor(diffMin / 60);
-                return `${hours}h ago`;
-            }
+        if (password === "samgetshoes") {
+            // Password correct - grant admin access
+            adminState.isAdmin = true;
+            saveAdminState();
+            document.body.removeChild(modal);
+            showAdminPanel();
         } else {
-            // Otherwise show date
-            return date.toLocaleDateString();
+            // Password incorrect - shake the input
+            passwordInput.classList.add('shake-animation');
+            setTimeout(() => {
+                passwordInput.classList.remove('shake-animation');
+            }, 500);
         }
     }
     
-    // Create admin_users table if not exists
-    async function ensureAdminTable() {
-        try {
-            // Check if table exists by trying to select from it
-            await window.SupabaseDB.from('admin_users').select('*').limit(1);
-        } catch (error) {
-            // If table doesn't exist, we need to create it
-            // However, this requires RLS permissions so we'll use a function approach
-            console.error('Admin users table may not exist:', error);
+    // Add CSS for shake animation
+    const style = document.createElement('style');
+    style.textContent = `
+        .shake-animation {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
         }
-    }
-    
-    // Redeem admin code
-    async function redeemAdminCode(code) {
-        if (code === '$$ADMIN$$') {
-            const currentUser = window.BetaAuth?.getCurrentUser();
-            if (!currentUser) {
-                alert('You need to be logged in to redeem admin code');
-                return false;
-            }
-            
-            // Grant admin rights to current user
-            const granted = await grantAdminRights(currentUser.username);
-            
-            if (granted) {
-                alert('Admin access granted!');
-                isAdmin = true;
-                showAdminPanel(currentUser.username);
-                loadDashboard();
-                return true;
-            } else {
-                alert('Error granting admin rights');
-                return false;
-            }
-        } else {
-            alert('Invalid admin code');
-            return false;
+        
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
         }
-    }
+    `;
+    document.head.appendChild(style);
+}
+
+// Initialize mock online users for demo
+function initMockUsers() {
+    adminState.onlineUsers = [
+        { username: 'Player123', balance: 5000, avatar: 'assets/default-avatar.svg', status: 'online', lastActivity: new Date() },
+        { username: 'GamblePro', balance: 12000, avatar: 'assets/default-avatar.svg', status: 'online', lastActivity: new Date() },
+        { username: 'LuckyGuy', balance: 8500, avatar: 'assets/default-avatar.svg', status: 'online', lastActivity: new Date() },
+        { username: 'BigWinner', balance: 25000, avatar: 'assets/default-avatar.svg', status: 'online', lastActivity: new Date() },
+        { username: 'RollTheNice', balance: 3000, avatar: 'assets/default-avatar.svg', status: 'away', lastActivity: new Date(Date.now() - 300000) }
+    ];
     
-    // Update house edge
-    async function updateHouseEdgeValue(edgeValue) {
-        try {
-            // Store in settings table
-            const { data, error } = await window.SupabaseDB
-                .from('settings')
-                .upsert([
-                    { key: 'house_edge', value: edgeValue.toString() }
-                ]);
-                
-            if (error) throw error;
-            
-            alert(`House edge updated to ${edgeValue}%`);
-            return true;
-        } catch (error) {
-            console.error('Error updating house edge:', error);
-            alert(`Error updating house edge: ${error.message}`);
-            return false;
-        }
-    }
-    
-    // Update maintenance mode
-    async function updateMaintenanceModeValue(mode) {
-        try {
-            // Store in settings table
-            const { data, error } = await window.SupabaseDB
-                .from('settings')
-                .upsert([
-                    { key: 'maintenance_mode', value: mode }
-                ]);
-                
-            if (error) throw error;
-            
-            alert(`Maintenance mode ${mode === 'on' ? 'enabled' : 'disabled'}`);
-            return true;
-        } catch (error) {
-            console.error('Error updating maintenance mode:', error);
-            alert(`Error updating maintenance mode: ${error.message}`);
-            return false;
-        }
-    }
-    
-    // Event Listeners
-    
-    // Redeem admin code button
-    if (redeemAdminBtn) {
-        redeemAdminBtn.addEventListener('click', () => {
-            const code = adminCode.value.trim();
-            if (code) {
-                redeemAdminCode(code);
-                adminCode.value = '';
-            }
+    // Add current user if logged in
+    const currentUser = window.BetaAuth?.getCurrentUser();
+    if (currentUser && !adminState.onlineUsers.find(u => u.username === currentUser.username)) {
+        adminState.onlineUsers.push({
+            username: currentUser.username,
+            balance: currentUser.balance || 100,
+            avatar: currentUser.avatar || 'assets/default-avatar.svg',
+            status: 'online',
+            lastActivity: new Date()
         });
     }
+}
+
+// Show admin panel
+function showAdminPanel() {
+    // Create admin panel modal
+    const modal = document.createElement('div');
+    modal.className = 'modal admin-panel-modal';
+    modal.id = 'adminPanelModal';
+    modal.style.display = 'flex';
+    
+    modal.innerHTML = `
+        <div class="modal-content admin-panel-content glow-box">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-shield-alt"></i> Admin Panel</h2>
+            
+            <div class="admin-tabs">
+                <button class="admin-tab active" data-tab="users"><i class="fas fa-users"></i> Online Users</button>
+                <button class="admin-tab" data-tab="settings"><i class="fas fa-cog"></i> Settings</button>
+                <button class="admin-tab" data-tab="broadcast"><i class="fas fa-bullhorn"></i> Broadcast</button>
+            </div>
+            
+            <div class="admin-tab-content active" id="users-tab">
+                <div class="search-bar">
+                    <input type="text" id="userSearchInput" placeholder="Search users...">
+                </div>
+                <div class="online-users-list" id="onlineUsersList">
+                    <!-- Will be populated with users -->
+                </div>
+            </div>
+            
+            <div class="admin-tab-content" id="settings-tab">
+                <div class="admin-setting-group">
+                    <h3>Owner Settings</h3>
+                    <div class="admin-setting-item">
+                        <label for="ownerUsername">Set Owner Username:</label>
+                        <div class="setting-input-group">
+                            <input type="text" id="ownerUsername" placeholder="Username">
+                            <button id="setOwnerBtn" class="admin-btn">Set Owner</button>
+                        </div>
+                    </div>
+                    <div class="admin-setting-item">
+                        <span>Current Owner: <span id="currentOwner">None</span></span>
+                    </div>
+                </div>
+                
+                <div class="admin-setting-group">
+                    <h3>Admin List</h3>
+                    <div class="admin-users-list" id="adminUsersList">
+                        <!-- Will be populated with admin users -->
+                    </div>
+                    <div class="admin-setting-item">
+                        <div class="setting-input-group">
+                            <input type="text" id="newAdminUsername" placeholder="Username">
+                            <button id="addAdminBtn" class="admin-btn">Add Admin</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-tab-content" id="broadcast-tab">
+                <div class="admin-setting-group">
+                    <h3>Send Message to All Users</h3>
+                    <div class="admin-setting-item">
+                        <textarea id="broadcastMessage" placeholder="Enter your message to all users" rows="4"></textarea>
+                    </div>
+                    <button id="sendBroadcastBtn" class="admin-btn broadcast-btn">Send Broadcast</button>
+                </div>
+                
+                <div class="admin-setting-group">
+                    <h3>Send Direct Message</h3>
+                    <div class="admin-setting-item">
+                        <label for="directMessageUsername">Username:</label>
+                        <input type="text" id="directMessageUsername" placeholder="Username">
+                    </div>
+                    <div class="admin-setting-item">
+                        <textarea id="directMessage" placeholder="Enter your message to the user" rows="4"></textarea>
+                    </div>
+                    <button id="sendDirectMessageBtn" class="admin-btn">Send Message</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add CSS for admin panel
+    addAdminPanelStyles();
+    
+    // Add event listeners
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
     
     // Tab switching
-    adminTabs.forEach(tab => {
+    const tabs = modal.querySelectorAll('.admin-tab');
+    tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            // Remove active class from all tabs
-            adminTabs.forEach(t => t.classList.remove('active'));
+            const tabName = tab.getAttribute('data-tab');
             
-            // Add active class to clicked tab
+            // Update active tab
+            tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             
-            // Hide all tab contents
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            // Show selected tab content
-            const tabId = tab.dataset.tab;
-            document.getElementById(tabId).classList.add('active');
-            
-            // Load tab-specific data
-            if (tabId === 'dashboard') {
-                loadDashboard();
-            } else if (tabId === 'users') {
-                loadUsers();
-            } else if (tabId === 'bets') {
-                loadBetHistory();
-            }
+            // Show corresponding tab content
+            const tabContents = modal.querySelectorAll('.admin-tab-content');
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            document.getElementById(`${tabName}-tab`).classList.add('active');
         });
     });
     
-    // Search users
-    if (searchUserBtn) {
-        searchUserBtn.addEventListener('click', () => {
-            const searchTerm = userSearchInput.value.trim();
-            loadUsers(searchTerm);
-        });
-    }
+    // Populate users list
+    populateOnlineUsers();
     
-    // Refresh users
-    if (refreshUsersBtn) {
-        refreshUsersBtn.addEventListener('click', () => {
-            loadUsers();
-        });
-    }
+    // Update owner display
+    updateOwnerDisplay();
     
-    // Add balance
-    if (addBalanceBtn) {
-        addBalanceBtn.addEventListener('click', () => {
-            const username = balanceUsername.value.trim();
-            const amount = parseInt(balanceAmount.value);
-            
-            if (!username) {
-                alert('Please enter a username');
-                return;
+    // Populate admin users
+    populateAdminUsers();
+    
+    // Add event listeners for admin actions
+    setupAdminEventListeners();
+}
+
+// Add admin panel styles
+function addAdminPanelStyles() {
+    const styleId = 'admin-panel-styles';
+    if (document.getElementById(styleId)) return;
+    
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+        .admin-panel-modal {
+            z-index: 1000;
+        }
+        
+        .admin-panel-content {
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 30px;
+        }
+        
+        .admin-panel-content h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(24, 231, 124, 0.3);
+        }
+        
+        .admin-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            background: rgba(12, 14, 26, 0.5);
+            border-radius: 8px;
+            padding: 5px;
+        }
+        
+        .admin-tab {
+            padding: 10px 15px;
+            border: none;
+            background: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .admin-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .admin-tab.active {
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+        
+        .admin-tab-content {
+            display: none;
+        }
+        
+        .admin-tab-content.active {
+            display: block;
+        }
+        
+        .search-bar {
+            margin-bottom: 15px;
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(12, 14, 26, 0.5);
+            color: #fff;
+        }
+        
+        .online-users-list, .admin-users-list {
+            background: rgba(12, 14, 26, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .user-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .user-item:last-child {
+            border-bottom: none;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .username {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .crown-icon {
+            color: gold;
+        }
+        
+        .banned-tag {
+            background: rgba(241, 90, 90, 0.2);
+            color: var(--danger-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        
+        .admin-tag {
+            background: rgba(24, 231, 124, 0.2);
+            color: var(--primary-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        
+        .user-status {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .status-online {
+            color: var(--primary-color);
+        }
+        
+        .status-away {
+            color: #ffc107;
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .user-action-btn {
+            background: rgba(12, 14, 26, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+        }
+        
+        .user-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .ban-btn {
+            color: var(--danger-color);
+            border-color: rgba(241, 90, 90, 0.3);
+        }
+        
+        .ban-btn:hover {
+            background: rgba(241, 90, 90, 0.1);
+        }
+        
+        .unban-btn {
+            color: var(--success-color);
+            border-color: rgba(46, 204, 113, 0.3);
+        }
+        
+        .unban-btn:hover {
+            background: rgba(46, 204, 113, 0.1);
+        }
+        
+        .message-btn {
+            color: #3498db;
+            border-color: rgba(52, 152, 219, 0.3);
+        }
+        
+        .message-btn:hover {
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .admin-btn {
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+        }
+        
+        .admin-btn:hover {
+            background: #16c96c;
+            transform: translateY(-2px);
+        }
+        
+        .broadcast-btn {
+            width: 100%;
+            margin-top: 10px;
+            background: linear-gradient(90deg, var(--primary-color), #16c96c);
+        }
+        
+        .admin-setting-group {
+            background: rgba(12, 14, 26, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .admin-setting-group h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-size: 16px;
+        }
+        
+        .admin-setting-item {
+            margin-bottom: 15px;
+        }
+        
+        .admin-setting-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .admin-setting-item input,
+        .admin-setting-item textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(12, 14, 26, 0.5);
+            color: #fff;
+            margin-top: 5px;
+        }
+        
+        .setting-input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .setting-input-group input {
+            flex: 1;
+        }
+        
+        #currentOwner {
+            font-weight: bold;
+            color: gold;
+        }
+        
+        /* Alert Styles */
+        .admin-alert {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(12, 14, 26, 0.9);
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 15px 20px;
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideDown 0.3s forwards;
+        }
+        
+        .admin-alert.danger {
+            border-color: var(--danger-color);
+        }
+        
+        .admin-alert-icon {
+            font-size: 20px;
+            color: var(--primary-color);
+        }
+        
+        .admin-alert.danger .admin-alert-icon {
+            color: var(--danger-color);
+        }
+        
+        .admin-alert-message {
+            font-weight: 500;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translate(-50%, -100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .admin-panel-content {
+                padding: 20px;
+                width: 95%;
             }
             
-            if (!amount || amount < 1) {
-                alert('Please enter a valid amount');
-                return;
+            .admin-tabs {
+                flex-direction: column;
+                gap: 5px;
             }
             
-            addBalance(username, amount);
-        });
-    }
-    
-    // Filter bets
-    if (filterBetsBtn) {
-        filterBetsBtn.addEventListener('click', () => {
-            const username = betSearchInput.value.trim();
-            const game = gameFilter.value;
-            const result = resultFilter.value;
-            
-            loadBetHistory({
-                username,
-                game,
-                result
-            });
-        });
-    }
-    
-    // Refresh bets
-    if (refreshBetsBtn) {
-        refreshBetsBtn.addEventListener('click', () => {
-            loadBetHistory();
-        });
-    }
-    
-    // Refresh activity
-    if (refreshActivityBtn) {
-        refreshActivityBtn.addEventListener('click', () => {
-            loadRecentActivity();
-        });
-    }
-    
-    // Add admin
-    if (addAdminBtn) {
-        addAdminBtn.addEventListener('click', () => {
-            const username = addAdminUsername.value.trim();
-            
-            if (!username) {
-                alert('Please enter a username');
-                return;
+            .user-actions {
+                flex-direction: column;
             }
             
-            addAdmin(username);
-        });
-    }
-    
-    // Update house edge
-    if (updateEdgeBtn) {
-        updateEdgeBtn.addEventListener('click', () => {
-            const edge = parseInt(houseEdge.value);
-            
-            if (!edge || edge < 1 || edge > 10) {
-                alert('Please enter a valid house edge (1-10%)');
-                return;
+            .setting-input-group {
+                flex-direction: column;
             }
-            
-            updateHouseEdgeValue(edge);
-        });
-    }
+        }
+    `;
     
-    // Update maintenance mode
-    if (updateMaintenanceBtn) {
-        updateMaintenanceBtn.addEventListener('click', () => {
-            const mode = maintenanceMode.value;
-            updateMaintenanceModeValue(mode);
-        });
-    }
+    document.head.appendChild(style);
+}
+
+// Populate online users list
+function populateOnlineUsers() {
+    const usersList = document.getElementById('onlineUsersList');
+    if (!usersList) return;
     
-    // Edit user form
-    if (editUserForm) {
-        editUserForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const username = editUsername.value;
-            const balance = parseInt(editBalance.value);
-            const status = editStatus.value;
-            
-            try {
-                const { data, error } = await window.SupabaseDB
-                    .from('users')
-                    .update({
-                        balance,
-                        status
-                    })
-                    .eq('username', username)
-                    .select();
-                    
-                if (error) throw error;
-                
-                alert(`User ${username} updated successfully`);
-                editUserModal.style.display = 'none';
-                
-                // Refresh users list
-                loadUsers();
-            } catch (error) {
-                console.error('Error updating user:', error);
-                alert(`Error updating user: ${error.message}`);
-            }
-        });
-    }
+    usersList.innerHTML = '';
     
-    // Close edit user modal
-    const editUserModalClose = editUserModal?.querySelector('.close');
-    if (editUserModalClose) {
-        editUserModalClose.addEventListener('click', () => {
-            editUserModal.style.display = 'none';
-        });
-    }
+    adminState.onlineUsers.forEach(user => {
+        const isOwner = adminState.owner === user.username;
+        const isAdmin = adminState.adminUsers.includes(user.username);
+        const isBanned = adminState.bannedUsers.includes(user.username);
+        
+        const userItem = document.createElement('div');
+        userItem.className = 'user-item';
+        userItem.dataset.username = user.username;
+        
+        userItem.innerHTML = `
+            <div class="user-info">
+                <img src="${user.avatar}" alt="${user.username}" class="user-avatar">
+                <div class="user-details">
+                    <div class="username">
+                        ${user.username}
+                        ${isOwner ? '<i class="fas fa-crown crown-icon"></i>' : ''}
+                        ${isAdmin ? '<span class="admin-tag">Admin</span>' : ''}
+                        ${isBanned ? '<span class="banned-tag">Banned</span>' : ''}
+                    </div>
+                    <div class="user-status">
+                        <span class="status-${user.status}">${user.status}</span> • ${user.balance.toLocaleString()} coins
+                    </div>
+                </div>
+            </div>
+            <div class="user-actions">
+                ${isBanned ? 
+                    '<button class="user-action-btn unban-btn" data-action="unban"><i class="fas fa-undo"></i> Unban</button>' : 
+                    '<button class="user-action-btn ban-btn" data-action="ban"><i class="fas fa-ban"></i> Ban</button>'
+                }
+                <button class="user-action-btn message-btn" data-action="message"><i class="fas fa-envelope"></i> Message</button>
+                ${!isAdmin ? 
+                    '<button class="user-action-btn" data-action="make-admin"><i class="fas fa-user-shield"></i> Make Admin</button>' : 
+                    '<button class="user-action-btn" data-action="remove-admin"><i class="fas fa-user-minus"></i> Remove Admin</button>'
+                }
+                ${!isOwner ? 
+                    '<button class="user-action-btn" data-action="make-owner"><i class="fas fa-crown"></i> Make Owner</button>' : 
+                    ''
+                }
+            </div>
+        `;
+        
+        usersList.appendChild(userItem);
+    });
     
-    // Close modal when clicking outside
-    window.addEventListener('click', (e) => {
-        if (e.target === editUserModal) {
-            editUserModal.style.display = 'none';
+    // Add event listeners for user actions
+    const actionButtons = usersList.querySelectorAll('.user-action-btn');
+    actionButtons.forEach(button => {
+        button.addEventListener('click', handleUserAction);
+    });
+    
+    // Add search functionality
+    const searchInput = document.getElementById('userSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', filterUsers);
+    }
+}
+
+// Filter users based on search
+function filterUsers() {
+    const searchInput = document.getElementById('userSearchInput');
+    const userItems = document.querySelectorAll('.user-item');
+    
+    const searchTerm = searchInput.value.toLowerCase();
+    
+    userItems.forEach(item => {
+        const username = item.dataset.username.toLowerCase();
+        if (username.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
         }
     });
+}
+
+// Update owner display
+function updateOwnerDisplay() {
+    const currentOwnerElement = document.getElementById('currentOwner');
+    if (currentOwnerElement) {
+        currentOwnerElement.textContent = adminState.owner || 'None';
+    }
+}
+
+// Populate admin users list
+function populateAdminUsers() {
+    const adminUsersList = document.getElementById('adminUsersList');
+    if (!adminUsersList) return;
     
-    // Initialize admin panel
-    ensureAdminTable();
-    checkAdminStatus();
-}); 
+    adminUsersList.innerHTML = '';
+    
+    if (adminState.adminUsers.length === 0) {
+        adminUsersList.innerHTML = '<div class="user-item">No admin users yet</div>';
+        return;
+    }
+    
+    adminState.adminUsers.forEach(username => {
+        const userItem = document.createElement('div');
+        userItem.className = 'user-item';
+        
+        userItem.innerHTML = `
+            <div class="username">${username}</div>
+            <button class="user-action-btn" data-username="${username}" data-action="remove-admin">
+                <i class="fas fa-times"></i> Remove
+            </button>
+        `;
+        
+        adminUsersList.appendChild(userItem);
+    });
+    
+    // Add event listeners for remove buttons
+    const removeButtons = adminUsersList.querySelectorAll('.user-action-btn');
+    removeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const username = button.dataset.username;
+            removeAdmin(username);
+        });
+    });
+}
+
+// Set up admin event listeners
+function setupAdminEventListeners() {
+    // Set owner button
+    const setOwnerBtn = document.getElementById('setOwnerBtn');
+    if (setOwnerBtn) {
+        setOwnerBtn.addEventListener('click', () => {
+            const ownerInput = document.getElementById('ownerUsername');
+            const username = ownerInput.value.trim();
+            
+            if (username) {
+                setOwner(username);
+                ownerInput.value = '';
+            }
+        });
+    }
+    
+    // Add admin button
+    const addAdminBtn = document.getElementById('addAdminBtn');
+    if (addAdminBtn) {
+        addAdminBtn.addEventListener('click', () => {
+            const adminInput = document.getElementById('newAdminUsername');
+            const username = adminInput.value.trim();
+            
+            if (username) {
+                addAdmin(username);
+                adminInput.value = '';
+            }
+        });
+    }
+    
+    // Send broadcast button
+    const sendBroadcastBtn = document.getElementById('sendBroadcastBtn');
+    if (sendBroadcastBtn) {
+        sendBroadcastBtn.addEventListener('click', () => {
+            const messageInput = document.getElementById('broadcastMessage');
+            const message = messageInput.value.trim();
+            
+            if (message) {
+                sendBroadcast(message);
+                messageInput.value = '';
+            }
+        });
+    }
+    
+    // Send direct message button
+    const sendDirectMessageBtn = document.getElementById('sendDirectMessageBtn');
+    if (sendDirectMessageBtn) {
+        sendDirectMessageBtn.addEventListener('click', () => {
+            const usernameInput = document.getElementById('directMessageUsername');
+            const messageInput = document.getElementById('directMessage');
+            const username = usernameInput.value.trim();
+            const message = messageInput.value.trim();
+            
+            if (username && message) {
+                sendDirectMessage(username, message);
+                messageInput.value = '';
+            }
+        });
+    }
+}
+
+// Handle user actions (ban, message, make admin, etc.)
+function handleUserAction(e) {
+    const button = e.currentTarget;
+    const action = button.dataset.action;
+    const userItem = button.closest('.user-item');
+    const username = userItem.dataset.username;
+    
+    switch(action) {
+        case 'ban':
+            banUser(username);
+            break;
+        case 'unban':
+            unbanUser(username);
+            break;
+        case 'message':
+            // Open message tab and fill username
+            const tabs = document.querySelectorAll('.admin-tab');
+            tabs.forEach(tab => {
+                if (tab.dataset.tab === 'broadcast') {
+                    tab.click();
+                }
+            });
+            const usernameInput = document.getElementById('directMessageUsername');
+            if (usernameInput) {
+                usernameInput.value = username;
+                document.getElementById('directMessage').focus();
+            }
+            break;
+        case 'make-admin':
+            addAdmin(username);
+            break;
+        case 'remove-admin':
+            removeAdmin(username);
+            break;
+        case 'make-owner':
+            setOwner(username);
+            break;
+    }
+}
+
+// Ban a user
+function banUser(username) {
+    if (!adminState.bannedUsers.includes(username)) {
+        adminState.bannedUsers.push(username);
+        saveAdminState();
+        
+        // Show alert
+        showAdminAlert(`User ${username} has been banned`, 'danger');
+        
+        // Update users list
+        populateOnlineUsers();
+    }
+}
+
+// Unban a user
+function unbanUser(username) {
+    const index = adminState.bannedUsers.indexOf(username);
+    if (index !== -1) {
+        adminState.bannedUsers.splice(index, 1);
+        saveAdminState();
+        
+        // Show alert
+        showAdminAlert(`User ${username} has been unbanned`);
+        
+        // Update users list
+        populateOnlineUsers();
+    }
+}
+
+// Add admin
+function addAdmin(username) {
+    if (!adminState.adminUsers.includes(username)) {
+        adminState.adminUsers.push(username);
+        saveAdminState();
+        
+        // Show alert
+        showAdminAlert(`${username} is now an admin`);
+        
+        // Update admin list and users list
+        populateAdminUsers();
+        populateOnlineUsers();
+    }
+}
+
+// Remove admin
+function removeAdmin(username) {
+    const index = adminState.adminUsers.indexOf(username);
+    if (index !== -1) {
+        adminState.adminUsers.splice(index, 1);
+        saveAdminState();
+        
+        // Show alert
+        showAdminAlert(`${username} is no longer an admin`, 'danger');
+        
+        // Update admin list and users list
+        populateAdminUsers();
+        populateOnlineUsers();
+    }
+}
+
+// Set owner
+function setOwner(username) {
+    adminState.owner = username;
+    saveAdminState();
+    
+    // Show alert
+    showAdminAlert(`${username} is now the owner`);
+    
+    // Update owner display and users list
+    updateOwnerDisplay();
+    populateOnlineUsers();
+}
+
+// Send broadcast message to all users
+function sendBroadcast(message) {
+    // Create broadcast element
+    const broadcast = document.createElement('div');
+    broadcast.className = 'admin-alert';
+    broadcast.innerHTML = `
+        <i class="fas fa-bullhorn admin-alert-icon"></i>
+        <div class="admin-alert-message">${message}</div>
+    `;
+    
+    document.body.appendChild(broadcast);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+        document.body.removeChild(broadcast);
+    }, 5000);
+    
+    // Show confirmation
+    showAdminAlert('Broadcast sent to all users');
+}
+
+// Send direct message to a specific user
+function sendDirectMessage(username, message) {
+    // Check if user exists
+    const userExists = adminState.onlineUsers.some(user => user.username === username);
+    
+    if (!userExists) {
+        showAdminAlert(`User ${username} not found`, 'danger');
+        return;
+    }
+    
+    // Create direct message alert
+    const directMsg = document.createElement('div');
+    directMsg.className = 'admin-alert';
+    directMsg.innerHTML = `
+        <i class="fas fa-envelope admin-alert-icon"></i>
+        <div class="admin-alert-message">
+            <strong>Message from Admin:</strong> ${message}
+        </div>
+    `;
+    
+    document.body.appendChild(directMsg);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+        document.body.removeChild(directMsg);
+    }, 5000);
+    
+    // Show confirmation
+    showAdminAlert(`Message sent to ${username}`);
+}
+
+// Show admin alert
+function showAdminAlert(message, type = 'success') {
+    const alert = document.createElement('div');
+    alert.className = `admin-alert ${type}`;
+    alert.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} admin-alert-icon"></i>
+        <div class="admin-alert-message">${message}</div>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        alert.style.opacity = '0';
+        alert.style.transform = 'translate(-50%, -20px)';
+        alert.style.transition = 'opacity 0.3s, transform 0.3s';
+        
+        setTimeout(() => {
+            if (document.body.contains(alert)) {
+                document.body.removeChild(alert);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Export admin functionality
+window.BetaAdmin = {
+    isAdmin: () => adminState.isAdmin,
+    isBanned: (username) => adminState.bannedUsers.includes(username),
+    isOwner: (username) => adminState.owner === username,
+    sendAlert: showAdminAlert
+}; 

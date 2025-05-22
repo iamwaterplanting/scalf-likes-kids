@@ -81,6 +81,11 @@ async function login(username, password) {
 
         if (error) throw error;
         if (!user) throw new Error('Invalid credentials');
+        
+        // Check if user is banned by admin
+        if (window.BetaAdmin && window.BetaAdmin.isBanned && window.BetaAdmin.isBanned(username)) {
+            throw new Error('Your account has been banned');
+        }
 
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
         currentUser = user;
@@ -88,7 +93,7 @@ async function login(username, password) {
         return user;
     } catch (error) {
         console.error('Login error:', error);
-        throw new Error('Invalid credentials');
+        throw new Error(error.message || 'Invalid credentials');
     }
 }
 
