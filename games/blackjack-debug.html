@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack Debug</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px;
+            background: #222;
+            color: #fff;
+        }
+        pre { 
+            background: #333; 
+            padding: 10px; 
+            border-radius: 5px; 
+            white-space: pre-wrap;
+        }
+        h1 { color: #5ef75e; }
+        button {
+            padding: 10px 20px;
+            margin: 10px 0;
+            background: #5ef75e;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 10px;
+            background: #333;
+            border-radius: 5px;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Blackjack Debug Page</h1>
+    <p>This page will help debug why the Blackjack page shows "Coming Soon"</p>
+    
+    <button id="checkDom">Check Current DOM</button>
+    <button id="compareFiles">Check Blackjack HTML Files</button>
+    <button id="checkScripts">Check Scripts</button>
+    
+    <div class="output" id="output"></div>
+    
+    <script>
+        document.getElementById('checkDom').addEventListener('click', async function() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<h3>DOM Check</h3>';
+            
+            // Check all loaded scripts
+            const scripts = document.querySelectorAll('script');
+            output.innerHTML += `<p>Found ${scripts.length} scripts loaded on this page:</p><ul>`;
+            scripts.forEach(script => {
+                output.innerHTML += `<li>${script.src || 'inline script'}</li>`;
+            });
+            output.innerHTML += '</ul>';
+            
+            // Try to load the blackjack.html file via fetch
+            try {
+                const response = await fetch('blackjack.html');
+                const text = await response.text();
+                output.innerHTML += '<h3>blackjack.html Content</h3>';
+                output.innerHTML += '<pre>' + escapeHtml(text.substring(0, 500)) + '...</pre>';
+                
+                // Check for "Coming Soon" text
+                if (text.includes('Coming Soon')) {
+                    output.innerHTML += '<p style="color: red"><strong>Found "Coming Soon" text in blackjack.html!</strong></p>';
+                    // Find the context
+                    const comingSoonIndex = text.indexOf('Coming Soon');
+                    const startIndex = Math.max(0, comingSoonIndex - 100);
+                    const endIndex = Math.min(text.length, comingSoonIndex + 100);
+                    const context = text.substring(startIndex, endIndex);
+                    output.innerHTML += '<p>Context:</p><pre style="color: orange">' + escapeHtml(context) + '</pre>';
+                } else {
+                    output.innerHTML += '<p style="color: green">No "Coming Soon" text found in blackjack.html.</p>';
+                }
+            } catch (error) {
+                output.innerHTML += `<p>Error loading blackjack.html: ${error.message}</p>`;
+            }
+        });
+        
+        document.getElementById('compareFiles').addEventListener('click', async function() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<h3>File Comparison</h3>';
+            
+            // Check the file sizes to detect if they're different files
+            try {
+                const blackjackResponse = await fetch('blackjack.html');
+                const blackjack2Response = await fetch('blackjack2.html');
+                const blackjackGameResponse = await fetch('blackjack-game.html');
+                
+                if (blackjackResponse.ok && blackjack2Response.ok && blackjackGameResponse.ok) {
+                    const blackjackText = await blackjackResponse.text();
+                    const blackjack2Text = await blackjack2Response.text();
+                    const blackjackGameText = await blackjackGameResponse.text();
+                    
+                    output.innerHTML += `<p>blackjack.html size: ${blackjackText.length} bytes</p>`;
+                    output.innerHTML += `<p>blackjack2.html size: ${blackjack2Text.length} bytes</p>`;
+                    output.innerHTML += `<p>blackjack-game.html size: ${blackjackGameText.length} bytes</p>`;
+                    
+                    // Check if they contain "Coming Soon"
+                    output.innerHTML += `<p>blackjack.html contains "Coming Soon": ${blackjackText.includes('Coming Soon')}</p>`;
+                    output.innerHTML += `<p>blackjack2.html contains "Coming Soon": ${blackjack2Text.includes('Coming Soon')}</p>`;
+                    output.innerHTML += `<p>blackjack-game.html contains "Coming Soon": ${blackjackGameText.includes('Coming Soon')}</p>`;
+                    
+                    // Display the first 200 chars of each
+                    output.innerHTML += '<h4>First 200 chars of blackjack.html:</h4>';
+                    output.innerHTML += '<pre>' + escapeHtml(blackjackText.substring(0, 200)) + '...</pre>';
+                    
+                    output.innerHTML += '<h4>First 200 chars of blackjack2.html:</h4>';
+                    output.innerHTML += '<pre>' + escapeHtml(blackjack2Text.substring(0, 200)) + '...</pre>';
+                    
+                    output.innerHTML += '<h4>First 200 chars of blackjack-game.html:</h4>';
+                    output.innerHTML += '<pre>' + escapeHtml(blackjackGameText.substring(0, 200)) + '...</pre>';
+                } else {
+                    if (!blackjackResponse.ok) {
+                        output.innerHTML += '<p>Could not load blackjack.html: ' + blackjackResponse.status + '</p>';
+                    }
+                    if (!blackjack2Response.ok) {
+                        output.innerHTML += '<p>Could not load blackjack2.html: ' + blackjack2Response.status + '</p>';
+                    }
+                    if (!blackjackGameResponse.ok) {
+                        output.innerHTML += '<p>Could not load blackjack-game.html: ' + blackjackGameResponse.status + '</p>';
+                    }
+                }
+            } catch (error) {
+                output.innerHTML += `<p>Error comparing files: ${error.message}</p>`;
+            }
+        });
+        
+        document.getElementById('checkScripts').addEventListener('click', async function() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<h3>Script Check</h3>';
+            
+            try {
+                const jsResponse = await fetch('js/blackjack.js');
+                if (jsResponse.ok) {
+                    const jsText = await jsResponse.text();
+                    output.innerHTML += `<p>blackjack.js size: ${jsText.length} bytes</p>`;
+                    output.innerHTML += `<p>Contains "Coming Soon": ${jsText.includes('Coming Soon')}</p>`;
+                    
+                    // Display the first 200 chars
+                    output.innerHTML += '<h4>First 200 chars of blackjack.js:</h4>';
+                    output.innerHTML += '<pre>' + escapeHtml(jsText.substring(0, 200)) + '...</pre>';
+                    
+                    // Check for DOM manipulation that might inject "Coming Soon"
+                    if (jsText.includes('innerHTML') || jsText.includes('textContent')) {
+                        output.innerHTML += '<p>Contains DOM manipulation (innerHTML/textContent)</p>';
+                        
+                        // Extract all lines with innerHTML/textContent
+                        const lines = jsText.split('\n');
+                        const manipulationLines = lines.filter(line => 
+                            line.includes('innerHTML') || line.includes('textContent'));
+                        
+                        output.innerHTML += '<h4>DOM Manipulation Lines:</h4>';
+                        output.innerHTML += '<pre>' + escapeHtml(manipulationLines.join('\n')) + '</pre>';
+                    }
+                } else {
+                    output.innerHTML += '<p>Could not load blackjack.js: ' + jsResponse.status + '</p>';
+                }
+            } catch (error) {
+                output.innerHTML += `<p>Error checking scripts: ${error.message}</p>`;
+            }
+        });
+        
+        // Helper function to escape HTML
+        function escapeHtml(unsafe) {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html> 
