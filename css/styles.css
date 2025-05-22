@@ -54,17 +54,40 @@ body {
     color: var(--primary-color);
 }
 
+.glow-text {
+    text-shadow: 0 0 10px rgba(24, 231, 124, 0.5);
+}
+
 .main-nav ul {
     list-style: none;
 }
 
 .main-nav li {
     padding: 12px 20px;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
 }
 
 .main-nav li:hover, .main-nav li.active {
     background-color: rgba(255, 255, 255, 0.05);
+    transform: translateX(5px);
+}
+
+.main-nav li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background-color: var(--primary-color);
+    transform: scaleY(0);
+    transition: transform 0.3s;
+}
+
+.main-nav li:hover::before, .main-nav li.active::before {
+    transform: scaleY(1);
 }
 
 .main-nav a {
@@ -79,6 +102,12 @@ body {
     color: var(--primary-color);
     width: 20px;
     text-align: center;
+    transition: transform 0.3s, color 0.3s;
+}
+
+.main-nav li:hover i, .main-nav li.active i {
+    transform: scale(1.2);
+    color: #ffffff;
 }
 
 .redeem-code {
