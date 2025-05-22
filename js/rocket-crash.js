@@ -889,6 +889,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Helper function to update user balance in Supabase
+    async function updateUserBalanceInSupabase(userId, newBalance) {
+        if (!window.SupabaseDB || !userId) return;
+        
+        try {
+            const { error } = await window.SupabaseDB
+                .from('users')
+                .update({ balance: newBalance })
+                .eq('id', userId);
+                
+            if (error) {
+                console.error('Error updating user balance in Supabase:', error);
+            } else {
+                console.log('User balance updated in Supabase');
+            }
+        } catch (error) {
+            console.error('Error updating user balance:', error);
+        }
+    }
+
+    // Modify handleBet function to update Supabase
     function handleBet() {
         // Validate user is logged in
         const currentUser = window.BetaAuth?.getCurrentUser();
@@ -923,6 +944,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Deduct bet amount from balance
         window.BetaAuth.updateBalance(-betAmount, 'Rocket Crash Bet');
+        
+        // Also update in Supabase directly
+        if (currentUser.id) {
+            updateUserBalanceInSupabase(currentUser.id, currentUser.balance);
+        }
         
         // Create bet object
         const bet = {
@@ -1034,6 +1060,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Modify cashoutBet function to update Supabase
     function cashoutBet(bet, isAuto) {
         // Mark bet as cashed out
         bet.cashedOut = true;
@@ -1055,6 +1082,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentUser = window.BetaAuth?.getCurrentUser();
         if (currentUser && bet.user === currentUser.username) {
             window.BetaAuth.updateBalance(payout, 'Rocket Crash Win');
+            
+            // Also update in Supabase directly
+            if (currentUser.id) {
+                updateUserBalanceInSupabase(currentUser.id, currentUser.balance);
+            }
             
             // Update bet in Supabase if available
             if (supabaseEnabled && window.SupabaseDB) {
@@ -1132,6 +1164,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (updateError) {
                 console.error('Error updating bet:', updateError);
                 return;
+            }
+            
+            // Update user balance in the users table
+            const currentUser = window.BetaAuth?.getCurrentUser();
+            if (currentUser && currentUser.id) {
+                const { error: userUpdateError } = await window.SupabaseDB
+                    .from('users')
+                    .update({
+                        balance: currentUser.balance
+                    })
+                    .eq('id', currentUser.id);
+                    
+                if (userUpdateError) {
+                    console.error('Error updating user balance in Supabase:', userUpdateError);
+                }
             }
             
             console.log('Bet updated in Supabase');

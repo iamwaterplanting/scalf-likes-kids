@@ -70,15 +70,15 @@ function setupSupabaseSubscription() {
     }
     
     try {
-        // Subscribe to profile changes
+        // Subscribe to user changes
         window.SupabaseDB
-            .channel('profiles-channel')
+            .channel('users-channel')
             .on('postgres_changes', { 
                 event: '*', 
                 schema: 'public', 
-                table: 'profiles'
+                table: 'users'
             }, payload => {
-                console.log('Profile change detected, refreshing leaderboard');
+                console.log('User data change detected, refreshing leaderboard');
                 loadLeaderboard();
             })
             .subscribe();
@@ -111,8 +111,8 @@ async function loadLeaderboard() {
         
         // Fetch top 10 users ordered by balance
         const { data, error } = await window.SupabaseDB
-            .from('profiles')
-            .select('id, username, balance, avatar_url')
+            .from('users')
+            .select('id, username, balance, avatar')
             .order('balance', { ascending: false })
             .limit(10);
             
@@ -138,7 +138,7 @@ async function loadLeaderboard() {
         const topPlayers = data.slice(0, 3);
         topPlayers.forEach((player, index) => {
             const rank = index + 1;
-            const avatarUrl = player.avatar_url || '../assets/default-avatar.svg';
+            const avatarUrl = player.avatar || '../assets/default-avatar.svg';
             
             // Create the top player item with custom emoji
             const previewItem = document.createElement('div');
@@ -158,7 +158,7 @@ async function loadLeaderboard() {
         // Add all players to the full leaderboard
         data.forEach((player, index) => {
             const rank = index + 1;
-            const avatarUrl = player.avatar_url || '../assets/default-avatar.svg';
+            const avatarUrl = player.avatar || '../assets/default-avatar.svg';
             
             // Check if user is current user
             const currentUser = window.BetaAuth?.getCurrentUser();
@@ -283,12 +283,12 @@ async function createInitialUsers() {
     for (const user of testUsers) {
         try {
             const { data, error } = await window.SupabaseDB
-                .from('profiles')
+                .from('users')
                 .upsert({
                     id: crypto.randomUUID(), // Generate UUID
                     username: user.username,
                     balance: user.balance,
-                    avatar_url: '../assets/default-avatar.svg'
+                    avatar: '../assets/default-avatar.svg'
                 });
                 
             if (error) {
