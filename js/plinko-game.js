@@ -30,10 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
         pins: [],
         multipliers: [],
         pinRadius: 4,
-        ballRadius: 10,
-        gravity: 0.2,
-        friction: 0.8,
-        elasticity: 0.6,
+        ballRadius: 8, // Smaller ball for easier passage
+        gravity: 0.15,  // Reduced gravity for slower, more controlled movement
+        friction: 0.9,  // Increased friction for more realistic bounces
+        elasticity: 0.7, // Increased elasticity for more bouncy effect
         glowIntensity: 0.6,
         pinGlowColors: ['#18e77c', '#4287f5', '#ffc107'],
         activePin: null,
@@ -45,11 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
         shiftKeyDown: false
     };
     
-    // Multiplier definitions for different risk levels
+    // Multiplier definitions for different risk levels - Modified for easier wins
     const multiplierSets = {
-        low: [3.0, 2.0, 1.5, 1.0, 0.8, 0.6, 0.5, 0.5, 0.5, 0.6, 0.8, 1.0, 1.5, 2.0, 3.0, 5.0],
-        medium: [5.0, 3.0, 1.5, 1.0, 0.6, 0.5, 0.3, 0.2, 0.2, 0.3, 0.5, 0.6, 1.0, 1.5, 3.0, 5.0],
-        high: [10.0, 5.0, 3.0, 1.5, 1.0, 0.6, 0.5, 0.3, 0.3, 0.5, 0.6, 1.0, 1.5, 3.0, 5.0, 10.0]
+        low: [3.0, 2.0, 1.5, 1.2, 0.9, 0.8, 0.8, 0.8, 0.8, 0.8, 0.9, 1.2, 1.5, 2.0, 3.0, 5.0],
+        medium: [5.0, 3.0, 2.0, 1.5, 0.9, 0.8, 0.5, 0.5, 0.5, 0.5, 0.8, 0.9, 1.5, 2.0, 3.0, 5.0],
+        high: [10.0, 5.0, 3.0, 2.0, 1.5, 0.9, 0.8, 0.5, 0.5, 0.8, 0.9, 1.5, 2.0, 3.0, 5.0, 10.0]
     };
     
     // Initialize the game
@@ -85,19 +85,31 @@ document.addEventListener('DOMContentLoaded', () => {
     function resizeCanvas() {
         // First, ensure the board container is properly sized
         if (plinkoBoard) {
-            // Make sure the canvas takes up the full board area
-            canvas.width = plinkoBoard.clientWidth;
-            canvas.height = plinkoBoard.clientHeight;
+            // Make the canvas smaller for better playability
+            const containerWidth = plinkoBoard.clientWidth;
+            const containerHeight = plinkoBoard.clientHeight;
+            
+            // Make the game board more compact
+            const scale = 0.85; // 85% of original size
+            canvas.width = containerWidth * scale;
+            canvas.height = containerHeight * scale;
+            
+            // Center the canvas in the container
+            canvas.style.position = 'absolute';
+            canvas.style.left = `${(containerWidth - canvas.width) / 2}px`;
+            canvas.style.top = `${(containerHeight - canvas.height) / 2}px`;
             
             // Make sure the multiplier container aligns perfectly with the canvas
             if (multiplierContainer) {
                 // Set exact width with no margins or paddings
                 multiplierContainer.style.width = `${canvas.width}px`;
-                multiplierContainer.style.left = '0';
-                multiplierContainer.style.right = '0';
+                multiplierContainer.style.left = `${(containerWidth - canvas.width) / 2}px`;
+                multiplierContainer.style.right = 'auto';
                 multiplierContainer.style.padding = '0';
                 multiplierContainer.style.margin = '0';
                 multiplierContainer.style.boxSizing = 'border-box';
+                multiplierContainer.style.position = 'absolute';
+                multiplierContainer.style.bottom = '0';
                 
                 // Add an important style to ensure the width is enforced
                 const style = document.createElement('style');
@@ -107,8 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         box-sizing: border-box !important;
                         padding: 0 !important;
                         margin: 0 !important;
-                        left: 0 !important;
-                        right: 0 !important;
+                        left: ${(containerWidth - canvas.width) / 2}px !important;
+                        right: auto !important;
                     }
                     
                     .multiplier-bucket {
@@ -436,11 +448,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function dropBall(betAmount) {
         // Create a new ball at the top center of the board
         const ball = {
-            x: canvas.width / 2 + (Math.random() * 20 - 10), // Small random offset
+            x: canvas.width / 2 + (Math.random() * 10 - 5), // Smaller random offset
             y: 20, // Start slightly higher
             radius: gameState.ballRadius,
-            vx: 0,
-            vy: 2, // Start with initial downward velocity
+            vx: (Math.random() - 0.5) * 1.5, // Give initial horizontal velocity for better randomness
+            vy: 1, // Slower initial downward velocity
             betAmount,
             done: false,
             multiplier: null,
@@ -448,9 +460,6 @@ document.addEventListener('DOMContentLoaded', () => {
             glowIntensity: 1.0, // For dynamic glow effect
             animationPhase: 0 // For pulsating effect
         };
-        
-        // Add some random horizontal velocity
-        ball.vx = (Math.random() - 0.5) * 2;
         
         // Add ball to game state
         gameState.ballsInPlay.push(ball);
@@ -492,11 +501,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ball.animationPhase > Math.PI * 2) ball.animationPhase = 0;
             ball.glowIntensity = 0.7 + Math.sin(ball.animationPhase) * 0.3;
             
-            // Apply gravity - significantly increased for faster movement
-            ball.vy += gameState.gravity * 2.5;
+            // Apply gravity - moderately increased for better movement
+            ball.vy += gameState.gravity;
             
-            // Apply speed cap to prevent extreme velocities but allow faster motion
-            const maxSpeed = 20;
+            // Apply speed cap to prevent extreme velocities
+            const maxSpeed = 10; // Reduced max speed for more controlled movement
             if (ball.vy > maxSpeed) ball.vy = maxSpeed;
             
             // Update position
@@ -521,16 +530,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Calculate relative velocity
                     const relativeVelocity = ball.vx * nx + ball.vy * ny;
                     
-                    // Apply impulse - slightly reduced elasticity for quicker movement
-                    const impulse = 2 * relativeVelocity * (gameState.elasticity * 0.9);
+                    // Apply impulse with improved elasticity for more natural bounces
+                    const impulse = 2 * relativeVelocity * gameState.elasticity;
                     ball.vx -= impulse * nx;
                     ball.vy -= impulse * ny;
                     
-                    // Apply friction - reduced for faster movement
+                    // Apply friction - adjusted for more natural bounces
                     ball.vx *= gameState.friction;
                     
-                    // Apply slight center bias for realistic distribution
-                    const centerBias = (canvas.width / 2 - ball.x) * 0.003;
+                    // Apply slight randomness for more variation in bounces
+                    ball.vx += (Math.random() - 0.5) * 0.2;
+                    
+                    // Apply very small center bias for more natural distribution
+                    const centerBias = (canvas.width / 2 - ball.x) * 0.0015;
                     ball.vx += centerBias;
                     
                     // Move ball out of collision
@@ -540,23 +552,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // Strict boundary enforcement - don't allow balls to leave the board
-            const padding = 2; // Small padding to avoid visual glitches
+            // Boundary handling - bouncy walls
+            const padding = 2;
             const effectiveRadius = ball.radius + padding;
             
             if (ball.x - effectiveRadius < 0) {
                 ball.x = effectiveRadius;
-                ball.vx = -ball.vx * gameState.friction;
-                // Add extra bounce back from wall
-                ball.vx = Math.min(ball.vx + 0.5, 5);
+                ball.vx = -ball.vx * 0.95; // Slightly reduced energy for walls
             } else if (ball.x + effectiveRadius > canvas.width) {
                 ball.x = canvas.width - effectiveRadius;
-                ball.vx = -ball.vx * gameState.friction;
-                // Add extra bounce back from wall
-                ball.vx = Math.max(ball.vx - 0.5, -5);
+                ball.vx = -ball.vx * 0.95;
             }
             
-            // Check for multiplier bucket collisions - use a more precise calculation
+            // Check for multiplier bucket collisions
             if (ball.y >= canvas.height - 65) {
                 // Calculate which bucket the ball is in based on x position
                 const bucketIndex = Math.floor(ball.x / (canvas.width / gameState.multipliers.length));

@@ -127,6 +127,13 @@
             pointer-events: none;
         }
         
+        .setting-note {
+            margin-top: 5px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
+        
         .payout-display {
             background-color: #0d1321;
             border-radius: 8px;
@@ -743,24 +750,30 @@
                         </div>
                         
                         <div class="risk-section">
-                            <label for="riskLevel">Risk</label>
-                            <div class="dropdown-wrapper">
-                                <select id="riskLevel" class="risk-dropdown">
-                                    <option value="low">Low</option>
-                                    <option value="medium" selected>Medium</option>
-                                    <option value="high">High</option>
-                                </select>
+                            <div class="setting-item">
+                                <label for="riskLevel">Risk Level</label>
+                                <div class="dropdown-wrapper">
+                                    <select id="riskLevel" class="risk-dropdown">
+                                        <option value="low">Low Risk (Easy - More Frequent Wins)</option>
+                                        <option value="medium" selected>Medium Risk (Balanced)</option>
+                                        <option value="high">High Risk (Hard - Higher Payouts)</option>
+                                    </select>
+                                </div>
+                                <p class="setting-note">Lower risk gives more frequent wins!</p>
                             </div>
                         </div>
                         
                         <div class="rows-section">
-                            <label for="rowsCount">Rows</label>
-                            <div class="dropdown-wrapper">
-                                <select id="rowsCount" class="rows-dropdown">
-                                    <option value="8">8</option>
-                                    <option value="12">12</option>
-                                    <option value="16" selected>16</option>
-                                </select>
+                            <div class="setting-item">
+                                <label for="rowsCount">Grid Size</label>
+                                <div class="dropdown-wrapper">
+                                    <select id="rowsCount" class="rows-dropdown">
+                                        <option value="8">8 rows (Easier)</option>
+                                        <option value="12" selected>12 rows (Standard)</option>
+                                        <option value="16">16 rows (Challenging)</option>
+                                    </select>
+                                </div>
+                                <p class="setting-note">Fewer rows = easier to predict landing spot</p>
                             </div>
                         </div>
                         
