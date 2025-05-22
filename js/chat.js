@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadChatMessages();
     
     // Set up real-time subscription for new messages
+    enableRealtimeForChat();
     subscribeToNewMessages();
 });
 
@@ -206,6 +207,15 @@ function addChatStyles() {
             margin-left: 5px;
         }
         
+        .system-message {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-left: 3px solid var(--primary-color, #00cc88);
+        }
+        
+        .system-message .username {
+            color: #ffcc00;
+        }
+        
         .chat-form {
             padding: 10px;
             border-top: 1px solid var(--border-color, #2a2d3e);
@@ -295,6 +305,8 @@ function updateBadge() {
 // Load existing chat messages
 async function loadChatMessages() {
     try {
+        console.log('Loading existing chat messages...');
+        
         const { data, error } = await window.SupabaseDB
             .from('chat_messages')
             .select('*')
@@ -303,25 +315,79 @@ async function loadChatMessages() {
             
         if (error) throw error;
         
+        console.log('Loaded chat messages:', data);
+        
         chatMessages = data || [];
+        
+        if (chatMessages.length === 0) {
+            console.log('No existing chat messages found');
+            
+            // Try to create a test message if no messages exist
+            if (window.BetaAuth?.getCurrentUser()) {
+                const testMessage = {
+                    username: 'System',
+                    message: 'Welcome to the BetaGames chat!',
+                    created_at: new Date().toISOString()
+                };
+                
+                try {
+                    console.log('Creating welcome message...');
+                    await window.SupabaseDB.from('chat_messages').insert([testMessage]);
+                    console.log('Welcome message created');
+                    
+                    // Reload messages
+                    const { data: refreshData } = await window.SupabaseDB
+                        .from('chat_messages')
+                        .select('*')
+                        .order('created_at', { ascending: true })
+                        .limit(50);
+                        
+                    if (refreshData && refreshData.length > 0) {
+                        chatMessages = refreshData;
+                        console.log('Reloaded messages after creating welcome message:', chatMessages);
+                    }
+                } catch (welcomeError) {
+                    console.error('Error creating welcome message:', welcomeError);
+                }
+            }
+        }
+        
         renderChatMessages();
         
         // Update last message time for subscription
         if (chatMessages.length > 0) {
             lastMessageTime = new Date(chatMessages[chatMessages.length - 1].created_at);
+            console.log('Last message time:', lastMessageTime);
         }
         
         scrollToBottom();
     } catch (error) {
         console.error('Error loading chat messages:', error);
+        
+        // Create empty message array in case of error
+        chatMessages = [];
+        renderChatMessages();
     }
 }
 
 // Render chat messages
 function renderChatMessages() {
-    if (!chatMessagesList) return;
+    if (!chatMessagesList) {
+        console.error('Chat messages list element not found!');
+        return;
+    }
     
+    console.log('Rendering chat messages, count:', chatMessages.length);
     chatMessagesList.innerHTML = '';
+    
+    if (chatMessages.length === 0) {
+        // Display a placeholder message
+        const li = document.createElement('li');
+        li.className = 'chat-message system-message';
+        li.innerHTML = '<div class="message-text">No messages yet. Be the first to say hello!</div>';
+        chatMessagesList.appendChild(li);
+        return;
+    }
     
     chatMessages.forEach(message => {
         addMessageToUI(message);
@@ -330,14 +396,25 @@ function renderChatMessages() {
 
 // Add a message to the UI
 function addMessageToUI(message) {
+    if (!chatMessagesList) {
+        console.error('Chat messages list element not found when adding message!');
+        return;
+    }
+    
+    console.log('Adding message to UI:', message);
+    
     const li = document.createElement('li');
     li.className = 'chat-message';
+    
+    if (message.username === 'System') {
+        li.className += ' system-message';
+    }
     
     const time = new Date(message.created_at);
     const timeStr = formatTime(time);
     
     li.innerHTML = `
-        <div class="username">${message.username}<span class="time">${timeStr}</span></div>
+        <div class="username">${escapeHTML(message.username)}<span class="time">${timeStr}</span></div>
         <div class="message-text">${escapeHTML(message.message)}</div>
     `;
     
@@ -346,9 +423,21 @@ function addMessageToUI(message) {
 
 // Subscribe to new messages
 function subscribeToNewMessages() {
+    console.log('Setting up subscription to chat messages...');
+    
+    // Enable realtime functionality for this table
+    window.SupabaseDB
+        .from('chat_messages')
+        .on('*', payload => {
+            console.log('Received realtime event:', payload);
+        })
+        .subscribe();
+    
     const subscription = window.SupabaseDB
         .from('chat_messages')
         .on('INSERT', payload => {
+            console.log('New message received:', payload);
+            
             const newMessage = payload.new;
             
             // Add to messages array
@@ -368,10 +457,13 @@ function subscribeToNewMessages() {
                 scrollToBottom();
             }
         })
-        .subscribe();
+        .subscribe((status) => {
+            console.log('Subscription status:', status);
+        });
         
     // Store subscription for cleanup
     window.chatSubscription = subscription;
+    console.log('Chat subscription created:', subscription);
 }
 
 // Send a chat message
@@ -386,21 +478,49 @@ async function sendMessage() {
     if (!messageText) return;
     
     try {
+        console.log('Sending message to Supabase:', messageText);
+        
         const message = {
             username: currentUser.username,
             message: messageText,
             created_at: new Date().toISOString()
         };
         
+        console.log('Message object:', message);
+        
         // Send to Supabase
         const { data, error } = await window.SupabaseDB
             .from('chat_messages')
-            .insert([message]);
+            .insert([message])
+            .select();
             
         if (error) throw error;
         
+        console.log('Message sent successfully, response:', data);
+        
         // Clear input
         messageInput.value = '';
+        
+        // If the subscription isn't working, manually add the message to UI
+        // This is a fallback in case realtime isn't working
+        if (data && data.length > 0) {
+            const newMessage = data[0];
+            
+            // Check if this message is already in our list (avoid duplicates)
+            const messageExists = chatMessages.some(m => 
+                m.id === newMessage.id || 
+                (m.username === newMessage.username && 
+                 m.message === newMessage.message && 
+                 m.created_at === newMessage.created_at)
+            );
+            
+            if (!messageExists) {
+                console.log('Manually adding message to UI (fallback)');
+                chatMessages.push(newMessage);
+                addMessageToUI(newMessage);
+                scrollToBottom();
+            }
+        }
         
     } catch (error) {
         console.error('Error sending message:', error);
@@ -437,6 +557,28 @@ function scrollToBottom() {
     if (chatMessagesList) {
         const chatBody = chatMessagesList.parentElement;
         chatBody.scrollTop = chatBody.scrollHeight;
+    }
+}
+
+// Enable realtime for chat messages table
+async function enableRealtimeForChat() {
+    try {
+        console.log('Enabling realtime for chat_messages table...');
+        
+        // Check if the Supabase JS client has the realtimeClient property
+        if (window.SupabaseDB.realtime) {
+            // Enable channel for chat_messages table
+            await window.SupabaseDB.realtime.channel('public:chat_messages').subscribe();
+            console.log('Realtime enabled for chat_messages table');
+        } else {
+            console.warn('Supabase realtime client not available, trying alternate method');
+            
+            // For older Supabase versions, just try to connect
+            await window.SupabaseDB.from('chat_messages').select('id').limit(1);
+            console.log('Connected to chat_messages table');
+        }
+    } catch (error) {
+        console.error('Error enabling realtime for chat:', error);
     }
 }
 
