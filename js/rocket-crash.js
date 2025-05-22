@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeBetsList = document.getElementById('activeBetsList');
     const gameHistoryBody = document.getElementById('gameHistoryBody');
     const rocketBoard = document.querySelector('.rocket-board');
+    const countdownDisplay = document.getElementById('countdownDisplay');
+    const crashHistoryDisplay = document.getElementById('crashHistory');
     
     // Game state
     let gameState = {
@@ -19,20 +21,24 @@ document.addEventListener('DOMContentLoaded', () => {
         currentMultiplier: 1.00,
         gameHistory: [],
         activeBets: [],
+        recentCrashes: [],
+        countdownTime: 5, // 5 seconds countdown between games
+        currentCountdown: 0,
         rocket: {
             x: 0,
             y: 0,
-            width: 50,
-            height: 100,
+            width: 60,  // Increased size
+            height: 120, // Increased size
             angle: 0,
             scale: 1
         },
         particles: [],
         stars: [],
-        crashChance: 0.005, // Initial chance of crashing per frame (increases over time)
-        maxMultiplier: 100, // Maximum possible multiplier
+        crashChance: 0.001, // Reduced chance of crashing per frame
+        growthRate: 0.3,    // Reduced growth rate for slower climbs
+        maxMultiplier: 1000, // Increased maximum possible multiplier
         updateInterval: null,
-        houseEdge: 0.04 // 4% house edge
+        houseEdge: 0.02 // Reduced to 2% house edge to make winning easier
     };
     
     // Initialize the game
@@ -53,14 +59,50 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize stars
         initStars();
         
+        // Initialize some recent crashes for UI
+        initRecentCrashes();
+        
+        // Update crash history display
+        updateCrashHistoryDisplay();
+        
         // Draw initial state
         draw();
         
         // Load game history with some sample data
         loadGameHistory();
         
-        // Start game loop
-        startGameLoop();
+        // Start countdown for first game
+        startGameCountdown();
+    }
+    
+    function initRecentCrashes() {
+        // Add some sample crash points
+        gameState.recentCrashes = [
+            { multiplier: 1.24, color: '#ff4444' },
+            { multiplier: 2.78, color: '#18e77c' },
+            { multiplier: 1.05, color: '#ff4444' },
+            { multiplier: 4.23, color: '#18e77c' },
+            { multiplier: 1.92, color: '#18e77c' },
+            { multiplier: 3.45, color: '#18e77c' },
+            { multiplier: 1.14, color: '#ff4444' },
+            { multiplier: 8.73, color: '#18e77c' }
+        ];
+    }
+    
+    function updateCrashHistoryDisplay() {
+        if (!crashHistoryDisplay) return;
+        
+        // Clear current display
+        crashHistoryDisplay.innerHTML = '';
+        
+        // Add each crash point
+        gameState.recentCrashes.forEach(crash => {
+            const crashItem = document.createElement('div');
+            crashItem.className = 'crash-item';
+            crashItem.textContent = crash.multiplier.toFixed(2) + 'x';
+            crashItem.style.color = crash.color;
+            crashHistoryDisplay.appendChild(crashItem);
+        });
     }
     
     function resizeCanvas() {
@@ -99,29 +141,50 @@ document.addEventListener('DOMContentLoaded', () => {
     function initStars() {
         // Create background stars
         gameState.stars = [];
-        const starCount = 100;
+        const starCount = 150; // More stars for better visuals
         
         for (let i = 0; i < starCount; i++) {
             gameState.stars.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
-                size: Math.random() * 2 + 1,
+                size: Math.random() * 3 + 1, // Larger stars
                 speed: Math.random() * 0.5 + 0.1,
                 opacity: Math.random() * 0.8 + 0.2
             });
         }
     }
     
-    function startGameLoop() {
-        // Start a new game every 5 seconds if not already active
-        setInterval(() => {
-            if (!gameState.gameActive) {
+    function startGameCountdown() {
+        // Reset countdown
+        gameState.currentCountdown = gameState.countdownTime;
+        
+        // Update display
+        if (countdownDisplay) {
+            countdownDisplay.textContent = `Next launch: ${gameState.currentCountdown}s`;
+            countdownDisplay.style.display = 'block';
+        }
+        
+        // Start countdown interval
+        const countdownInterval = setInterval(() => {
+            gameState.currentCountdown--;
+            
+            if (countdownDisplay) {
+                countdownDisplay.textContent = `Next launch: ${gameState.currentCountdown}s`;
+            }
+            
+            if (gameState.currentCountdown <= 0) {
+                clearInterval(countdownInterval);
+                if (countdownDisplay) {
+                    countdownDisplay.style.display = 'none';
+                }
                 startNewGame();
             }
-        }, 5000);
+        }, 1000);
     }
     
     function startNewGame() {
+        if (gameState.gameActive) return; // Prevent multiple games
+        
         gameState.gameActive = true;
         gameState.currentMultiplier = 1.00;
         gameState.particles = [];
@@ -151,8 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Increase multiplier with delta time to maintain consistent speed
             // We use exponential growth for the multiplier to make it more exciting
-            const growthRate = 0.5; // Adjust for speed
-            const increment = (deltaTime / 1000) * growthRate * gameState.currentMultiplier;
+            // Reduced growth rate for slower climb
+            const increment = (deltaTime / 1000) * gameState.growthRate * gameState.currentMultiplier;
             gameState.currentMultiplier += increment;
             
             // Limit to max multiplier
@@ -199,21 +262,26 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (r < houseEdge) {
             // Force early crash for house edge percentage of games
-            return 1.00; // Instant crash
+            return 1.00 + Math.random() * 0.5; // Give a small chance to at least go over 1.0
         }
         
         // Generate using a distribution that gives an expected value of 1
-        // We use an exponential distribution
+        // We use an exponential distribution but adjust it to make winning easier
         const lambda = Math.log(1 / (1 - houseEdge));
-        const result = Math.exp(r * lambda) / (1 - houseEdge);
+        let result = Math.exp(r * lambda) / (1 - houseEdge);
+        
+        // Increase chance of higher multipliers for player-friendly experience
+        if (Math.random() < 0.3) {
+            result = result * (1 + Math.random() * 2); // Boost some results
+        }
         
         // Round to 2 decimal places
         return Math.floor(result * 100) / 100;
     }
     
     function updateRocket(deltaTime) {
-        // Update rocket y position
-        const speedFactor = 0.05;
+        // Update rocket y position - slower movement
+        const speedFactor = 0.03; // Reduced for slower ascent
         gameState.rocket.y -= speedFactor * deltaTime * (1 + Math.log10(gameState.currentMultiplier));
         
         // Add slight rotation based on multiplier
@@ -221,26 +289,29 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Scale rocket based on distance from bottom
         const distanceFromBottom = canvas.height - gameState.rocket.y;
-        const scaleFactor = 1 - distanceFromBottom / canvas.height * 0.5;
-        gameState.rocket.scale = Math.max(0.5, scaleFactor);
+        const scaleFactor = 1 - distanceFromBottom / canvas.height * 0.3; // Less scaling
+        gameState.rocket.scale = Math.max(0.7, scaleFactor); // Minimum scale increased
     }
     
     function createRocketParticles() {
         // Add new particles
-        if (Math.random() < 0.3) {
+        if (Math.random() < 0.5) { // Increased particle rate
             const rocketBottomX = gameState.rocket.x;
             const rocketBottomY = gameState.rocket.y + gameState.rocket.height * 0.5 * gameState.rocket.scale;
             
-            gameState.particles.push({
-                x: rocketBottomX + (Math.random() - 0.5) * 20 * gameState.rocket.scale,
-                y: rocketBottomY,
-                radius: Math.random() * 5 + 2,
-                color: Math.random() < 0.7 ? '#ff4b2b' : '#ff9d00',
-                alpha: 1,
-                vx: (Math.random() - 0.5) * 2,
-                vy: Math.random() * 2 + 1,
-                life: Math.random() * 40 + 20
-            });
+            // Create flame trail
+            for (let i = 0; i < 3; i++) { // Multiple particles per frame
+                gameState.particles.push({
+                    x: rocketBottomX + (Math.random() - 0.5) * 25 * gameState.rocket.scale,
+                    y: rocketBottomY,
+                    radius: Math.random() * 6 + 3, // Larger particles
+                    color: Math.random() < 0.7 ? '#ff4b2b' : '#ff9d00',
+                    alpha: 1,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: Math.random() * 3 + 1.5, // Faster falling
+                    life: Math.random() * 40 + 30 // Longer life
+                });
+            }
         }
         
         // Update existing particles
@@ -248,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const particle = gameState.particles[i];
             particle.x += particle.vx;
             particle.y += particle.vy;
-            particle.alpha -= 0.02;
+            particle.alpha -= 0.015; // Slower fade
             particle.life--;
             
             // Remove dead particles
@@ -261,6 +332,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function updateMultiplierDisplay() {
         multiplierDisplay.textContent = gameState.currentMultiplier.toFixed(2) + 'x';
+        
+        // Change color based on multiplier for visual feedback
+        if (gameState.currentMultiplier >= 10) {
+            multiplierDisplay.style.color = '#ff9d00';
+            multiplierDisplay.style.textShadow = '0 0 20px rgba(255, 157, 0, 0.7)';
+        } else if (gameState.currentMultiplier >= 5) {
+            multiplierDisplay.style.color = '#18e77c';
+            multiplierDisplay.style.textShadow = '0 0 20px rgba(24, 231, 124, 0.7)';
+        } else if (gameState.currentMultiplier >= 2) {
+            multiplierDisplay.style.color = '#4287f5';
+            multiplierDisplay.style.textShadow = '0 0 20px rgba(66, 135, 245, 0.7)';
+        } else {
+            multiplierDisplay.style.color = '#fff';
+            multiplierDisplay.style.textShadow = '0 0 20px rgba(255, 255, 255, 0.5)';
+        }
     }
     
     function checkAutoCashouts() {
@@ -395,6 +481,21 @@ document.addEventListener('DOMContentLoaded', () => {
             gameState.animationFrame = null;
         }
         
+        // Add crash to history
+        const crashColor = gameState.currentMultiplier < 1.5 ? '#ff4444' : '#18e77c';
+        gameState.recentCrashes.unshift({ 
+            multiplier: gameState.currentMultiplier,
+            color: crashColor
+        });
+        
+        // Keep only last 8 crashes
+        if (gameState.recentCrashes.length > 8) {
+            gameState.recentCrashes.pop();
+        }
+        
+        // Update crash history display
+        updateCrashHistoryDisplay();
+        
         // Mark all remaining bets as crashed
         for (const bet of gameState.activeBets) {
             if (!bet.cashedOut) {
@@ -426,27 +527,30 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset UI for current user
         betButton.disabled = false;
         cashoutButton.style.display = 'none';
+        
+        // Start countdown for next game
+        startGameCountdown();
     }
     
     function showCrashAnimation() {
         // Add explosion particles
-        const explosionCount = 50;
+        const explosionCount = 100; // More particles for better explosion
         const rocketX = gameState.rocket.x;
         const rocketY = gameState.rocket.y;
         
         for (let i = 0; i < explosionCount; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * 5 + 2;
+            const speed = Math.random() * 6 + 3;
             
             gameState.particles.push({
-                x: rocketX + (Math.random() - 0.5) * 30,
-                y: rocketY + (Math.random() - 0.5) * 30,
-                radius: Math.random() * 8 + 3,
-                color: Math.random() < 0.6 ? '#ff4b2b' : '#ff9d00',
+                x: rocketX + (Math.random() - 0.5) * 40,
+                y: rocketY + (Math.random() - 0.5) * 40,
+                radius: Math.random() * 10 + 4, // Larger explosion particles
+                color: Math.random() < 0.6 ? '#ff4b2b' : (Math.random() < 0.5 ? '#ff9d00' : '#ffea00'),
                 alpha: 1,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
-                life: Math.random() * 60 + 20
+                life: Math.random() * 80 + 40 // Longer life for explosion particles
             });
         }
         
@@ -457,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const particle = gameState.particles[i];
                 particle.x += particle.vx;
                 particle.y += particle.vy;
-                particle.alpha -= 0.01;
+                particle.alpha -= 0.008; // Slower fade for longer explosion
                 particle.life--;
                 
                 // Apply gravity to particles
@@ -485,10 +589,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show crash multiplier
         multiplierDisplay.textContent = 'CRASH @ ' + gameState.currentMultiplier.toFixed(2) + 'x';
         multiplierDisplay.style.color = '#ff4b2b';
+        multiplierDisplay.style.textShadow = '0 0 20px rgba(255, 75, 43, 0.8)';
         
         // Reset display after a delay
         setTimeout(() => {
             multiplierDisplay.style.color = '#fff';
+            multiplierDisplay.style.textShadow = '0 0 20px rgba(255, 255, 255, 0.5)';
         }, 3000);
     }
     
@@ -609,6 +715,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Multiplier cell
             const multiplierCell = document.createElement('td');
             multiplierCell.textContent = item.multiplier.toFixed(2) + 'x';
+            if (item.multiplier == 0) {
+                multiplierCell.style.color = '#ff4444';
+            } else if (item.multiplier >= 2) {
+                multiplierCell.style.color = '#18e77c';
+            }
             
             // Payout cell
             const payoutCell = document.createElement('td');
@@ -702,6 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Draw gradient background
         const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
         gradient.addColorStop(0, '#0d1321');
+        gradient.addColorStop(0.5, '#141b2d');
         gradient.addColorStop(1, '#1c2639');
         
         ctx.fillStyle = gradient;
@@ -759,10 +871,40 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.closePath();
         ctx.fill();
         
+        // Add rocket body highlight
+        const bodyGradient = ctx.createLinearGradient(
+            -gameState.rocket.width / 2, 
+            -gameState.rocket.height / 2,
+            gameState.rocket.width / 2,
+            gameState.rocket.height / 2
+        );
+        bodyGradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+        bodyGradient.addColorStop(1, 'rgba(255, 75, 43, 0.0)');
+        
+        ctx.fillStyle = bodyGradient;
+        ctx.beginPath();
+        ctx.moveTo(0, -gameState.rocket.height / 2);
+        ctx.lineTo(gameState.rocket.width / 2, gameState.rocket.height / 2);
+        ctx.lineTo(-gameState.rocket.width / 2, gameState.rocket.height / 2);
+        ctx.closePath();
+        ctx.fill();
+        
         // Draw rocket window
         ctx.fillStyle = '#1c2639';
         ctx.beginPath();
-        ctx.arc(0, 0, gameState.rocket.width / 5, 0, Math.PI * 2);
+        ctx.arc(0, -gameState.rocket.height / 8, gameState.rocket.width / 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Add window reflection
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.beginPath();
+        ctx.arc(
+            -gameState.rocket.width / 10, 
+            -gameState.rocket.height / 8 - gameState.rocket.width / 12,
+            gameState.rocket.width / 12, 
+            0, 
+            Math.PI * 2
+        );
         ctx.fill();
         
         // Draw rocket fins
@@ -781,6 +923,25 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.moveTo(gameState.rocket.width / 2, gameState.rocket.height / 3);
         ctx.lineTo(gameState.rocket.width, gameState.rocket.height / 2);
         ctx.lineTo(gameState.rocket.width / 2, gameState.rocket.height / 2);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Add fin highlights
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        
+        // Left fin highlight
+        ctx.beginPath();
+        ctx.moveTo(-gameState.rocket.width / 2, gameState.rocket.height / 3);
+        ctx.lineTo(-gameState.rocket.width * 0.8, gameState.rocket.height / 2.5);
+        ctx.lineTo(-gameState.rocket.width / 2, gameState.rocket.height / 2.2);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Right fin highlight
+        ctx.beginPath();
+        ctx.moveTo(gameState.rocket.width / 2, gameState.rocket.height / 3);
+        ctx.lineTo(gameState.rocket.width * 0.8, gameState.rocket.height / 2.5);
+        ctx.lineTo(gameState.rocket.width / 2, gameState.rocket.height / 2.2);
         ctx.closePath();
         ctx.fill();
         
