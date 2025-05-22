@@ -100,6 +100,31 @@
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), 0 0 20px rgba(24, 231, 124, 0.3);
 }
 
+.back-home-btn {
+    display: inline-block;
+    background: rgba(12, 14, 26, 0.6);
+    color: #fff;
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.back-home-btn i {
+    margin-right: 8px;
+}
+
+.back-home-btn:hover {
+    background: rgba(24, 231, 124, 0.2);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
 /* Game Status Badges */
 .game-status {
     position: absolute;
@@ -133,32 +158,3 @@
 .game-status.coming-soon {
     background-color: rgba(244, 67, 54, 0.2);
     color: #F44336;
-    border: 1px solid rgba(244, 67, 54, 0.3);
-}
-
-.game-status.maintenance {
-    background-color: rgba(244, 67, 54, 0.2);
-    color: #F44336;
-    border: 1px solid rgba(244, 67, 54, 0.3);
-}
-
-/* Maintenance Icon for Game Cards */
-.maintenance-icon {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2;
-}
-
-.maintenance-icon i {
-    font-size: 48px;
-    color: #F44336;
-    animation: wrench-rotate 3s ease infinite;
-} 
