@@ -202,7 +202,7 @@
             flex: 2;
             background-color: #1c2639;
             border-radius: 12px;
-            padding: 25px;
+            padding: 0;
             display: flex;
             flex-direction: column;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -218,6 +218,7 @@
             position: absolute;
             top: 0;
             left: 0;
+            z-index: 1;
         }
         
         .multiplier-container {
@@ -225,20 +226,29 @@
             width: 100%;
             justify-content: space-between;
             position: absolute;
-            bottom: 10px;
+            bottom: 0;
             left: 0;
-            padding: 0 25px;
+            right: 0;
+            z-index: 2;
+            background-color: rgba(12, 14, 26, 0.5);
+            padding: 0;
         }
         
         .multiplier-bucket {
-            width: 60px;
             height: 50px;
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: bold;
             font-size: 14px;
-            border-radius: 4px 4px 0 0;
+            border-radius: 0;
+            transition: all 0.3s ease;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .multiplier-bucket:last-child {
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .multiplier-bucket[data-value="0.2"],
@@ -256,10 +266,33 @@
         }
         
         .multiplier-bucket[data-value="2.0"],
+        .multiplier-bucket[data-value="3.0"],
         .multiplier-bucket[data-value="5.0"],
-        .multiplier-bucket[data-value="10.0"] {
+        .multiplier-bucket[data-value="10.0"],
+        .multiplier-bucket[data-value="20.0"] {
             background-color: rgba(24, 231, 124, 0.7);
             color: #000;
+        }
+        
+        .bucket-highlight {
+            animation: bucketGlow 1s ease-out;
+            z-index: 3;
+        }
+        
+        @keyframes bucketGlow {
+            0% { transform: scale(1); box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px var(--primary-color); }
+            100% { transform: scale(1); box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+        }
+        
+        .drop-animation {
+            animation: dropButton 0.5s ease-out;
+        }
+        
+        @keyframes dropButton {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(3px); }
+            100% { transform: translateY(0); }
         }
         
         .game-history {
@@ -332,26 +365,6 @@
             font-weight: bold;
         }
         
-        /* Ball animation */
-        @keyframes ballBounce {
-            0% { transform: scale(1); }
-            10% { transform: scale(0.8); }
-            20% { transform: scale(1); }
-            100% { transform: scale(1); }
-        }
-        
-        .ball {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #ffffff, #18e77c);
-            box-shadow: 0 0 10px rgba(24, 231, 124, 0.7);
-            position: absolute;
-            z-index: 2;
-            animation: ballBounce 0.3s ease-out;
-        }
-        
-        /* Result animation */
         .result-popup {
             position: absolute;
             top: 50%;
@@ -367,11 +380,18 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
+            backdrop-filter: blur(5px);
         }
         
         .result-popup.show {
             opacity: 1;
             pointer-events: auto;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0.7); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
         
         .result-popup h3 {
@@ -384,30 +404,25 @@
             font-size: 36px;
             font-weight: bold;
             margin-bottom: 20px;
+            animation: numberGrow 0.5s ease-out;
+        }
+        
+        @keyframes numberGrow {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
         }
         
         .result-amount.win {
             color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(24, 231, 124, 0.5);
         }
         
         .result-amount.loss {
             color: #ff4444;
+            text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
         }
         
-        @media (max-width: 992px) {
-            .plinko-game-area {
-                flex-direction: column;
-            }
-            
-            .plinko-controls {
-                max-width: 100%;
-            }
-            
-            .plinko-board {
-                min-height: 500px;
-            }
-        }
-
         /* Auto/Manual Tabs */
         .bet-mode-tabs {
             display: flex;
@@ -439,6 +454,17 @@
         
         .auto-bet-panel.active {
             display: block;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .plinko-game-area {
+                flex-direction: column;
+            }
+            
+            .plinko-controls {
+                max-width: 100%;
+            }
         }
     </style>
 </head>

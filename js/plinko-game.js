@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultAmount = document.getElementById('resultAmount');
     const multiplierContainer = document.getElementById('multiplierContainer');
     const gameHistoryBody = document.getElementById('gameHistoryBody');
+    const plinkoBoard = document.querySelector('.plinko-board');
     
     // Game state
     let gameState = {
@@ -32,7 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ballRadius: 10,
         gravity: 0.2,
         friction: 0.8,
-        elasticity: 0.6
+        elasticity: 0.6,
+        glowIntensity: 0.6,
+        pinGlowColors: ['#18e77c', '#4287f5', '#ffc107'],
+        activePin: null,
+        activePinTimeout: null
     };
     
     // Multiplier definitions for different risk levels
@@ -65,14 +70,25 @@ document.addEventListener('DOMContentLoaded', () => {
         // Draw initial state
         draw();
         
+        // Start ambient animation
+        animatePins();
+        
         // Load game history with some sample data
         loadGameHistory();
     }
     
     function resizeCanvas() {
-        const boardDiv = document.querySelector('.plinko-board');
-        canvas.width = boardDiv.clientWidth;
-        canvas.height = boardDiv.clientHeight;
+        // First, ensure the board container is properly sized
+        if (plinkoBoard) {
+            // Make sure the canvas takes up the full board area
+            canvas.width = plinkoBoard.clientWidth;
+            canvas.height = plinkoBoard.clientHeight;
+            
+            // Make sure the multiplier container aligns with the canvas
+            if (multiplierContainer) {
+                multiplierContainer.style.width = `${canvas.width}px`;
+            }
+        }
         
         // Reinitialize game board when canvas size changes
         if (gameState.pins.length > 0) {
@@ -121,9 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const boardWidth = canvas.width;
         const boardHeight = canvas.height;
         const horizontalPadding = 50;
-        const verticalPadding = 80;
+        const verticalPadding = 60;
+        const bucketHeight = 60; // Height reserved for multiplier buckets
         const availableWidth = boardWidth - (horizontalPadding * 2);
-        const availableHeight = boardHeight - (verticalPadding * 2) - 50; // Extra space for buckets
+        const availableHeight = boardHeight - verticalPadding - bucketHeight;
         
         const pinSpacing = Math.min(availableWidth / rowCount, availableHeight / rowCount);
         
@@ -137,7 +154,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const x = startX + pin * pinSpacing;
                 const y = verticalPadding + row * pinSpacing;
                 
-                gameState.pins.push({ x, y, radius: gameState.pinRadius });
+                gameState.pins.push({ 
+                    x, 
+                    y, 
+                    radius: gameState.pinRadius,
+                    glowColor: gameState.pinGlowColors[Math.floor(Math.random() * gameState.pinGlowColors.length)],
+                    glowSize: 0,
+                    animationSpeed: 0.01 + Math.random() * 0.02
+                });
             }
         }
         
@@ -157,20 +181,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate bucket positions
         const boardWidth = canvas.width;
         const boardHeight = canvas.height;
-        const horizontalPadding = 20;
+        const bucketHeight = 60;
+        const horizontalPadding = 0;
         const bucketWidth = (boardWidth - (horizontalPadding * 2)) / bucketCount;
         
         for (let i = 0; i < bucketCount; i++) {
             const multiplier = multipliers[i];
             const x = horizontalPadding + (i * bucketWidth) + bucketWidth / 2;
-            const y = boardHeight - 30;
+            const y = boardHeight - bucketHeight / 2;
             
             // Create visual bucket
             const bucketElement = document.createElement('div');
             bucketElement.className = 'multiplier-bucket';
             bucketElement.textContent = `${multiplier}x`;
             bucketElement.dataset.value = multiplier;
-            bucketElement.style.width = `${bucketWidth - 4}px`;
+            bucketElement.style.width = `${bucketWidth - 2}px`;
             multiplierContainer.appendChild(bucketElement);
             
             // Add to game state
@@ -178,7 +203,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 value: multiplier,
                 x,
                 y,
-                width: bucketWidth
+                width: bucketWidth,
+                height: bucketHeight,
+                element: bucketElement,
+                isActive: false,
+                activeTime: 0
             });
         }
         
@@ -228,6 +257,12 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Not enough coins in your balance.');
             return;
         }
+        
+        // Add drop animation to the play button
+        playButton.classList.add('drop-animation');
+        setTimeout(() => {
+            playButton.classList.remove('drop-animation');
+        }, 500);
         
         // Update game state
         gameState.isPlaying = true;
@@ -302,7 +337,10 @@ document.addEventListener('DOMContentLoaded', () => {
             vy: 0,
             betAmount,
             done: false,
-            multiplier: null
+            multiplier: null,
+            trail: [], // For trail effect
+            glowIntensity: 1.0, // For dynamic glow effect
+            animationPhase: 0 // For pulsating effect
         };
         
         // Add some random horizontal velocity
@@ -340,6 +378,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (ball.done) continue;
             
+            // Update trail (for visual effect)
+            if (ball.trail.length > 8) ball.trail.pop();
+            ball.trail.unshift({x: ball.x, y: ball.y});
+            
+            // Update animation phase
+            ball.animationPhase += 0.1;
+            if (ball.animationPhase > Math.PI * 2) ball.animationPhase = 0;
+            ball.glowIntensity = 0.7 + Math.sin(ball.animationPhase) * 0.3;
+            
             // Apply gravity
             ball.vy += gameState.gravity;
             
@@ -355,6 +402,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Collision detected
                 if (distance < ball.radius + pin.radius) {
+                    // Highlight this pin
+                    highlightPin(pin);
+                    
                     // Calculate collision normal
                     const nx = dx / distance;
                     const ny = dy / distance;
@@ -387,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Check for multiplier bucket collisions
-            if (ball.y > canvas.height - 50) {
+            if (ball.y > canvas.height - 70) {
                 for (const multiplier of gameState.multipliers) {
                     const leftEdge = multiplier.x - multiplier.width / 2;
                     const rightEdge = multiplier.x + multiplier.width / 2;
@@ -395,6 +445,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (ball.x >= leftEdge && ball.x <= rightEdge) {
                         ball.multiplier = multiplier.value;
                         ball.done = true;
+                        
+                        // Highlight this bucket
+                        highlightBucket(multiplier);
                         
                         // Calculate payout
                         const payout = ball.betAmount * ball.multiplier;
@@ -426,32 +479,130 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.ballsInPlay = gameState.ballsInPlay.filter(ball => !ball.done);
     }
     
+    function highlightPin(pin) {
+        // Set this pin as the active pin with a glow effect
+        gameState.activePin = pin;
+        pin.glowSize = pin.radius * 3;
+        
+        // Clear any existing timeout
+        if (gameState.activePinTimeout) {
+            clearTimeout(gameState.activePinTimeout);
+        }
+        
+        // Set a timeout to clear the highlight
+        gameState.activePinTimeout = setTimeout(() => {
+            gameState.activePin = null;
+        }, 300);
+    }
+    
+    function highlightBucket(multiplier) {
+        if (!multiplier.element) return;
+        
+        // Add a highlight animation class
+        multiplier.element.classList.add('bucket-highlight');
+        
+        // Remove it after animation completes
+        setTimeout(() => {
+            multiplier.element.classList.remove('bucket-highlight');
+        }, 1000);
+    }
+    
     function draw() {
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
+        // Draw background grid (subtle)
+        drawBackgroundGrid();
+        
         // Draw pins
         drawPins();
         
-        // Draw balls
-        drawBalls();
-        
         // Draw multiplier slots
         drawMultiplierSlots();
+        
+        // Draw balls
+        drawBalls();
+    }
+    
+    function drawBackgroundGrid() {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.lineWidth = 1;
+        
+        const gridSize = 30;
+        
+        // Draw vertical lines
+        for (let x = 0; x < canvas.width; x += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+        
+        // Draw horizontal lines
+        for (let y = 0; y < canvas.height; y += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
     }
     
     function drawPins() {
-        ctx.fillStyle = '#FFFFFF';
-        
         for (const pin of gameState.pins) {
+            // Base pin
+            ctx.fillStyle = '#FFFFFF';
             ctx.beginPath();
             ctx.arc(pin.x, pin.y, pin.radius, 0, Math.PI * 2);
             ctx.fill();
+            
+            // Draw glow if this is the active pin or it's pulsating
+            if (gameState.activePin === pin && pin.glowSize > 0) {
+                const gradient = ctx.createRadialGradient(
+                    pin.x, pin.y, pin.radius,
+                    pin.x, pin.y, pin.glowSize
+                );
+                gradient.addColorStop(0, pin.glowColor);
+                gradient.addColorStop(1, 'rgba(24, 231, 124, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(pin.x, pin.y, pin.glowSize, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Reduce glow size for animation
+                pin.glowSize *= 0.9;
+            }
         }
     }
     
     function drawBalls() {
         for (const ball of gameState.ballsInPlay) {
+            // Draw trail effect
+            for (let i = 0; i < ball.trail.length; i++) {
+                const trailPos = ball.trail[i];
+                const alpha = (1 - i / ball.trail.length) * 0.3;
+                const size = ball.radius * (1 - i / ball.trail.length) * 0.8;
+                
+                ctx.fillStyle = `rgba(24, 231, 124, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(trailPos.x, trailPos.y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Ball glow
+            const glowSize = ball.radius * 2 * ball.glowIntensity;
+            const glowGradient = ctx.createRadialGradient(
+                ball.x, ball.y, ball.radius * 0.5,
+                ball.x, ball.y, glowSize
+            );
+            glowGradient.addColorStop(0, 'rgba(24, 231, 124, 0.8)');
+            glowGradient.addColorStop(1, 'rgba(24, 231, 124, 0)');
+            
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, glowSize, 0, Math.PI * 2);
+            ctx.fill();
+            
             // Ball gradient
             const gradient = ctx.createRadialGradient(
                 ball.x - ball.radius * 0.3,
@@ -484,6 +635,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function drawMultiplierSlots() {
+        // Draw the container for multipliers
+        ctx.fillStyle = 'rgba(12, 14, 26, 0.5)';
+        ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+        
+        // Draw divider lines
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.lineWidth = 1;
         
@@ -493,13 +649,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Draw divider lines
             ctx.beginPath();
-            ctx.moveTo(left, canvas.height - 50);
+            ctx.moveTo(left, canvas.height - 60);
             ctx.lineTo(left, canvas.height);
             ctx.stroke();
             
             if (multiplier === gameState.multipliers[gameState.multipliers.length - 1]) {
                 ctx.beginPath();
-                ctx.moveTo(right, canvas.height - 50);
+                ctx.moveTo(right, canvas.height - 60);
                 ctx.lineTo(right, canvas.height);
                 ctx.stroke();
             }
@@ -608,6 +764,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Ambient pin animation
+    function animatePins() {
+        // Pick a random pin to highlight
+        const randomIndex = Math.floor(Math.random() * gameState.pins.length);
+        const randomPin = gameState.pins[randomIndex];
+        
+        // Set glow size
+        randomPin.glowSize = randomPin.radius * 2;
+        
+        // Set a timeout for the next animation
+        setTimeout(animatePins, 300 + Math.random() * 700);
+        
+        // Redraw if we're not already animating
+        if (!gameState.animationFrame) {
+            draw();
+        }
+    }
+    
     // Load initial game history with sample data
     function loadGameHistory() {
         const riskLevels = ['low', 'medium', 'high'];
@@ -654,4 +828,29 @@ document.addEventListener('DOMContentLoaded', () => {
         initGameBoard();
         draw();
     });
+    
+    // Add CSS animation for bucket highlighting
+    const style = document.createElement('style');
+    style.textContent = `
+        .bucket-highlight {
+            animation: bucketGlow 1s ease-out;
+        }
+        
+        @keyframes bucketGlow {
+            0% { transform: scale(1); box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px var(--primary-color); }
+            100% { transform: scale(1); box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+        }
+        
+        .drop-animation {
+            animation: dropButton 0.5s ease-out;
+        }
+        
+        @keyframes dropButton {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(3px); }
+            100% { transform: translateY(0); }
+        }
+    `;
+    document.head.appendChild(style);
 }); 
