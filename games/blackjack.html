@@ -6,7 +6,8 @@
     <title>Blackjack - BetaGames</title>
     <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="../assets/favicon.ico.svg" type="image/x-icon">
-    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="css/blackjack.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -60,15 +61,132 @@
             <!-- Game Container -->
             <div class="game-container">
                 <h1 class="game-title">Blackjack</h1>
-                <div class="coming-soon-message">
-                    <div class="message-content">
-                        <i class="fas fa-crown fa-4x pulse-animation" style="color: var(--primary-color);"></i>
-                        <h2>Coming Soon!</h2>
-                        <p>Our Blackjack game is currently under development. Please check back later!</p>
-                        <a href="../index.html" class="btn-primary glow-button">Return Home</a>
+                
+                <div class="blackjack-table">
+                    <div class="dealer-area">
+                        <span class="area-label">Dealer</span>
+                        <div class="score-display" id="dealerScore">0</div>
+                        <div class="hand" id="dealerHand"></div>
+                    </div>
+                    
+                    <div class="result-message" id="resultMessage"></div>
+                    
+                    <div class="player-area">
+                        <span class="area-label">Player</span>
+                        <div class="score-display show" id="playerScore">0</div>
+                        <div class="hand" id="playerHand"></div>
+                    </div>
+                    
+                    <div class="current-bet">
+                        <span class="current-bet-label">Current Bet:</span>
+                        <span class="current-bet-amount" id="betAmount">0</span>
+                    </div>
+                    
+                    <div class="bet-chips" id="betChips">
+                        <div class="chip chip-10" data-value="10">10</div>
+                        <div class="chip chip-25" data-value="25">25</div>
+                        <div class="chip chip-50" data-value="50">50</div>
+                        <div class="chip chip-100" data-value="100">100</div>
+                        <div class="chip chip-500" data-value="500">500</div>
+                    </div>
+                    
+                    <div class="game-controls">
+                        <button id="dealButton" class="action-btn btn-deal">
+                            <i class="fas fa-play"></i> Deal Cards
+                        </button>
+                        
+                        <button id="hitButton" class="action-btn btn-hit" disabled>
+                            <i class="fas fa-plus"></i> Hit
+                        </button>
+                        
+                        <button id="standButton" class="action-btn btn-stand" disabled>
+                            <i class="fas fa-hand"></i> Stand
+                        </button>
+                        
+                        <button id="doubleButton" class="action-btn btn-double" disabled>
+                            <i class="fas fa-arrow-up"></i> Double
+                        </button>
+                        
+                        <button id="newHandButton" class="action-btn btn-new-hand" style="display: none;">
+                            <i class="fas fa-redo"></i> New Hand
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="game-stats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="handsPlayed">0</span>
+                        <span class="stat-label">Hands Played</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="handsWon">0</span>
+                        <span class="stat-label">Hands Won</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="blackjacks">0</span>
+                        <span class="stat-label">Blackjacks</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalProfit">0</span>
+                        <span class="stat-label">Total Profit</span>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="signupModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Sign Up</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Sign Up</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="redeemModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Redeem Code</h2>
+            <form id="redeemForm">
+                <div class="form-group">
+                    <label for="redeemCode">Enter Code</label>
+                    <input type="text" id="redeemCode" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Redeem</button>
+            </form>
         </div>
     </div>
 
@@ -78,5 +196,6 @@
     <script src="../js/auth.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/admin.js"></script>
+    <script src="js/blackjack.js"></script>
 </body>
 </html> 
