@@ -214,7 +214,7 @@ function processRedeemCode(code) {
         'WELCOME': { amount: 5000, cooldown: 0 },
         'BONUS': { amount: 10000, cooldown: 0 },
         'VIP': { amount: 50000, cooldown: 0 },
-        'LOL': { amount: 100, cooldown: 0 }, // Keeping old codes
+        'LOL': { amount: 100, cooldown: 30 }, // Added 30-min cooldown
         'BETAGAMES': { amount: 1000, cooldown: 0 },
         'FREEMONEY': { amount: 2500, cooldown: 0 },
         
@@ -223,7 +223,7 @@ function processRedeemCode(code) {
         'LOLMAO': { amount: 100, cooldown: 0 }, // No cooldown
         'GREENFN': { amount: 250, cooldown: 360 }, // 6 hour cooldown
         'MESSAROUND99SAMGOAT': { amount: 1000, cooldown: 0 }, // No cooldown
-        'CAMIL': { amount: -Infinity, cooldown: 0 }, // Takes away all balance
+        'CAMIL': { amount: -999999, cooldown: 0 }, // Takes away all balance (using large negative number)
         'SENDEN': { amount: 500, cooldown: 120 }, // 2 hour cooldown
         'RUSTAM': { amount: 99, cooldown: 10 }, // 10 minute cooldown
         'JAKE': { amount: 150, cooldown: 20 }, // 20 minute cooldown
@@ -268,12 +268,20 @@ function processRedeemCode(code) {
     // Handle special code: CAMIL - takes away all balance
     if (upperCode === 'CAMIL') {
         const currentBalance = currentUser.balance;
-        window.BetaAuth.updateBalance(-currentBalance, 'redeem');
-        alert('Oh no! The code "CAMIL" has taken all your coins!');
+        const success = window.BetaAuth.updateBalance(-currentBalance, 'redeem_camil');
+        if (success) {
+            alert('Oh no! The code "CAMIL" has taken all your coins!');
+        } else {
+            alert('Something went wrong applying the CAMIL code.');
+        }
     } else {
         // Normal code - add the amount
-        window.BetaAuth.updateBalance(codeData.amount, 'redeem');
-        alert(`Successfully redeemed code for ${codeData.amount} coins!`);
+        const success = window.BetaAuth.updateBalance(codeData.amount, 'redeem');
+        if (success) {
+            alert(`Successfully redeemed code for ${codeData.amount} coins!`);
+        } else {
+            alert('Error applying code. Please try again later.');
+        }
     }
     
     // Update redeem history

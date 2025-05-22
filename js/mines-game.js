@@ -207,15 +207,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Reveal with a slight delay for better animation effect
         setTimeout(() => {
-            if (isMine) {
-                // Hit a mine - game over
-                cell.classList.add('revealed-mine');
-                
-                // Create mine element
+        if (isMine) {
+            // Hit a mine - game over
+            cell.classList.add('revealed-mine');
+            
+            // Create mine element
                 const mine = document.createElement('i');
                 mine.className = 'fas fa-bomb mine';
-                cell.appendChild(mine);
-                
+            cell.appendChild(mine);
+            
                 // Add explosion sound
                 playSound('explosion');
                 
@@ -223,32 +223,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 addScreenShake();
                 
                 // Show all mines with cascading reveal
-                revealAllMines();
-                
-                // Game over
-                gameOver(false);
-            } else {
-                // Found a gem
-                cell.classList.add('revealed-gem');
-                
-                // Create gem element
+            revealAllMines();
+            
+            // Game over
+            gameOver(false);
+        } else {
+            // Found a gem
+            cell.classList.add('revealed-gem');
+            
+            // Create gem element
                 const gem = document.createElement('i');
                 gem.className = 'fas fa-gem gem';
-                cell.appendChild(gem);
-                
+            cell.appendChild(gem);
+            
                 // Add gem sound
                 playSound('gem');
                 
                 // Update next payout and profit
                 gameState.currentProfit = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length - 1) - gameState.currentBet;
                 gameState.nextPayout = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length);
-                
+            
                 // Update display with animation
                 updateDisplayWithAnimation();
-                
+            
                 // Check if all safe cells are revealed (win)
-                const totalSafeCells = gameState.totalCells - gameState.mines;
-                if (gameState.revealedCells.length >= totalSafeCells) {
+            const totalSafeCells = gameState.totalCells - gameState.mines;
+            if (gameState.revealedCells.length >= totalSafeCells) {
                     gameOver(true);
                 }
             }
@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     const cell = cells[pos];
                     cell.classList.add('revealed-mine');
-                    
+                
                     const mine = document.createElement('i');
                     mine.className = 'fas fa-bomb mine';
                     cell.appendChild(mine);
@@ -381,12 +381,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateDisplay() {
         // Update next gem amount
         if (nextGemAmount) {
-            nextGemAmount.textContent = gameState.nextPayout.toFixed(2);
+        nextGemAmount.textContent = gameState.nextPayout.toFixed(2);
         }
         
         // Update total profit
         if (totalProfit) {
-            totalProfit.textContent = gameState.currentProfit.toFixed(2);
+        totalProfit.textContent = gameState.currentProfit.toFixed(2);
         }
         
         // Update current payout
@@ -444,10 +444,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Reset next values
         gameState.nextPayout = 0;
-        gameState.currentProfit = 0;
+            gameState.currentProfit = 0;
         
         // Update display
-        updateDisplay();
+            updateDisplay();
     }
     
     // Record game in history
