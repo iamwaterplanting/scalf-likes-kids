@@ -375,6 +375,37 @@
     z-index: 9999;
 }
 
+/* Game message styles */
+.game-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1100;
+    opacity: 0;
+    transition: all 0.3s;
+}
+
+.game-message.error {
+    border-left: 4px solid #e74c3c;
+}
+
+.game-message.info {
+    border-left: 4px solid var(--primary-color);
+}
+
+.game-message.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
 /* Animations */
 @keyframes dealCard {
     0% {
