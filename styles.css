@@ -732,6 +732,8 @@ tr:last-child {
     display: flex;
     flex-direction: column;
     gap: 30px;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .mines-controls {
@@ -745,6 +747,10 @@ tr:last-child {
     grid-template-columns: repeat(5, 1fr);
     gap: 10px;
     margin-top: 20px;
+    width: 100%;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .mines-grid-cell {
@@ -759,6 +765,7 @@ tr:last-child {
     display: flex;
     justify-content: center;
     align-items: center;
+    min-width: 0; /* Prevent overflow */
 }
 
 .mines-grid-cell:hover {
@@ -881,6 +888,9 @@ tr:last-child {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .setting-group {
@@ -973,4 +983,60 @@ input:checked + .toggle-slider:before {
     border-radius: 50%;
     background: var(--primary-color);
     cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .game-settings-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .mines-grid {
+        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+        gap: 5px;
+    }
+    
+    .mines-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .mines-game {
+        padding: 10px;
+    }
+    
+    .mines-grid {
+        grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+        gap: 5px;
+    }
+    
+    .mines-grid-cell {
+        border-radius: 5px;
+    }
+    
+    .mines-grid-cell i {
+        font-size: 16px;
+    }
+    
+    .mines-stats {
+        padding: 10px;
+        gap: 8px;
+    }
+    
+    .mines-stat-item {
+        padding: 6px 8px;
+        font-size: 14px;
+    }
+    
+    .mines-actions {
+        flex-direction: column;
+    }
+    
+    .game-settings-form {
+        padding: 15px;
+    }
+    
+    .setting-group {
+        padding: 10px;
+    }
 } 

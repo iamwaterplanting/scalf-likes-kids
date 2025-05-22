@@ -229,14 +229,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear existing grid
         minesGrid.innerHTML = '';
         
-        // Set grid template
+        // Set grid template based on grid size
+        // For smaller screens, we'll let CSS handle the responsiveness
         minesGrid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+        
+        // Set appropriate cell size based on grid size
+        const cellSize = Math.min(100 / gridSize, 20); // Max 20% width for each cell
         
         // Create cells
         for (let i = 0; i < totalCells; i++) {
             const cell = document.createElement('div');
             cell.className = 'mines-grid-cell';
             cell.dataset.index = i;
+            
+            // Ensure cells are properly sized on all devices
+            if (window.innerWidth <= 768) {
+                // On mobile, let the CSS handle sizing
+            } else {
+                // On desktop, ensure consistent sizing
+                cell.style.height = '0';
+                cell.style.paddingBottom = '100%'; // Create a square aspect ratio
+            }
             
             // Add gem icon (hidden initially)
             const icon = document.createElement('i');
@@ -252,7 +265,25 @@ document.addEventListener('DOMContentLoaded', () => {
             
             minesGrid.appendChild(cell);
         }
+        
+        // Make sure the grid fits properly within the container
+        adjustGridSize();
     }
+    
+    // Function to adjust grid size for better display
+    function adjustGridSize() {
+        const containerWidth = minesGrid.parentElement.clientWidth;
+        const maxGridWidth = Math.min(containerWidth, 600); // Maximum width of 600px
+        
+        minesGrid.style.maxWidth = `${maxGridWidth}px`;
+    }
+    
+    // Add a window resize listener to adjust the grid when window size changes
+    window.addEventListener('resize', () => {
+        if (minesGrid.children.length > 0) {
+            adjustGridSize();
+        }
+    });
     
     function revealCell(index) {
         // Check if this is a mine
