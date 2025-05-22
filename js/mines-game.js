@@ -202,58 +202,179 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add to revealed cells
         gameState.revealedCells.push(parseInt(index));
         
-        if (isMine) {
-            // Hit a mine - game over
-            cell.classList.add('revealed-mine');
-            
-            // Create mine element
-            const mine = document.createElement('i');
-            mine.className = 'fas fa-bomb mine';
-            cell.appendChild(mine);
-            
-            // Show all mines
-            revealAllMines();
-            
-            // Game over
-            gameOver(false);
-        } else {
-            // Found a gem
-            cell.classList.add('revealed-gem');
-            
-            // Create gem element
-            const gem = document.createElement('i');
-            gem.className = 'fas fa-gem gem';
-            cell.appendChild(gem);
-            
-            // Update next payout and profit
-            gameState.currentProfit = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length - 1) - gameState.currentBet;
-            gameState.nextPayout = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length);
-            
-            // Update display
-            updateDisplay();
-            
-            // Check if all safe cells are revealed (win)
-            const totalSafeCells = gameState.totalCells - gameState.mines;
-            if (gameState.revealedCells.length >= totalSafeCells) {
-                gameOver(true);
-            }
-        }
-    }
-    
-    // Reveal all mines
-    function revealAllMines() {
-        const cells = minesGrid.children;
+        // Add click effect
+        addClickEffect(cell);
         
-        gameState.minePositions.forEach(pos => {
-            if (!gameState.revealedCells.includes(pos)) {
-                const cell = cells[pos];
+        // Reveal with a slight delay for better animation effect
+        setTimeout(() => {
+            if (isMine) {
+                // Hit a mine - game over
                 cell.classList.add('revealed-mine');
                 
+                // Create mine element
                 const mine = document.createElement('i');
                 mine.className = 'fas fa-bomb mine';
                 cell.appendChild(mine);
+                
+                // Add explosion sound
+                playSound('explosion');
+                
+                // Add screen shake effect
+                addScreenShake();
+                
+                // Show all mines with cascading reveal
+                revealAllMines();
+                
+                // Game over
+                gameOver(false);
+            } else {
+                // Found a gem
+                cell.classList.add('revealed-gem');
+                
+                // Create gem element
+                const gem = document.createElement('i');
+                gem.className = 'fas fa-gem gem';
+                cell.appendChild(gem);
+                
+                // Add gem sound
+                playSound('gem');
+                
+                // Update next payout and profit
+                gameState.currentProfit = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length - 1) - gameState.currentBet;
+                gameState.nextPayout = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length);
+                
+                // Update display with animation
+                updateDisplayWithAnimation();
+                
+                // Check if all safe cells are revealed (win)
+                const totalSafeCells = gameState.totalCells - gameState.mines;
+                if (gameState.revealedCells.length >= totalSafeCells) {
+                    gameOver(true);
+                }
+            }
+        }, 100);
+    }
+    
+    // Add click effect to cell
+    function addClickEffect(cell) {
+        const effect = document.createElement('div');
+        effect.className = 'click-effect';
+        cell.appendChild(effect);
+        
+        // Remove effect after animation completes
+        setTimeout(() => {
+            if (effect && effect.parentNode === cell) {
+                cell.removeChild(effect);
+            }
+        }, 300);
+    }
+    
+    // Play sound effect
+    function playSound(type) {
+        // This is a placeholder - you would implement actual sound playing here
+        // Example: const sound = new Audio(`sounds/${type}.mp3`); sound.play();
+        console.log(`Playing ${type} sound`);
+    }
+    
+    // Add screen shake effect
+    function addScreenShake() {
+        const grid = minesGrid;
+        grid.classList.add('shake');
+        
+        setTimeout(() => {
+            grid.classList.remove('shake');
+        }, 500);
+    }
+    
+    // Reveal all mines with cascading effect
+    function revealAllMines() {
+        const cells = minesGrid.children;
+        
+        gameState.minePositions.forEach((pos, index) => {
+            if (!gameState.revealedCells.includes(pos)) {
+                setTimeout(() => {
+                    const cell = cells[pos];
+                    cell.classList.add('revealed-mine');
+                    
+                    const mine = document.createElement('i');
+                    mine.className = 'fas fa-bomb mine';
+                    cell.appendChild(mine);
+                }, index * 100); // Stagger the reveals
             }
         });
+    }
+    
+    // Update display with animation
+    function updateDisplayWithAnimation() {
+        // Update next gem amount with animation
+        if (nextGemAmount) {
+            animateNumberChange(nextGemAmount, gameState.nextPayout.toFixed(2));
+        }
+        
+        // Update total profit with animation
+        if (totalProfit) {
+            animateNumberChange(totalProfit, gameState.currentProfit.toFixed(2));
+        }
+        
+        // Update current payout with animation
+        if (currentPayoutDisplay && gameState.isPlaying) {
+            const currentPayout = gameState.currentBet + gameState.currentProfit;
+            animateNumberChange(currentPayoutDisplay, currentPayout.toFixed(2));
+        }
+        
+        // Update multiplier indicators
+        updateMultiplierIndicators();
+    }
+    
+    // Animate number change
+    function animateNumberChange(element, newValue) {
+        // Add highlight class
+        element.classList.add('highlight-change');
+        
+        // Update value
+        element.textContent = newValue;
+        
+        // Remove highlight class after animation
+        setTimeout(() => {
+            element.classList.remove('highlight-change');
+        }, 500);
+    }
+    
+    // Update multiplier indicators
+    function updateMultiplierIndicators() {
+        const multiplierItems = document.querySelectorAll('.multiplier-item');
+        if (!multiplierItems.length) return;
+        
+        // Remove active class from all
+        multiplierItems.forEach(item => item.classList.remove('active'));
+        
+        // Calculate current multiplier
+        const currentMultiplier = calculateMultiplier(gameState.mines, gameState.revealedCells.length);
+        
+        // Calculate next multiplier
+        const nextMultiplier = calculateMultiplier(gameState.mines, gameState.revealedCells.length + 1);
+        
+        // Update and activate the correct multiplier indicator
+        multiplierItems[0].classList.add('active');
+        multiplierItems[0].querySelector('span').textContent = `× ${currentMultiplier.toFixed(2)}`;
+        
+        if (multiplierItems[1]) {
+            multiplierItems[1].querySelector('span').textContent = `× ${nextMultiplier.toFixed(2)}`;
+        }
+    }
+    
+    // Calculate multiplier based on mines and revealed cells
+    function calculateMultiplier(mineCount, revealedCount) {
+        const totalCells = gameState.totalCells;
+        const safeCells = totalCells - mineCount;
+        const remainingSafeCells = safeCells - revealedCount;
+        
+        if (remainingSafeCells <= 0) return 0;
+        
+        // Calculate multiplier based on probability
+        // House edge: 5%
+        const fairMultiplier = totalCells / remainingSafeCells;
+        return fairMultiplier * 0.95; // Apply 5% house edge
     }
     
     // Update game display
@@ -273,6 +394,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentPayout = gameState.currentBet + gameState.currentProfit;
             currentPayoutDisplay.textContent = currentPayout.toFixed(2);
         }
+        
+        // Update multiplier indicators
+        updateMultiplierIndicators();
     }
     
     // Cashout
