@@ -53,6 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Don't allow clicking already revealed cells
                 if (gameState.revealedCells.includes(i)) return;
                 
+                // Play click sound
+                playSound('click');
+                
                 revealCell(i);
             });
             
@@ -209,6 +212,9 @@ document.addEventListener('DOMContentLoaded', () => {
         addClickEffect(cell);
         
         if (isMine) {
+            // Play explosion sound
+            playSound('explosion');
+            
             // Hit a mine - game over
             cell.classList.add('revealed-mine');
             
@@ -225,9 +231,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Game over with a short delay to allow animations to play
             setTimeout(() => {
+                playSound('lose');
                 gameOver(false);
             }, 800);
         } else {
+            // Play reveal sound
+            playSound('reveal');
+            
             // Found a gem
             cell.classList.add('revealed-gem');
             
@@ -251,8 +261,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Check if all safe cells are revealed (win)
             const totalSafeCells = gameState.totalCells - gameState.mines;
             if (gameState.revealedCells.length >= totalSafeCells) {
-                // Allow animations to play before ending game
+                // Play win sound and complete game
                 setTimeout(() => {
+                    playSound('win');
                     gameOver(true);
                 }, 500);
             }
@@ -275,9 +286,19 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Play sound effect
     function playSound(type) {
-        // This is a placeholder - you would implement actual sound playing here
-        // Example: const sound = new Audio(`sounds/${type}.mp3`); sound.play();
+        // In a real implementation, you would play actual sounds
         console.log(`Playing ${type} sound`);
+        
+        // You could implement real sounds like this:
+        // const sounds = {
+        //     click: new Audio('../sounds/click.mp3'),
+        //     reveal: new Audio('../sounds/reveal.mp3'),
+        //     win: new Audio('../sounds/win.mp3'),
+        //     lose: new Audio('../sounds/lose.mp3'),
+        //     explosion: new Audio('../sounds/explosion.mp3'),
+        //     cashout: new Audio('../sounds/cashout.mp3')
+        // };
+        // sounds[type].play();
     }
     
     // Add screen shake effect
@@ -303,7 +324,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const mine = document.createElement('div');
                     mine.className = 'mine';
                     cell.appendChild(mine);
-                }, index * 80); // Fast cascade for better visual effect
+                    
+                    // Play a softer explosion sound for each revealed mine
+                    if (index % 3 === 0) { // Only play sound for every 3rd mine to avoid sound spam
+                        playSound('explosion');
+                    }
+                }, index * 100); // Slightly slower for better visual effect
             }
         });
     }
@@ -414,6 +440,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cashout
     function cashout() {
         if (!gameState.isPlaying || gameState.revealedCells.length === 0) return;
+        
+        // Play cashout sound
+        playSound('cashout');
         
         // Calculate winnings
         const winnings = gameState.currentBet + gameState.currentProfit;
