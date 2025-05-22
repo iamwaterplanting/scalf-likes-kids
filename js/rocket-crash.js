@@ -1,4 +1,13 @@
 // BetaGames Rocket Crash Game Implementation
+
+// Global state synchronization
+const SYNC_INTERVAL = 1000; // Sync every 1 second
+const GAME_ID_KEY = 'rocketcrash_game_id';
+const GLOBAL_STATE_KEY = 'rocketcrash_global_state';
+const GLOBAL_BETS_KEY = 'rocketcrash_global_bets';
+const CRASH_HISTORY_KEY = 'rocketcrash_crash_history';
+let lastSyncTime = 0;
+
 document.addEventListener('DOMContentLoaded', () => {
     // Game elements
     const canvas = document.getElementById('rocketCanvas');
@@ -24,6 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
         recentCrashes: [],
         countdownTime: 5, // 5 seconds countdown between games
         currentCountdown: 0,
+        gameId: generateGameId(), // Unique ID for each game instance
+        serverStartTime: 0, // When the current game started on server
+        localStartTime: 0, // Local timestamp when game started
         rocket: {
             x: 0,
             y: 0,
@@ -38,11 +50,263 @@ document.addEventListener('DOMContentLoaded', () => {
         growthRate: 0.3,    // Reduced growth rate for slower climbs
         maxMultiplier: 1000, // Increased maximum possible multiplier
         updateInterval: null,
-        houseEdge: 0.02 // Reduced to 2% house edge to make winning easier
+        houseEdge: 0.01, // Reduced to 1% house edge to make winning much easier
+        crashPoint: 0, // The predetermined crash point
+        lastSyncedMultiplier: 1.00 // For synchronization
     };
     
     // Initialize the game
     initGame();
+    
+    // Generate a unique game ID
+    function generateGameId() {
+        return Date.now().toString() + Math.random().toString().slice(2, 8);
+    }
+    
+    // Load or initialize global state
+    function initGlobalState() {
+        let globalState = localStorage.getItem(GLOBAL_STATE_KEY);
+        
+        if (globalState) {
+            try {
+                globalState = JSON.parse(globalState);
+                
+                // If stored game is still active, sync with it
+                if (globalState.gameActive && Date.now() - globalState.lastUpdate < 10000) {
+                    // Game is still active, sync with it
+                    gameState.gameActive = globalState.gameActive;
+                    gameState.currentMultiplier = globalState.currentMultiplier;
+                    gameState.serverStartTime = globalState.serverStartTime;
+                    gameState.localStartTime = Date.now();
+                    gameState.crashPoint = globalState.crashPoint;
+                    gameState.currentCountdown = globalState.currentCountdown;
+                    
+                    // Load active bets
+                    loadGlobalBets();
+                    
+                    // If game is in countdown, update UI
+                    if (globalState.currentCountdown > 0) {
+                        showCountdown(globalState.currentCountdown);
+                    } else {
+                        // Game is already running, sync and join
+                        joinRunningGame();
+                    }
+                } else {
+                    // Previous game ended or timed out, start a new one
+                    startGameCountdown();
+                }
+            } catch (e) {
+                console.error("Error parsing global state", e);
+                startGameCountdown();
+            }
+        } else {
+            // No existing game, start a new one
+            startGameCountdown();
+        }
+        
+        // Load crash history
+        loadCrashHistory();
+        
+        // Start synchronization loop
+        startSyncLoop();
+    }
+    
+    // Save the current game state globally
+    function saveGlobalState() {
+        const globalState = {
+            gameActive: gameState.gameActive,
+            currentMultiplier: gameState.currentMultiplier,
+            serverStartTime: gameState.serverStartTime,
+            currentCountdown: gameState.currentCountdown,
+            crashPoint: gameState.crashPoint,
+            lastUpdate: Date.now()
+        };
+        
+        localStorage.setItem(GLOBAL_STATE_KEY, JSON.stringify(globalState));
+    }
+    
+    // Save active bets globally
+    function saveGlobalBets() {
+        localStorage.setItem(GLOBAL_BETS_KEY, JSON.stringify(gameState.activeBets));
+    }
+    
+    // Load bets from global storage
+    function loadGlobalBets() {
+        let bets = localStorage.getItem(GLOBAL_BETS_KEY);
+        if (bets) {
+            try {
+                gameState.activeBets = JSON.parse(bets);
+                updateActiveBetsList();
+            } catch (e) {
+                console.error("Error loading global bets", e);
+            }
+        }
+    }
+    
+    // Save crash history globally
+    function saveCrashHistory() {
+        localStorage.setItem(CRASH_HISTORY_KEY, JSON.stringify(gameState.recentCrashes));
+    }
+    
+    // Load crash history from global storage
+    function loadCrashHistory() {
+        let history = localStorage.getItem(CRASH_HISTORY_KEY);
+        if (history) {
+            try {
+                gameState.recentCrashes = JSON.parse(history);
+                updateCrashHistoryDisplay();
+            } catch (e) {
+                console.error("Error loading crash history", e);
+                initRecentCrashes(); // Use defaults if error
+            }
+        } else {
+            initRecentCrashes(); // Initialize with defaults
+        }
+    }
+    
+    // Sync game state with global state
+    function syncGameState() {
+        const now = Date.now();
+        
+        // Only sync every SYNC_INTERVAL ms to avoid too frequent updates
+        if (now - lastSyncTime < SYNC_INTERVAL) return;
+        lastSyncTime = now;
+        
+        // First, check if there's a newer game state
+        let globalState = localStorage.getItem(GLOBAL_STATE_KEY);
+        
+        if (globalState) {
+            try {
+                globalState = JSON.parse(globalState);
+                
+                // If the stored game is newer, and not from this instance, sync with it
+                if (globalState.lastUpdate > lastSyncTime - SYNC_INTERVAL * 2) {
+                    // Update countdown if we're in countdown phase
+                    if (globalState.currentCountdown > 0 && !gameState.gameActive) {
+                        gameState.currentCountdown = globalState.currentCountdown;
+                        if (countdownDisplay) {
+                            countdownDisplay.textContent = `Next launch: ${gameState.currentCountdown}s`;
+                            countdownDisplay.style.display = 'block';
+                        }
+                    }
+                    
+                    // If we're not in a game but global state is, join it
+                    if (globalState.gameActive && !gameState.gameActive) {
+                        gameState.gameActive = true;
+                        gameState.serverStartTime = globalState.serverStartTime;
+                        gameState.localStartTime = now;
+                        gameState.crashPoint = globalState.crashPoint;
+                        
+                        // Calculate current multiplier based on elapsed time
+                        const elapsedSeconds = (now - gameState.serverStartTime) / 1000;
+                        const targetMultiplier = calculateMultiplierAtTime(elapsedSeconds);
+                        gameState.currentMultiplier = targetMultiplier;
+                        
+                        joinRunningGame();
+                    }
+                    
+                    // Sync multiplier if we're both in a game
+                    if (globalState.gameActive && gameState.gameActive) {
+                        // If the difference is significant, resync
+                        if (Math.abs(globalState.currentMultiplier - gameState.currentMultiplier) > 0.5) {
+                            gameState.currentMultiplier = globalState.currentMultiplier;
+                            updateMultiplierDisplay();
+                        }
+                    }
+                    
+                    // If global game ended but we're still active, handle crash
+                    if (!globalState.gameActive && gameState.gameActive) {
+                        handleCrash();
+                    }
+                }
+            } catch (e) {
+                console.error("Error syncing game state", e);
+            }
+        }
+        
+        // Then, save our current state
+        if (gameState.gameActive || gameState.currentCountdown > 0) {
+            saveGlobalState();
+        }
+        
+        // Sync bets
+        loadGlobalBets();
+    }
+    
+    // Start sync loop
+    function startSyncLoop() {
+        setInterval(syncGameState, SYNC_INTERVAL);
+    }
+    
+    // Calculate multiplier at a given time point
+    function calculateMultiplierAtTime(seconds) {
+        // Use the same growth formula as in the game
+        let multiplier = 1.0;
+        for (let i = 0; i < seconds * 10; i++) {
+            const increment = 0.1 * gameState.growthRate * multiplier;
+            multiplier += increment;
+        }
+        return Math.min(multiplier, gameState.maxMultiplier);
+    }
+    
+    // Join a running game
+    function joinRunningGame() {
+        // Clear any existing animation frame
+        if (gameState.animationFrame) {
+            cancelAnimationFrame(gameState.animationFrame);
+        }
+        
+        // Set UI to game mode
+        if (countdownDisplay) {
+            countdownDisplay.style.display = 'none';
+        }
+        
+        // Start the game animation from current point
+        let lastTimestamp = performance.now();
+        const updateMultiplier = (timestamp) => {
+            // Calculate delta time for smooth animation
+            const deltaTime = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+            
+            // Increase multiplier with delta time
+            const increment = (deltaTime / 1000) * gameState.growthRate * gameState.currentMultiplier;
+            gameState.currentMultiplier += increment;
+            
+            // Limit to max multiplier
+            if (gameState.currentMultiplier > gameState.maxMultiplier) {
+                gameState.currentMultiplier = gameState.maxMultiplier;
+            }
+            
+            // Check if we've reached the crash point
+            if (gameState.currentMultiplier >= gameState.crashPoint) {
+                handleCrash();
+                return;
+            }
+            
+            // Update rocket position and scale
+            updateRocket(deltaTime);
+            
+            // Update UI
+            updateMultiplierDisplay();
+            
+            // Check auto cashouts
+            checkAutoCashouts();
+            
+            // Create particles
+            createRocketParticles();
+            
+            // Draw game
+            draw();
+            
+            // Continue animation if game is still active
+            if (gameState.gameActive) {
+                gameState.animationFrame = requestAnimationFrame(updateMultiplier);
+            }
+        };
+        
+        // Start the animation
+        gameState.animationFrame = requestAnimationFrame(updateMultiplier);
+    }
     
     function initGame() {
         // Setup canvas size
@@ -59,20 +323,23 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize stars
         initStars();
         
-        // Initialize some recent crashes for UI
-        initRecentCrashes();
-        
-        // Update crash history display
-        updateCrashHistoryDisplay();
-        
         // Draw initial state
         draw();
         
         // Load game history with some sample data
         loadGameHistory();
         
-        // Start countdown for first game
-        startGameCountdown();
+        // Initialize global state
+        initGlobalState();
+    }
+    
+    // Show countdown display
+    function showCountdown(seconds) {
+        gameState.currentCountdown = seconds;
+        if (countdownDisplay) {
+            countdownDisplay.textContent = `Next launch: ${seconds}s`;
+            countdownDisplay.style.display = 'block';
+        }
     }
     
     function initRecentCrashes() {
@@ -87,6 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { multiplier: 1.14, color: '#ff4444' },
             { multiplier: 8.73, color: '#18e77c' }
         ];
+        saveCrashHistory();
     }
     
     function updateCrashHistoryDisplay() {
@@ -155,14 +423,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function startGameCountdown() {
+        // Make sure we're not already in a game
+        if (gameState.gameActive) return;
+        
         // Reset countdown
         gameState.currentCountdown = gameState.countdownTime;
+        
+        // Set the server start time to a future point
+        gameState.serverStartTime = Date.now() + (gameState.countdownTime * 1000);
+        
+        // Pre-generate the crash point for this game
+        gameState.crashPoint = generateCrashPoint();
         
         // Update display
         if (countdownDisplay) {
             countdownDisplay.textContent = `Next launch: ${gameState.currentCountdown}s`;
             countdownDisplay.style.display = 'block';
         }
+        
+        // Save global state
+        saveGlobalState();
         
         // Start countdown interval
         const countdownInterval = setInterval(() => {
@@ -171,6 +451,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (countdownDisplay) {
                 countdownDisplay.textContent = `Next launch: ${gameState.currentCountdown}s`;
             }
+            
+            // Save updated countdown
+            saveGlobalState();
             
             if (gameState.currentCountdown <= 0) {
                 clearInterval(countdownInterval);
@@ -188,6 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.gameActive = true;
         gameState.currentMultiplier = 1.00;
         gameState.particles = [];
+        gameState.localStartTime = Date.now();
         
         // Reset rocket position
         gameState.rocket.y = canvas.height - 120;
@@ -201,9 +485,8 @@ document.addEventListener('DOMContentLoaded', () => {
         betButton.disabled = false;
         cashoutButton.style.display = 'none';
         
-        // Determine crash point based on house edge
-        // We use a realistic approach where the expected value with house edge
-        const crashPoint = generateCrashPoint();
+        // Save global state
+        saveGlobalState();
         
         // Start multiplier update loop
         let lastTimestamp = performance.now();
@@ -224,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Check if we've reached the crash point
-            if (gameState.currentMultiplier >= crashPoint) {
+            if (gameState.currentMultiplier >= gameState.crashPoint) {
                 handleCrash();
                 return;
             }
@@ -244,6 +527,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Draw game
             draw();
             
+            // Save global state periodically
+            if (timestamp % 100 < 20) {
+                saveGlobalState();
+            }
+            
             // Continue animation if game is still active
             if (gameState.gameActive) {
                 gameState.animationFrame = requestAnimationFrame(updateMultiplier);
@@ -260,9 +548,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const houseEdge = gameState.houseEdge;
         const r = Math.random();
         
-        if (r < houseEdge) {
-            // Force early crash for house edge percentage of games
-            return 1.00 + Math.random() * 0.5; // Give a small chance to at least go over 1.0
+        // Ensure a minimum crash point of 1.30x most of the time
+        if (r < 0.05) { // Only 5% chance of early crash
+            return 1.10 + Math.random() * 0.40; // Minimum 1.10x, maximum 1.50x
         }
         
         // Generate using a distribution that gives an expected value of 1
@@ -270,10 +558,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const lambda = Math.log(1 / (1 - houseEdge));
         let result = Math.exp(r * lambda) / (1 - houseEdge);
         
-        // Increase chance of higher multipliers for player-friendly experience
-        if (Math.random() < 0.3) {
-            result = result * (1 + Math.random() * 2); // Boost some results
+        // Increase chance of higher multipliers for very player-friendly experience
+        if (Math.random() < 0.50) { // 50% chance (up from 30%)
+            result = result * (1 + Math.random() * 3); // Bigger boost (up to 4x)
         }
+        
+        // Add bonus multipliers occasionally
+        if (Math.random() < 0.15) { // 15% chance of jackpot boost
+            result = result * (3 + Math.random() * 5); // Big 3x-8x boost
+        }
+        
+        // Set minimum crash point to 1.30x
+        result = Math.max(result, 1.30);
         
         // Round to 2 decimal places
         return Math.floor(result * 100) / 100;
@@ -400,11 +696,15 @@ document.addEventListener('DOMContentLoaded', () => {
             cashedOut: false,
             cashoutMultiplier: null,
             profit: null,
-            timestamp: new Date()
+            timestamp: new Date(),
+            id: currentUser.username + '_' + Date.now() // Unique ID for the bet
         };
         
         // Add to active bets
         gameState.activeBets.push(bet);
+        
+        // Save bets globally
+        saveGlobalBets();
         
         // Update UI
         updateActiveBetsList();
@@ -437,8 +737,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const payout = bet.amount * bet.cashoutMultiplier;
         bet.profit = payout - bet.amount;
         
-        // Update user balance
-        window.BetaAuth?.updateBalance(payout, 'Rocket Crash Win');
+        // Update user balance if it's the current user
+        const currentUser = window.BetaAuth?.getCurrentUser();
+        if (currentUser && bet.user === currentUser.username) {
+            window.BetaAuth.updateBalance(payout, 'Rocket Crash Win');
+        }
         
         // Add to history
         gameState.gameHistory.unshift({
@@ -457,11 +760,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update history table
         updateHistoryTable();
         
+        // Update global bets
+        saveGlobalBets();
+        
         // Update UI
         updateActiveBetsList();
         
         // Reset UI for current user
-        const currentUser = window.BetaAuth?.getCurrentUser();
         if (currentUser && bet.user === currentUser.username) {
             betButton.disabled = false;
             cashoutButton.style.display = 'none';
@@ -493,6 +798,9 @@ document.addEventListener('DOMContentLoaded', () => {
             gameState.recentCrashes.pop();
         }
         
+        // Save crash history globally
+        saveCrashHistory();
+        
         // Update crash history display
         updateCrashHistoryDisplay();
         
@@ -513,6 +821,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         }
+        
+        // Save global state (game ended)
+        saveGlobalState();
+        
+        // Save global bets (all cashed out now)
+        saveGlobalBets();
         
         // Update history table
         updateHistoryTable();

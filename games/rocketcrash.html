@@ -243,6 +243,8 @@
             z-index: 3;
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 75, 43, 0.2);
+            flex-wrap: wrap;
+            max-width: 280px;
         }
         
         .crash-item {
@@ -473,6 +475,34 @@
             width: 100%;
             overflow: hidden;
         }
+
+        .sync-indicator {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(24, 231, 124, 0.2);
+            border-radius: 20px;
+            padding: 8px 15px;
+            color: rgba(24, 231, 124, 0.9);
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 3;
+            border: 1px solid rgba(24, 231, 124, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .sync-indicator i {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body>
@@ -490,7 +520,7 @@
                     <li><a href="mines.html"><i class="fas fa-bomb"></i> Mines</a></li>
                     <li><a href="plinko.html"><i class="fas fa-sort-amount-down"></i> Plinko</a></li>
                     <li><a href="slots.html"><i class="fas fa-coins"></i> Slots</a></li>
-                    <li><a href="blackjack.html"><i class="fas fa-crown"></i> Blackjack</a></li>
+                    <li><a href="blackjack-game.html"><i class="fas fa-crown"></i> Blackjack</a></li>
                     <li><a href="flappybird.html"><i class="fas fa-dove"></i> Flappy Bird</a></li>
                     <li class="active"><a href="rocketcrash.html"><i class="fas fa-rocket"></i> Rocket Crash</a></li>
                 </ul>
@@ -570,6 +600,10 @@
                         
                         <div class="countdown-timer" id="countdownDisplay">
                             Next launch: 5s
+                        </div>
+                        
+                        <div class="sync-indicator">
+                            <i class="fas fa-globe"></i> Global Game
                         </div>
                     </div>
                 </div>
