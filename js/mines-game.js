@@ -8,13 +8,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const cashoutBtn = document.getElementById('cashoutBtn');
     const nextGemAmount = document.getElementById('nextGemAmount');
     const totalProfit = document.getElementById('totalProfit');
+    const currentBetDisplay = document.getElementById('currentBet');
+    const currentPayoutDisplay = document.getElementById('currentPayout');
     const manualBtns = document.querySelectorAll('.manual-btn');
+    const minesBtns = document.querySelectorAll('.mines-btn');
     
     // Game state
     let gameState = {
         isPlaying: false,
         currentBet: 50,
-        mines: [],
+        mines: 3,
         revealedCells: [],
         minePositions: [],
         totalCells: 25,
@@ -75,6 +78,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         
+        // Mines count selector buttons
+        minesBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons
+                minesBtns.forEach(b => b.classList.remove('active'));
+                
+                // Add active class to clicked button
+                btn.classList.add('active');
+                
+                // Update mines count
+                const mines = btn.dataset.mines;
+                minesCount.value = mines;
+            });
+        });
+        
         // Update the bet amount when input changes
         betAmount.addEventListener('change', () => {
             const amount = parseInt(betAmount.value);
@@ -126,7 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
         betButton.style.display = 'none';
         cashoutBtn.style.display = 'block';
         betAmount.disabled = true;
-        minesCount.disabled = true;
+        minesBtns.forEach(btn => btn.disabled = true);
+        
+        // Display current bet
+        if (currentBetDisplay) {
+            currentBetDisplay.textContent = gameState.currentBet.toFixed(2);
+        }
         
         // Reset grid appearance
         const cells = minesGrid.querySelectorAll('.mine-cell');
@@ -184,8 +207,8 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.classList.add('revealed-mine');
             
             // Create mine element
-            const mine = document.createElement('div');
-            mine.className = 'mine';
+            const mine = document.createElement('i');
+            mine.className = 'fas fa-bomb mine';
             cell.appendChild(mine);
             
             // Show all mines
@@ -198,94 +221,94 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.classList.add('revealed-gem');
             
             // Create gem element
-            const gem = document.createElement('div');
-            gem.className = 'gem';
+            const gem = document.createElement('i');
+            gem.className = 'fas fa-gem gem';
             cell.appendChild(gem);
             
-            // Update current profit
-            gameState.currentProfit = gameState.nextPayout - gameState.currentBet;
-            
-            // Calculate next payout
-            gameState.nextPayout = calculateNextPayout(
-                gameState.currentBet, 
-                gameState.mines, 
-                gameState.revealedCells.length
-            );
+            // Update next payout and profit
+            gameState.currentProfit = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length - 1) - gameState.currentBet;
+            gameState.nextPayout = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length);
             
             // Update display
             updateDisplay();
             
-            // Check if all safe cells revealed
+            // Check if all safe cells are revealed (win)
             const totalSafeCells = gameState.totalCells - gameState.mines;
             if (gameState.revealedCells.length >= totalSafeCells) {
-                // All safe cells revealed - auto cashout
-                cashout();
+                gameOver(true);
             }
         }
     }
     
     // Reveal all mines
     function revealAllMines() {
-        gameState.minePositions.forEach(minePos => {
-            if (!gameState.revealedCells.includes(minePos)) {
-                const mineCell = minesGrid.children[minePos];
-                mineCell.classList.add('revealed-mine');
+        const cells = minesGrid.children;
+        
+        gameState.minePositions.forEach(pos => {
+            if (!gameState.revealedCells.includes(pos)) {
+                const cell = cells[pos];
+                cell.classList.add('revealed-mine');
                 
-                // Create mine element
-                const mine = document.createElement('div');
-                mine.className = 'mine';
-                mineCell.appendChild(mine);
+                const mine = document.createElement('i');
+                mine.className = 'fas fa-bomb mine';
+                cell.appendChild(mine);
             }
         });
     }
     
     // Update game display
     function updateDisplay() {
-        // Update next payout
-        nextGemAmount.textContent = gameState.nextPayout.toFixed(2);
+        // Update next gem amount
+        if (nextGemAmount) {
+            nextGemAmount.textContent = gameState.nextPayout.toFixed(2);
+        }
         
         // Update total profit
-        totalProfit.textContent = gameState.currentProfit.toFixed(2);
-        if (gameState.currentProfit > 0) {
-            totalProfit.style.color = '#00cc00';
-        } else if (gameState.currentProfit < 0) {
-            totalProfit.style.color = '#ff3333';
-        } else {
-            totalProfit.style.color = 'white';
+        if (totalProfit) {
+            totalProfit.textContent = gameState.currentProfit.toFixed(2);
+        }
+        
+        // Update current payout
+        if (currentPayoutDisplay && gameState.isPlaying) {
+            const currentPayout = gameState.currentBet + gameState.currentProfit;
+            currentPayoutDisplay.textContent = currentPayout.toFixed(2);
         }
     }
     
-    // Cashout function
+    // Cashout
     function cashout() {
-        if (!gameState.isPlaying) return;
+        if (!gameState.isPlaying || gameState.revealedCells.length === 0) return;
         
-        // Calculate final payout (current next payout - 1)
-        const finalPayout = gameState.nextPayout;
+        // Calculate winnings
+        const winnings = gameState.currentBet + gameState.currentProfit;
         
         // Add winnings to balance
-        window.BetaAuth.updateBalance(finalPayout, 'mines_win');
+        window.BetaAuth.updateBalance(winnings, 'mines_cashout');
         
-        // Record game in history
-        recordGame(true, finalPayout);
+        // Record game
+        recordGame(true, winnings);
         
-        // Reset game state
+        // End game
         gameEnded();
     }
     
-    // Game over
+    // Handle game over
     function gameOver(success) {
-        if (!gameState.isPlaying) return;
-        
-        if (!success) {
-            // Record loss in history
+        if (success) {
+            // User won (all safe cells revealed)
+            const winnings = gameState.currentBet + gameState.currentProfit;
+            window.BetaAuth.updateBalance(winnings, 'mines_win');
+            recordGame(true, winnings);
+        } else {
+            // User lost (hit a mine)
             recordGame(false, 0);
         }
         
-        // Reset game state
+        // End game
         gameEnded();
     }
     
-    // Common end-game functions
+    // Reset game state after end
     function gameEnded() {
         gameState.isPlaying = false;
         
@@ -293,15 +316,14 @@ document.addEventListener('DOMContentLoaded', () => {
         betButton.style.display = 'block';
         cashoutBtn.style.display = 'none';
         betAmount.disabled = false;
-        minesCount.disabled = false;
+        minesBtns.forEach(btn => btn.disabled = false);
         
-        // Delay before allowing new game
-        setTimeout(() => {
-            // Reset profit display after delay
-            gameState.currentProfit = 0;
-            gameState.nextPayout = 0;
-            updateDisplay();
-        }, 3000);
+        // Reset next values
+        gameState.nextPayout = 0;
+        gameState.currentProfit = 0;
+        
+        // Update display
+        updateDisplay();
     }
     
     // Record game in history
@@ -309,29 +331,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentUser = window.BetaAuth?.getCurrentUser();
         if (!currentUser) return;
         
-        const username = currentUser.username;
-        const gameRecord = {
-            user: username,
-            game: 'Mines',
+        const gameData = {
+            user: currentUser.username,
+            game: 'mines',
             bet: gameState.currentBet,
-            result: won ? payout - gameState.currentBet : -gameState.currentBet,
-            time: new Date().toISOString(),
-            details: {
-                mineCount: gameState.mines,
-                revealedCount: gameState.revealedCells.length,
-                minePositions: gameState.minePositions
-            }
+            mines: gameState.mines,
+            gems: gameState.revealedCells.length,
+            outcome: won ? payout - gameState.currentBet : -gameState.currentBet
         };
         
         try {
-            // Track bet using BetaGames global function
-            window.BetaGames.trackGameBet(
-                'Mines', 
-                gameState.currentBet, 
-                won ? payout - gameState.currentBet : -gameState.currentBet
-            );
+            await window.gameHistoryOperations?.addGameHistory(gameData);
+            // Update game history table if it exists
+            const gameHistoryBody = document.getElementById('gameHistoryBody');
+            if (gameHistoryBody) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${gameData.user}</td>
+                    <td>${gameData.bet}</td>
+                    <td>${gameData.mines}</td>
+                    <td>${gameData.gems}</td>
+                    <td class="${won ? 'win' : 'loss'}">${won ? '+' + (payout - gameState.currentBet) : -gameData.bet}</td>
+                    <td>${new Date().toLocaleTimeString()}</td>
+                `;
+                gameHistoryBody.prepend(row);
+            }
         } catch (error) {
-            console.error('Error recording game history:', error);
+            console.error('Error recording game:', error);
         }
     }
 }); 

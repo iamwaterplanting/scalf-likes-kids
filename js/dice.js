@@ -179,6 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        // Deduct bet amount immediately (fixed bug)
+        await window.BetaAuth.updateBalance(-betAmount, 'dice_bet');
+        
         // Start rolling animation
         isRolling = true;
         diceDisplay.classList.add('spinning');
@@ -231,23 +234,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
         }
         
-        // Calculate winnings
-        const winAmount = won ? betAmount * multiplier : -betAmount;
-        
-        // Update user balance
-        const currentUser = window.BetaAuth?.getCurrentUser();
-        if (currentUser) {
-            await window.BetaAuth.updateBalance(winAmount, 'dice');
+        // Calculate winnings - only add winnings if player won (bet already deducted)
+        let outcomeAmount = 0;
+        if (won) {
+            // Add winnings (original bet + profit)
+            outcomeAmount = betAmount * multiplier;
+            // Update user balance with winnings
+            const currentUser = window.BetaAuth?.getCurrentUser();
+            if (currentUser) {
+                await window.BetaAuth.updateBalance(outcomeAmount, 'dice_win');
+            }
+        } else {
+            // Player lost, bet was already deducted
+            outcomeAmount = -betAmount; // For display purposes only
         }
         
         // Add to game history
+        const currentUser = window.BetaAuth?.getCurrentUser();
         const gameData = {
             user: currentUser?.username || 'Guest',
             game: 'dice',
             bet: betAmount,
             target: targetNumber,
             result: finalRoll,
-            outcome: winAmount,
+            outcome: outcomeAmount,
             betType: betType
         };
         
@@ -264,12 +274,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (won) {
             resultText.textContent = 'You Won!';
             resultText.classList.add('result-text', 'win');
-            resultAmount.textContent = formatCurrency(winAmount);
+            resultAmount.textContent = formatCurrency(outcomeAmount);
             resultAmount.classList.add('result-amount', 'win');
         } else {
             resultText.textContent = 'You Lost!';
             resultText.classList.add('result-text', 'loss');
-            resultAmount.textContent = formatCurrency(winAmount);
+            resultAmount.textContent = formatCurrency(outcomeAmount);
             resultAmount.classList.add('result-amount', 'loss');
         }
         
