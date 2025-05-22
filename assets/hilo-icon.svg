@@ -1,0 +1,27 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="card-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#11ff66" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#00cc44" stop-opacity="0.8"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  
+  <!-- Card background -->
+  <rect x="20" y="15" width="80" height="90" rx="5" ry="5" fill="white" stroke="#11ff66" stroke-width="2" filter="url(#glow)"/>
+  
+  <!-- Card symbols -->
+  <text x="30" y="40" font-family="Arial" font-size="20" font-weight="bold" fill="#000000">A</text>
+  <text x="90" y="95" font-family="Arial" font-size="20" font-weight="bold" fill="#000000">A</text>
+  <text x="60" y="67.5" font-family="Arial" font-size="30" font-weight="bold" fill="#11ff66">♠</text>
+  
+  <!-- Arrows -->
+  <path d="M60,20 L70,30 L50,30 Z" fill="url(#card-gradient)" filter="url(#glow)"/>
+  <path d="M60,100 L50,90 L70,90 Z" fill="url(#card-gradient)" filter="url(#glow)"/>
+  
+  <!-- Arrow line -->
+  <line x1="60" y1="30" x2="60" y2="90" stroke="url(#card-gradient)" stroke-width="4" stroke-dasharray="5,3" filter="url(#glow)"/>
+</svg> 

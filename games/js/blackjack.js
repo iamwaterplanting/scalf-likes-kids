@@ -201,6 +201,10 @@ function startNewHand() {
     resultMessageElement.textContent = '';
     resultMessageElement.className = 'result-message';
     
+    // Ensure score displays are visible
+    playerScoreElement.classList.add('show');
+    dealerScoreElement.classList.add('show');
+    
     // Hide new hand button and show game buttons
     newHandButton.style.display = 'none';
     dealButton.disabled = true;
@@ -378,28 +382,35 @@ function updateDealerScore() {
     if (playerStood) {
         visibleScore = calculateHandValue(dealerHand);
     } else {
-        // Skip the first (face down) card
-        for (let i = 1; i < dealerHand.length; i++) {
-            let card = dealerHand[i];
-            if (card.value === 'A') {
-                visibleAceCount++;
-                visibleScore += 11;
-            } else if (['K', 'Q', 'J'].includes(card.value)) {
-                visibleScore += 10;
-            } else {
-                visibleScore += parseInt(card.value);
+        // Only show score for visible cards (skip face down card)
+        if (dealerHand.length > 1) {
+            // Skip the first (face down) card
+            for (let i = 1; i < dealerHand.length; i++) {
+                let card = dealerHand[i];
+                if (card.value === 'A') {
+                    visibleAceCount++;
+                    visibleScore += 11;
+                } else if (['K', 'Q', 'J'].includes(card.value)) {
+                    visibleScore += 10;
+                } else {
+                    visibleScore += parseInt(card.value);
+                }
             }
-        }
-        
-        // Adjust for aces
-        while (visibleScore > 21 && visibleAceCount > 0) {
-            visibleScore -= 10;
-            visibleAceCount--;
+            
+            // Adjust for aces
+            while (visibleScore > 21 && visibleAceCount > 0) {
+                visibleScore -= 10;
+                visibleAceCount--;
+            }
         }
     }
     
     dealerScoreElement.textContent = visibleScore;
-    dealerScoreElement.classList.add('show');
+    
+    // Ensure the show class is always added
+    if (!dealerScoreElement.classList.contains('show')) {
+        dealerScoreElement.classList.add('show');
+    }
 }
 
 // Player hit (draw a card)

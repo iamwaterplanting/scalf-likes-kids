@@ -1,0 +1,400 @@
+/* Hi-Lo Game CSS */
+.hilo-table {
+    background: transparent;
+    border-radius: 15px;
+    padding: 30px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: 0 0 15px rgba(24, 231, 124, 0.3);
+    min-height: 500px;
+    border: 2px solid rgba(24, 231, 124, 0.6);
+}
+
+.hilo-table::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('../assets/cards-pattern.svg') repeat;
+    opacity: 0.03;
+    pointer-events: none;
+}
+
+.game-title {
+    text-align: center;
+    font-size: 3.5rem;
+    margin-bottom: 30px;
+    background: linear-gradient(to right, #11ff66, #00cc44);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px rgba(17, 255, 102, 0.7);
+    letter-spacing: 2px;
+}
+
+.card-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+    margin: 30px 0;
+    min-height: 180px;
+    position: relative;
+}
+
+.current-card, .next-card {
+    width: 120px;
+    height: 180px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.next-card.hidden {
+    background-color: #1a3851;
+    background-image: linear-gradient(45deg, #2a4e6e 25%, transparent 25%, transparent 75%, #2a4e6e 75%, #2a4e6e), 
+                      linear-gradient(45deg, #2a4e6e 25%, transparent 25%, transparent 75%, #2a4e6e 75%, #2a4e6e);
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+    border-color: rgba(24, 231, 124, 0.3);
+}
+
+.card-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 15px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(240,240,240,1) 100%);
+    overflow: hidden;
+    position: relative;
+}
+
+.card-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    z-index: 2;
+}
+
+.card-suit {
+    font-size: 2.8rem;
+    align-self: flex-end;
+    z-index: 2;
+}
+
+.card-suit-small {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 14px;
+    z-index: 2;
+}
+
+.card-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(0, 0, 0, 0.02),
+        rgba(0, 0, 0, 0.02) 10px,
+        rgba(0, 0, 0, 0.01) 10px,
+        rgba(0, 0, 0, 0.01) 20px
+    );
+    z-index: 1;
+}
+
+.card-inner::after {
+    content: '';
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.05) 100%);
+    top: -10%;
+    left: -10%;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.hearts, .diamonds {
+    color: #e61c24;
+}
+
+.clubs, .spades {
+    color: #000000;
+}
+
+.prediction-result {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 20px auto;
+    max-width: 300px;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.prediction-result.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.result-win {
+    background-color: rgba(0, 200, 0, 0.2);
+    color: #00ff00;
+    border: 1px solid #00ff00;
+}
+
+.result-lose {
+    background-color: rgba(200, 0, 0, 0.2);
+    color: #ff5555;
+    border: 1px solid #ff5555;
+}
+
+.current-bet {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.current-bet-label {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+.current-bet-amount {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #11ff66;
+}
+
+.bet-chips {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 15px 0;
+    gap: 10px;
+}
+
+.chip {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.chip:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.chip-10 { background: linear-gradient(to bottom, #ff5e5e, #ff0000); }
+.chip-25 { background: linear-gradient(to bottom, #5e5eff, #0000ff); }
+.chip-50 { background: linear-gradient(to bottom, #5eff5e, #00ff00); }
+.chip-100 { background: linear-gradient(to bottom, #ffff5e, #ffff00); }
+.chip-500 { background: linear-gradient(to bottom, #ff5eff, #ff00ff); }
+
+.game-controls {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 25px 0;
+    gap: 15px;
+}
+
+.prediction-buttons {
+    display: flex;
+    gap: 20px;
+}
+
+.action-btn {
+    padding: 12px 20px;
+    border-radius: 50px;
+    border: none;
+    background: linear-gradient(to bottom, #00cc44, #00aa33);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 120px;
+    box-shadow: 0 4px 10px rgba(0, 170, 51, 0.3);
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action-btn:not(:disabled):hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 170, 51, 0.4);
+}
+
+.btn-higher {
+    background: linear-gradient(to bottom, #00cc44, #00aa33);
+}
+
+.btn-lower {
+    background: linear-gradient(to bottom, #cc4400, #aa3300);
+}
+
+.btn-start, .btn-new-game {
+    background: linear-gradient(to bottom, #00aacc, #0088aa);
+    min-width: 180px;
+}
+
+.streak-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 15px 0;
+    font-size: 1.2rem;
+}
+
+.streak-label {
+    margin-right: 10px;
+}
+
+.streak-count {
+    font-weight: bold;
+    color: #11ff66;
+    font-size: 1.5rem;
+}
+
+.game-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 30px;
+    flex-wrap: wrap;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid rgba(24, 231, 124, 0.3);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 20px;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #11ff66;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Card animations */
+.card-reveal {
+    animation: card-flip 0.8s ease-out forwards;
+    transform-origin: center;
+}
+
+.card-win {
+    animation: card-win 0.6s ease-in-out;
+}
+
+.card-lose {
+    animation: card-lose 0.6s ease-in-out;
+}
+
+@keyframes card-flip {
+    0% { transform: rotateY(0deg) scale(1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+    50% { transform: rotateY(90deg) scale(1.05); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5); }
+    100% { transform: rotateY(0deg) scale(1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+}
+
+@keyframes card-win {
+    0% { transform: scale(1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+    40% { transform: scale(1.15); box-shadow: 0 15px 35px rgba(0, 255, 0, 0.7); }
+    70% { transform: scale(1.1) rotate(2deg); box-shadow: 0 12px 30px rgba(0, 255, 0, 0.6); }
+    100% { transform: scale(1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+}
+
+@keyframes card-lose {
+    0% { transform: scale(1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+    25% { transform: translateX(-8px) rotate(-6deg); box-shadow: 0 8px 24px rgba(255, 0, 0, 0.5); }
+    50% { transform: translateX(8px) rotate(6deg); box-shadow: 0 8px 24px rgba(255, 0, 0, 0.5); }
+    75% { transform: translateX(-5px) rotate(-3deg); box-shadow: 0 8px 24px rgba(255, 0, 0, 0.5); }
+    100% { transform: scale(1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+}
+
+.next-card.hidden .card-inner {
+    background: linear-gradient(135deg, #2a4e6e 0%, #1a3851 100%);
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.current-card:hover, .next-card:hover:not(.hidden) {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hilo-table {
+        padding: 20px 10px;
+    }
+    
+    .card-container {
+        gap: 30px;
+    }
+    
+    .current-card, .next-card {
+        width: 100px;
+        height: 150px;
+    }
+    
+    .game-title {
+        font-size: 2.5rem;
+    }
+    
+    .action-btn {
+        padding: 10px 15px;
+        min-width: 100px;
+    }
+    
+    .prediction-buttons {
+        gap: 10px;
+    }
+    
+    .chip {
+        width: 40px;
+        height: 40px;
+        font-size: 0.9rem;
+    }
+    
+    .stat-item {
+        padding: 8px 12px;
+    }
+} 

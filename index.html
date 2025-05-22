@@ -24,7 +24,8 @@
                     <li><a href="games/mines.html"><i class="fas fa-bomb"></i> Mines</a></li>
                     <li><a href="games/plinko.html"><i class="fas fa-sort-amount-down"></i> Plinko</a></li>
                     <li><a href="games/slots.html"><i class="fas fa-coins"></i> Slots</a></li>
-                    <li><a href="games/blackjack-game.html"><i class="fas fa-crown"></i> Blackjack</a></li>
+                    <li><a href="games/blackjack.html"><i class="fas fa-crown"></i> Blackjack</a></li>
+                    <li><a href="games/hilo.html"><i class="fas fa-exchange-alt"></i> Hi-Lo</a></li>
                     <li><a href="games/flappybird.html"><i class="fas fa-dove"></i> Flappy Bird</a></li>
                     <li><a href="games/rocketcrash.html"><i class="fas fa-rocket"></i> Rocket Crash</a></li>
                 </ul>
@@ -170,7 +171,17 @@
                         <div class="card-info">
                             <h3>BLACKJACK</h3>
                             <p>Play cards against the dealer!</p>
-                            <a href="games/blackjack-game.html" class="play-btn glow-button">PLAY</a>
+                            <a href="games/blackjack.html" class="play-btn glow-button">PLAY</a>
+                        </div>
+                    </div>
+                    <div class="game-card glow-box-hover" data-game="hilo">
+                        <div class="card-image">
+                            <img src="assets/hilo-icon.svg" alt="Hi-Lo Game" class="rotate-slow">
+                        </div>
+                        <div class="card-info">
+                            <h3>HI-LO</h3>
+                            <p>Guess if the next card will be higher or lower!</p>
+                            <a href="games/hilo.html" class="play-btn glow-button">PLAY</a>
                         </div>
                     </div>
                     <div class="game-card glow-box-hover" data-game="flappybird">
@@ -183,6 +194,8 @@
                             <a href="games/flappybird.html" class="play-btn glow-button">PLAY</a>
                         </div>
                     </div>
+                </div>
+                <div class="card-container margin-top">
                     <div class="game-card glow-box-hover" data-game="rocketcrash">
                         <div class="card-image">
                             <i class="fas fa-rocket fa-3x bounce-slow" style="color: var(--primary-color);"></i>
@@ -207,16 +220,6 @@
                         <div class="card-info">
                             <h3>TOURNAMENTS</h3>
                             <p>Compete against other players for big prizes!</p>
-                            <span class="coming-soon-badge">SOON</span>
-                        </div>
-                    </div>
-                    <div class="game-card glow-box-hover coming-soon">
-                        <div class="card-image">
-                            <i class="fas fa-dice-three fa-3x rotate-slow" style="color: var(--primary-color);"></i>
-                        </div>
-                        <div class="card-info">
-                            <h3>HILO</h3>
-                            <p>Guess if the next card will be higher or lower!</p>
                             <span class="coming-soon-badge">SOON</span>
                         </div>
                     </div>
@@ -368,5 +371,6 @@
     <script src="js/chat.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/online-users.js"></script>
+    <script src="js/sidebar-update.js"></script>
 </body>
 </html> 

@@ -1,0 +1,12 @@
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="cards-pattern" patternUnits="userSpaceOnUse" width="50" height="50">
+      <path d="M10,5 C10,2.5 12.5,0 15,0 C17.5,0 20,2.5 20,5 C20,7.5 17.5,10 15,10 C12.5,10 10,7.5 10,5 Z" fill="#ffffff" opacity="0.05" />
+      <path d="M30,25 L35,20 L40,25 L35,30 Z" fill="#ffffff" opacity="0.05" />
+      <path d="M5,25 L10,20 L15,25 L10,30 Z" fill="#ffffff" opacity="0.05" />
+      <path d="M20,40 C20,37.5 22.5,35 25,35 C27.5,35 30,37.5 30,40 C30,42.5 27.5,45 25,45 C22.5,45 20,42.5 20,40 Z" fill="#ffffff" opacity="0.05" />
+      <path d="M35,5 L40,0 L45,5 L40,10 Z" fill="#ffffff" opacity="0.05" />
+    </pattern>
+  </defs>
+  <rect width="100" height="100" fill="url(#cards-pattern)" />
+</svg> 
