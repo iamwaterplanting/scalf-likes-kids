@@ -116,36 +116,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentBetType === 'under') {
             // For "Roll Under", win chance is the target number (e.g., roll under 75 = 75% chance)
             winChanceValue = targetNumber;
-            
-            // Special case: when target is very high (95+), dramatically reduce multiplier
-            if (targetNumber >= 95) {
-                // Make multiplier diminish exponentially as it approaches 99
-                const adjustmentFactor = Math.pow(1.8, targetNumber - 94);
-                winChanceValue = Math.min(99.9, targetNumber * adjustmentFactor);
-            }
         } else {
             // For "Roll Over", win chance is 100 - target number (e.g., roll over 25 = 75% chance)
             winChanceValue = 100 - targetNumber;
-            
-            // Special case: when target is very low (5-), dramatically reduce multiplier
-            if (targetNumber <= 5) {
-                // Make multiplier diminish exponentially as it approaches 1
-                const adjustmentFactor = Math.pow(1.8, 6 - targetNumber);
-                winChanceValue = Math.min(99.9, winChanceValue * adjustmentFactor);
-            }
-            
-            // Ensure win chance is never 0 (which would cause division by zero)
-            if (winChanceValue <= 0) {
-                winChanceValue = 0.1;
-            }
         }
         
         // Calculate multiplier with house edge (5%)
         // Formula: (100 / win chance) * 0.95
         multiplierValue = (100 / winChanceValue) * 0.95;
-        
-        // Cap multiplier at a reasonable value
-        multiplierValue = Math.min(multiplierValue, 950);
         
         // Update UI
         winChance.textContent = winChanceValue.toFixed(2) + '%';
@@ -241,33 +219,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (currentBetType === 'under') {
             winChanceValue = targetNumber;
-            
-            // Special case: when target is very high (95+), dramatically reduce multiplier
-            if (targetNumber >= 95) {
-                // Make multiplier diminish exponentially as it approaches 99
-                const adjustmentFactor = Math.pow(1.8, targetNumber - 94);
-                winChanceValue = Math.min(99.9, targetNumber * adjustmentFactor);
-            }
         } else { // over
             winChanceValue = 100 - targetNumber;
-            
-            // Special case: when target is very low (5-), dramatically reduce multiplier
-            if (targetNumber <= 5) {
-                // Make multiplier diminish exponentially as it approaches 1
-                const adjustmentFactor = Math.pow(1.8, 6 - targetNumber);
-                winChanceValue = Math.min(99.9, winChanceValue * adjustmentFactor);
-            }
-            
-            // Ensure win chance is never 0 (which would cause division by zero)
-            if (winChanceValue <= 0) {
-                winChanceValue = 0.1;
-            }
         }
         
         multiplierValue = (100 / winChanceValue) * 0.95; // 5% house edge
-        
-        // Cap multiplier at a reasonable value
-        multiplierValue = Math.min(multiplierValue, 950);
         
         // Calculate outcome
         const outcomeAmount = won ? Math.floor(betAmount * multiplierValue) : -betAmount;

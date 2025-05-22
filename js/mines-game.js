@@ -1,10 +1,7 @@
 // BetaGames Mines Game
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Mines game script loaded");
-    
     // Game elements
     const minesGrid = document.getElementById('minesGrid');
-    console.log("Mines grid element:", minesGrid);
     const betAmount = document.getElementById('betAmount');
     const minesCount = document.getElementById('minesCount');
     const betButton = document.getElementById('betButton');
@@ -23,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mines: 3,
         revealedCells: [],
         minePositions: [],
-        totalCells: 20,
+        totalCells: 25,
         nextPayout: 0,
         currentProfit: 0
     };
@@ -46,20 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.className = 'mine-cell';
             cell.dataset.index = i;
             
-            // Add content container
-            const cellContent = document.createElement('div');
-            cellContent.className = 'mine-cell-content';
-            cell.appendChild(cellContent);
-            
             // Add click event for revealing cells
             cell.addEventListener('click', () => {
                 if (!gameState.isPlaying) return;
                 
                 // Don't allow clicking already revealed cells
                 if (gameState.revealedCells.includes(i)) return;
-                
-                // Play click sound
-                playSound('click');
                 
                 revealCell(i);
             });
@@ -146,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mines: mines,
             revealedCells: [],
             minePositions: generateMinePositions(mines),
-            totalCells: 20,
+            totalCells: 25,
             nextPayout: calculateNextPayout(bet, mines, 0),
             currentProfit: 0
         };
@@ -208,103 +197,83 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!gameState.isPlaying || gameState.revealedCells.includes(index)) return;
         
         const cell = minesGrid.children[index];
-        const cellContent = cell.querySelector('.mine-cell-content');
         const isMine = gameState.minePositions.includes(parseInt(index));
         
         // Add to revealed cells
         gameState.revealedCells.push(parseInt(index));
         
         // Add click effect
-        addClickEffect(cellContent);
+        addClickEffect(cell);
         
-        if (isMine) {
-            // Play explosion sound
-            playSound('explosion');
-            
-            // Hit a mine - game over
-            cell.classList.add('revealed-mine');
-            
-            // Create mine element
-            const mine = document.createElement('div');
-            mine.className = 'mine';
-            cellContent.appendChild(mine);
-            
-            // Add screen shake effect
-            addScreenShake();
-            
-            // Show all mines with cascading reveal
-            revealAllMines();
-            
-            // Game over with a short delay to allow animations to play
-            setTimeout(() => {
-                playSound('lose');
+        // Reveal with a slight delay for better animation effect
+        setTimeout(() => {
+            if (isMine) {
+                // Hit a mine - game over
+                cell.classList.add('revealed-mine');
+                
+                // Create mine element
+                const mine = document.createElement('i');
+                mine.className = 'fas fa-bomb mine';
+                cell.appendChild(mine);
+                
+                // Add explosion sound
+                playSound('explosion');
+                
+                // Add screen shake effect
+                addScreenShake();
+                
+                // Show all mines with cascading reveal
+                revealAllMines();
+                
+                // Game over
                 gameOver(false);
-            }, 800);
-        } else {
-            // Play reveal sound
-            playSound('reveal');
-            
-            // Found a gem - create a gem first with the flip animation
-            cell.classList.add('revealed-gem');
-            
-            // Create gem element with profit value
-            const gem = document.createElement('div');
-            gem.className = 'gem';
-            
-            // Calculate a profit value like in the reference image
-            const gemProfit = calculateProfitForGem(gameState.currentBet, gameState.mines, gameState.revealedCells.length);
-            gem.textContent = gemProfit.toFixed(2);
-            
-            cellContent.appendChild(gem);
-            
-            // Update next payout and profit
-            gameState.currentProfit = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length - 1) - gameState.currentBet;
-            gameState.nextPayout = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length);
-            
-            // Update display with animation
-            updateDisplayWithAnimation();
-            
-            // Check if all safe cells are revealed (win)
-            const totalSafeCells = gameState.totalCells - gameState.mines;
-            if (gameState.revealedCells.length >= totalSafeCells) {
-                // Play win sound and complete game
-                setTimeout(() => {
-                    playSound('win');
+            } else {
+                // Found a gem
+                cell.classList.add('revealed-gem');
+                
+                // Create gem element
+                const gem = document.createElement('i');
+                gem.className = 'fas fa-gem gem';
+                cell.appendChild(gem);
+                
+                // Add gem sound
+                playSound('gem');
+                
+                // Update next payout and profit
+                gameState.currentProfit = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length - 1) - gameState.currentBet;
+                gameState.nextPayout = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length);
+                
+                // Update display with animation
+                updateDisplayWithAnimation();
+                
+                // Check if all safe cells are revealed (win)
+                const totalSafeCells = gameState.totalCells - gameState.mines;
+                if (gameState.revealedCells.length >= totalSafeCells) {
                     gameOver(true);
-                }, 500);
+                }
             }
-        }
+        }, 100);
     }
     
-    // Add click effect to cell content
-    function addClickEffect(element) {
+    // Add click effect to cell
+    function addClickEffect(cell) {
         const effect = document.createElement('div');
         effect.className = 'click-effect';
-        element.appendChild(effect);
+        cell.appendChild(effect);
         
         // Remove effect after animation completes
         setTimeout(() => {
-            if (effect && effect.parentNode === element) {
-                element.removeChild(effect);
+            if (effect && effect.parentNode === cell) {
+                cell.removeChild(effect);
             }
-        }, 400); // Match animation duration
+        }, 300);
     }
     
     // Play sound effect
     function playSound(type) {
-        // In a real implementation, you would play actual sounds
+        // This is a placeholder - you would implement actual sound playing here
+        // Example: const sound = new Audio(`sounds/${type}.mp3`); sound.play();
         console.log(`Playing ${type} sound`);
-        
-        // You could implement real sounds like this:
-        // const sounds = {
-        //     click: new Audio('../sounds/click.mp3'),
-        //     reveal: new Audio('../sounds/reveal.mp3'),
-        //     win: new Audio('../sounds/win.mp3'),
-        //     lose: new Audio('../sounds/lose.mp3'),
-        //     explosion: new Audio('../sounds/explosion.mp3'),
-        //     cashout: new Audio('../sounds/cashout.mp3')
-        // };
-        // sounds[type].play();
     }
     
     // Add screen shake effect
@@ -325,18 +294,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!gameState.revealedCells.includes(pos)) {
                 setTimeout(() => {
                     const cell = cells[pos];
-                    const cellContent = cell.querySelector('.mine-cell-content');
                     cell.classList.add('revealed-mine');
                     
-                    const mine = document.createElement('div');
-                    mine.className = 'mine';
-                    cellContent.appendChild(mine);
-                    
-                    // Play a softer explosion sound for each revealed mine
-                    if (index % 3 === 0) { // Only play sound for every 3rd mine to avoid sound spam
-                        playSound('explosion');
-                    }
-                }, index * 100); // Slightly slower for better visual effect
+                    const mine = document.createElement('i');
+                    mine.className = 'fas fa-bomb mine';
+                    cell.appendChild(mine);
+                }, index * 100); // Stagger the reveals
             }
         });
     }
@@ -414,14 +377,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return fairMultiplier * 0.95; // Apply 5% house edge
     }
     
-    // Calculate profit for a single gem
-    function calculateProfitForGem(bet, mineCount, revealedCount) {
-        // Generate values that look like the reference image (values between 6.0 and 8.5)
-        const baseValue = 6.0;
-        const randomVariation = Math.random() * 2.5;
-        return parseFloat((baseValue + randomVariation).toFixed(2));
-    }
-    
     // Update game display
     function updateDisplay() {
         // Update next gem amount
@@ -447,9 +402,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cashout
     function cashout() {
         if (!gameState.isPlaying || gameState.revealedCells.length === 0) return;
-        
-        // Play cashout sound
-        playSound('cashout');
         
         // Calculate winnings
         const winnings = gameState.currentBet + gameState.currentProfit;
