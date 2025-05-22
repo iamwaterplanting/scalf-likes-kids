@@ -422,7 +422,7 @@
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             grid-template-rows: repeat(4, 1fr);
-            gap: 1px;
+            gap: 0;
             flex: 3;
             aspect-ratio: 1/0.8;
             max-width: 500px;
@@ -459,10 +459,24 @@
         
         .mine-cell.revealed-gem {
             background: #141b2d;
+            animation: revealGem 0.3s ease forwards;
         }
         
         .mine-cell.revealed-mine {
             background: #141b2d;
+            animation: revealMine 0.3s ease forwards;
+        }
+        
+        @keyframes revealGem {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes revealMine {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
         
         .gem {
@@ -478,6 +492,12 @@
             clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
             position: relative;
+            animation: gemAppear 0.3s ease forwards;
+        }
+        
+        @keyframes gemAppear {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
         
         .gem:before {
@@ -490,6 +510,13 @@
         .mine {
             color: #ff4444;
             font-size: 24px;
+            animation: mineAppear 0.3s ease forwards;
+        }
+        
+        @keyframes mineAppear {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
         }
         
         .mines-sidebar {
@@ -830,10 +857,10 @@
         }
         
         @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
-            40%, 60% { transform: translate3d(3px, 0, 0); }
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(3px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
         }
         
         /* Hover and focus effects */

@@ -205,6 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add to revealed cells
         gameState.revealedCells.push(parseInt(index));
         
+        // Add click effect
+        addClickEffect(cell);
+        
         // Immediately show click effect
         if (isMine) {
             // Hit a mine - game over
@@ -214,6 +217,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const mine = document.createElement('i');
             mine.className = 'fas fa-bomb mine';
             cell.appendChild(mine);
+            
+            // Add screen shake effect
+            addScreenShake();
             
             // Show all mines with cascading reveal
             revealAllMines();
@@ -284,14 +290,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function revealAllMines() {
         const cells = minesGrid.children;
         
-        gameState.minePositions.forEach((pos) => {
+        gameState.minePositions.forEach((pos, index) => {
             if (!gameState.revealedCells.includes(pos)) {
-                const cell = cells[pos];
-                cell.classList.add('revealed-mine');
-                
-                const mine = document.createElement('i');
-                mine.className = 'fas fa-bomb mine';
-                cell.appendChild(mine);
+                setTimeout(() => {
+                    const cell = cells[pos];
+                    cell.classList.add('revealed-mine');
+                    
+                    const mine = document.createElement('i');
+                    mine.className = 'fas fa-bomb mine';
+                    cell.appendChild(mine);
+                }, index * 100); // Stagger the reveals
             }
         });
     }
