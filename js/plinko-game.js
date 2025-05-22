@@ -458,13 +458,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function dropBall(betAmount) {
+        // Immediately deduct bet amount from balance to prevent spam glitch
+        const currentUser = window.BetaAuth?.getCurrentUser();
+        if (currentUser) {
+            if (currentUser.balance < betAmount) {
+                alert('Not enough coins in your balance.');
+                return;
+            }
+            // Deduct the bet amount immediately
+            window.BetaAuth.updateBalance(-betAmount, 'Plinko Bet');
+        }
+        
         // Create a new ball at the top center of the board
         const ball = {
             x: canvas.width / 2 + (Math.random() * 10 - 5), // Smaller random offset
             y: 20, // Start slightly higher
             radius: gameState.ballRadius,
-            vx: (Math.random() - 0.5) * 1.5, // Give initial horizontal velocity for better randomness
-            vy: 1, // Slower initial downward velocity
+            vx: (Math.random() - 0.5) * 1.2, // Reduced initial horizontal velocity
+            vy: 0.8, // Slower initial downward velocity
             betAmount,
             done: false,
             multiplier: null,
@@ -513,11 +524,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ball.animationPhase > Math.PI * 2) ball.animationPhase = 0;
             ball.glowIntensity = 0.7 + Math.sin(ball.animationPhase) * 0.3;
             
-            // Apply gravity - moderately increased for better movement
-            ball.vy += gameState.gravity;
+            // Apply gravity - reduced for slower movement
+            ball.vy += gameState.gravity * 0.9;
             
             // Apply speed cap to prevent extreme velocities
-            const maxSpeed = 10; // Reduced max speed for more controlled movement
+            const maxSpeed = 8; // Reduced max speed for more controlled movement
             if (ball.vy > maxSpeed) ball.vy = maxSpeed;
             
             // Update position
@@ -594,10 +605,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Calculate payout
                     const payout = ball.betAmount * ball.multiplier;
                     
-                    // Update balance
+                    // Update balance - only add the profit since we already deducted the bet amount
                     const profit = payout - ball.betAmount;
                     if (window.BetaAuth) {
-                        window.BetaAuth.updateBalance(profit, 'Plinko Game');
+                        // Only add the winnings, not the full payout, since we already deducted the bet
+                        window.BetaAuth.updateBalance(payout, 'Plinko Win');
                     }
                     
                     // Show result popup
