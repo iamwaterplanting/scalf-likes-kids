@@ -79,24 +79,37 @@
     position: relative;
 }
 
+.card-contents {
+    position: relative;
+    z-index: 5;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
 .card-value {
     font-size: 2.5rem;
     font-weight: bold;
-    z-index: 2;
+    z-index: 5;
+    position: relative;
+    margin-bottom: 10px;
 }
 
 .card-suit {
     font-size: 2.8rem;
     align-self: flex-end;
-    z-index: 2;
+    z-index: 5;
+    position: relative;
 }
 
 .card-suit-small {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 0;
+    left: 0;
     font-size: 14px;
-    z-index: 2;
+    z-index: 5;
 }
 
 .card-inner::before {
@@ -126,6 +139,30 @@
     left: -10%;
     pointer-events: none;
     z-index: 3;
+}
+
+/* Fix for hidden card display */
+.next-card.hidden .card-inner {
+    background: linear-gradient(135deg, #2a4e6e 0%, #1a3851 100%);
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.next-card.hidden .card-value,
+.next-card.hidden .card-suit,
+.next-card.hidden .card-suit-small {
+    display: none;
+}
+
+/* For card question mark on hidden card */
+.next-card.hidden .card-inner::before {
+    content: '?';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    color: rgba(255, 255, 255, 0.2);
+    z-index: 4;
 }
 
 .hearts, .diamonds {
@@ -348,11 +385,6 @@
     50% { transform: translateX(8px) rotate(6deg); box-shadow: 0 8px 24px rgba(255, 0, 0, 0.5); }
     75% { transform: translateX(-5px) rotate(-3deg); box-shadow: 0 8px 24px rgba(255, 0, 0, 0.5); }
     100% { transform: scale(1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
-}
-
-.next-card.hidden .card-inner {
-    background: linear-gradient(135deg, #2a4e6e 0%, #1a3851 100%);
-    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
 }
 
 .current-card:hover, .next-card:hover:not(.hidden) {

@@ -208,6 +208,14 @@ function startGame() {
     currentCard = deck.pop();
     displayCard(currentCardElement, currentCard);
     
+    // Clear any previous animations
+    currentCardElement.classList.remove('card-reveal', 'card-win', 'card-lose');
+    
+    // Add reveal animation to current card
+    setTimeout(() => {
+        currentCardElement.classList.add('card-reveal');
+    }, 100);
+    
     // Prepare next card (hidden)
     nextCard = deck.pop();
     nextCardElement.innerHTML = '<div class="card-inner"></div>';
@@ -227,6 +235,17 @@ function displayCard(cardElement, card) {
     const cardInner = cardElement.querySelector('.card-inner');
     cardInner.innerHTML = '';
     
+    // Create card contents container
+    const cardContents = document.createElement('div');
+    cardContents.className = 'card-contents';
+    cardContents.style.width = '100%';
+    cardContents.style.height = '100%';
+    cardContents.style.display = 'flex';
+    cardContents.style.flexDirection = 'column';
+    cardContents.style.justifyContent = 'space-between';
+    cardContents.style.position = 'relative';
+    cardContents.style.zIndex = '5';
+    
     // Card value
     const valueElement = document.createElement('div');
     valueElement.className = 'card-value';
@@ -237,9 +256,6 @@ function displayCard(cardElement, card) {
     suitElement.className = `card-suit ${card.suit}`;
     suitElement.textContent = suitSymbols[card.suit];
     
-    cardInner.appendChild(valueElement);
-    cardInner.appendChild(suitElement);
-    
     // Add small suit icon in top left
     const smallSuitElement = document.createElement('div');
     smallSuitElement.className = `card-suit-small ${card.suit}`;
@@ -249,10 +265,17 @@ function displayCard(cardElement, card) {
     smallSuitElement.style.left = '10px';
     smallSuitElement.style.fontSize = '14px';
     
-    cardInner.appendChild(smallSuitElement);
+    // Add elements to card
+    cardContents.appendChild(valueElement);
+    cardContents.appendChild(suitElement);
+    cardContents.appendChild(smallSuitElement);
+    cardInner.appendChild(cardContents);
     
     // Remove hidden class if present
     cardElement.classList.remove('hidden');
+    
+    // Log for debugging
+    console.log('Card displayed:', card.value, 'of', card.suit);
 }
 
 // Make higher prediction
@@ -409,8 +432,8 @@ function resetGame() {
     currentBet = 0;
     
     // Reset UI
-    currentCardElement.innerHTML = '<div class="card-inner"><span class="card-value">?</span><span class="card-suit"></span></div>';
-    nextCardElement.innerHTML = '<div class="card-inner"><span class="card-value">?</span><span class="card-suit"></span></div>';
+    currentCardElement.innerHTML = '<div class="card-inner"></div>';
+    nextCardElement.innerHTML = '<div class="card-inner"></div>';
     nextCardElement.classList.add('hidden');
     
     // Clear animation classes

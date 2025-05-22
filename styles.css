@@ -29,7 +29,7 @@ body {
     height: 100vh;
 }
 
-/* Sidebar */
+/* Sidebar - Enhanced */
 .sidebar {
     width: 250px;
     background-color: var(--secondary-color);
@@ -37,20 +37,23 @@ body {
     padding: 20px 0;
     display: flex;
     flex-direction: column;
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
 }
 
 .logo {
     padding: 0 20px;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
+    text-align: center;
 }
 
 .logo h1 {
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: 1px;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 2px;
     background: linear-gradient(to right, #ffffff, #e0e0e0);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    margin-bottom: 5px;
 }
 
 .logo span {
@@ -58,26 +61,37 @@ body {
     background: linear-gradient(to right, var(--primary-color), #5df5a9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    font-weight: 900;
 }
 
 .glow-text {
-    text-shadow: 0 0 10px rgba(24, 231, 124, 0.5);
+    text-shadow: 0 0 15px rgba(24, 231, 124, 0.7), 0 0 30px rgba(24, 231, 124, 0.4), 0 0 5px rgba(255, 255, 255, 0.5);
+    animation: logo-pulse 3s infinite alternate;
+}
+
+@keyframes logo-pulse {
+    0% { text-shadow: 0 0 15px rgba(24, 231, 124, 0.7), 0 0 30px rgba(24, 231, 124, 0.4), 0 0 5px rgba(255, 255, 255, 0.3); }
+    100% { text-shadow: 0 0 25px rgba(24, 231, 124, 0.9), 0 0 50px rgba(24, 231, 124, 0.6), 0 0 10px rgba(255, 255, 255, 0.5); }
 }
 
 .main-nav ul {
     list-style: none;
+    padding: 0 10px;
 }
 
 .main-nav li {
-    padding: 12px 20px;
-    transition: background-color 0.3s, transform 0.2s;
+    padding: 16px 20px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
     position: relative;
     overflow: hidden;
 }
 
 .main-nav li:hover, .main-nav li.active {
-    background-color: rgba(255, 255, 255, 0.05);
-    transform: translateX(5px);
+    background-color: rgba(255, 255, 255, 0.07);
+    transform: translateX(7px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .main-nav li::before {
@@ -86,10 +100,11 @@ body {
     left: 0;
     top: 0;
     height: 100%;
-    width: 3px;
+    width: 4px;
     background-color: var(--primary-color);
     transform: scaleY(0);
     transition: transform 0.3s;
+    box-shadow: 0 0 10px rgba(24, 231, 124, 0.5);
 }
 
 .main-nav li:hover::before, .main-nav li.active::before {
@@ -101,12 +116,16 @@ body {
     text-decoration: none;
     display: flex;
     align-items: center;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
 }
 
 .main-nav i {
-    margin-right: 10px;
+    margin-right: 12px;
     color: var(--primary-color);
-    width: 20px;
+    width: 24px;
+    font-size: 18px;
     text-align: center;
     transition: transform 0.3s, color 0.3s;
 }
