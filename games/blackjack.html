@@ -1,5 +1,81 @@
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="../js/supabase-config.js"></script>
-  <script src="../js/auth.js"></script>
-  <script src="../js/main.js"></script>
-  <script src="../js/blackjack-game.js"></script> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack - BetaGames</title>
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="../assets/favicon.ico.svg" type="image/x-icon">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo glow-text">
+                <h1>BETA<span>GAMES</span></h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="../index.html"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="dice.html"><i class="fas fa-dice"></i> Dice</a></li>
+                    <li><a href="roulette.html"><i class="fas fa-circle"></i> Roulette</a></li>
+                    <li><a href="mines.html"><i class="fas fa-bomb"></i> Mines</a></li>
+                    <li><a href="plinko.html"><i class="fas fa-sort-amount-down"></i> Plinko</a></li>
+                    <li><a href="slots.html"><i class="fas fa-coins"></i> Slots</a></li>
+                    <li class="active"><a href="blackjack.html"><i class="fas fa-crown"></i> Blackjack</a></li>
+                    <li><a href="flappybird.html"><i class="fas fa-dove"></i> Flappy Bird</a></li>
+                </ul>
+            </nav>
+            <div class="redeem-code">
+                <button id="redeemButton" class="glow-button"><i class="fas fa-gift"></i> Redeem Code</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="user-info">
+                    <div class="balance glow-box">
+                        <span class="balance-amount">100</span>
+                        <span class="balance-currency">COINS</span>
+                    </div>
+                </div>
+                <div class="user-controls">
+                    <button id="loginButton" class="login-button pulse-animation">Login</button>
+                    <button id="signupButton" class="signup-button glow-button">Sign Up</button>
+                    <div class="user-profile" style="display: none;">
+                        <img src="../assets/default-avatar.svg" alt="User Avatar" id="userAvatar" class="rotate-slow">
+                        <span id="username">Guest</span>
+                        <div class="dropdown-menu glow-box">
+                            <a href="#" id="profileSettings"><i class="fas fa-cog spin-icon"></i> Settings</a>
+                            <a href="#" id="logoutButton"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Game Container -->
+            <div class="game-container">
+                <h1 class="game-title">Blackjack</h1>
+                <div class="coming-soon-message">
+                    <div class="message-content">
+                        <i class="fas fa-crown fa-4x pulse-animation" style="color: var(--primary-color);"></i>
+                        <h2>Coming Soon!</h2>
+                        <p>Our Blackjack game is currently under development. Please check back later!</p>
+                        <a href="../index.html" class="btn-primary glow-button">Return Home</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html> 

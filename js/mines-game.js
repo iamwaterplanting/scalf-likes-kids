@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mines: 3,
         revealedCells: [],
         minePositions: [],
-        totalCells: 25,
+        totalCells: 20,
         nextPayout: 0,
         currentProfit: 0
     };
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mines: mines,
             revealedCells: [],
             minePositions: generateMinePositions(mines),
-            totalCells: 25,
+            totalCells: 20,
             nextPayout: calculateNextPayout(bet, mines, 0),
             currentProfit: 0
         };

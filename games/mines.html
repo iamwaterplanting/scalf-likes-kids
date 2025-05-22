@@ -176,6 +176,27 @@
                     </table>
                 </div>
             </div>
+            
+            <!-- Global Recent Activity -->
+            <div class="recent-activity glow-box slide-in">
+                <h2 class="section-title">Recent Activity</h2>
+                <div class="activity-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Game</th>
+                                <th>Bet</th>
+                                <th>Result</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentActivityBody">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -400,10 +421,10 @@
             padding: 25px;
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: repeat(5, 1fr);
+            grid-template-rows: repeat(4, 1fr);
             gap: 15px;
             flex: 3;
-            aspect-ratio: 1/1;
+            aspect-ratio: 1/0.8;
             max-width: 550px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(24, 231, 124, 0.1);
