@@ -17,6 +17,25 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
         
+        .game-title.plinko-title {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            text-align: center;
+            background: linear-gradient(135deg, #11ff66, #00cc44, #18e77c, #00cc44);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(17, 255, 102, 0.5);
+            letter-spacing: 3px;
+            animation: glow-pulse 3s infinite alternate;
+            transform-origin: center;
+        }
+        
+        @keyframes glow-pulse {
+            0% { text-shadow: 0 0 20px rgba(17, 255, 102, 0.4); transform: scale(1); }
+            50% { text-shadow: 0 0 35px rgba(17, 255, 102, 0.7); transform: scale(1.03); }
+            100% { text-shadow: 0 0 20px rgba(17, 255, 102, 0.4); transform: scale(1); }
+        }
+        
         .plinko-game-area {
             display: flex;
             flex-direction: row;
@@ -77,25 +96,46 @@
         }
         
         .bet-shortcut {
-            background-color: #0d1321;
-            border: 1px solid #2c3e50;
-            padding: 8px 0;
-            border-radius: 4px;
+            background-color: rgba(13, 19, 33, 0.7);
+            border: 1px solid rgba(24, 231, 124, 0.3);
+            padding: 10px 0;
+            border-radius: 8px;
             color: #fff;
             cursor: pointer;
             text-align: center;
-            transition: all 0.2s;
-            font-size: 14px;
+            transition: all 0.3s;
+            font-size: 15px;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(24, 231, 124, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bet-shortcut:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(24, 231, 124, 0.15), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
         
         .bet-shortcut:hover {
-            background-color: #263752;
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            border-color: rgba(24, 231, 124, 0.6);
+            box-shadow: 0 0 15px rgba(24, 231, 124, 0.3);
+        }
+        
+        .bet-shortcut:hover:before {
+            opacity: 1;
         }
         
         .risk-dropdown, .rows-dropdown {
             background-color: #0d1321;
-            border: 1px solid #2c3e50;
+            border: 1px solid rgba(24, 231, 124, 0.3);
             border-radius: 8px;
             color: #fff;
             font-size: 16px;
@@ -104,10 +144,12 @@
             appearance: none;
             cursor: pointer;
             position: relative;
+            transition: all 0.3s;
         }
         
         .risk-dropdown:focus, .rows-dropdown:focus {
             border-color: var(--primary-color);
+            box-shadow: 0 0 15px rgba(24, 231, 124, 0.3);
             outline: none;
         }
         
@@ -135,19 +177,24 @@
         }
         
         .payout-display {
-            background-color: #0d1321;
-            border-radius: 8px;
-            padding: 15px;
+            background-color: rgba(13, 19, 33, 0.8);
+            border-radius: 10px;
+            padding: 20px;
             margin-top: 10px;
+            border: 1px solid rgba(24, 231, 124, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
         .payout-display h3 {
             color: #fff;
-            font-size: 16px;
+            font-size: 18px;
             margin-bottom: 15px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             text-align: center;
+            background: linear-gradient(to right, #18e77c, #16c96c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
         .payout-grid {
@@ -158,48 +205,84 @@
         
         .payout-item {
             text-align: center;
-            padding: 8px 0;
-            border-radius: 4px;
+            padding: 10px 0;
+            border-radius: 8px;
             font-weight: bold;
             width: 100%;
+            font-size: 16px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+        
+        .payout-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
         
         .payout-item.red {
-            background-color: rgba(255, 68, 68, 0.2);
+            background: linear-gradient(to bottom, rgba(255, 68, 68, 0.3), rgba(255, 68, 68, 0.1));
             color: #ff4444;
+            border: 1px solid rgba(255, 68, 68, 0.5);
         }
         
         .payout-item.yellow {
-            background-color: rgba(255, 193, 7, 0.2);
+            background: linear-gradient(to bottom, rgba(255, 193, 7, 0.3), rgba(255, 193, 7, 0.1));
             color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.5);
         }
         
         .payout-item.green {
-            background-color: rgba(24, 231, 124, 0.2);
+            background: linear-gradient(to bottom, rgba(24, 231, 124, 0.3), rgba(24, 231, 124, 0.1));
             color: #18e77c;
+            border: 1px solid rgba(24, 231, 124, 0.5);
         }
         
         .play-button {
             background: linear-gradient(135deg, var(--primary-color), #16c96c);
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             color: #0c0e1a;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             padding: 18px 0;
             margin-top: 15px;
             transition: all 0.3s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            letter-spacing: 2px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2), 0 0 20px rgba(24, 231, 124, 0.3);
             width: 100%;
+            position: relative;
+            overflow: hidden;
+            animation: button-pulse 2s infinite alternate;
+        }
+        
+        @keyframes button-pulse {
+            0% { box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2), 0 0 20px rgba(24, 231, 124, 0.3); }
+            100% { box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(24, 231, 124, 0.5); }
+        }
+        
+        .play-button:before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(30deg);
+            transition: transform 0.5s;
         }
         
         .play-button:hover {
             background: linear-gradient(135deg, #16c96c, var(--primary-color));
             transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 30px rgba(24, 231, 124, 0.5);
+            letter-spacing: 3px;
+        }
+        
+        .play-button:hover:before {
+            transform: translateX(100%) rotate(30deg);
         }
         
         .play-button:active {
@@ -652,29 +735,32 @@
         /* Instructions */
         .instructions {
             position: absolute;
-            bottom: 15px;
+            top: 15px;
             left: 15px;
+            z-index: 10;
             background-color: rgba(12, 14, 26, 0.7);
-            border-radius: 8px;
-            padding: 10px 15px;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 14px;
-            z-index: 5;
-            backdrop-filter: blur(5px);
-            max-width: 250px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
             border: 1px solid rgba(24, 231, 124, 0.3);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
         }
         
-        .instructions p {
-            margin: 5px 0;
+        .instructions:hover {
+            opacity: 1;
         }
         
         .instructions .key {
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
-            margin: 0 2px;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #18e77c;
         }
         
         /* Leaderboard Styles */
@@ -810,6 +896,79 @@
             font-size: 12px;
             font-weight: 500;
         }
+
+        /* Sidebar enhancements */
+        .sidebar {
+            width: 250px;
+            background-color: #0c0e1a;
+            height: 100vh;
+            overflow-y: auto;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 10;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .logo {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        .sidebar .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+        
+        .sidebar .logo span {
+            color: var(--primary-color);
+        }
+        
+        .sidebar .main-nav {
+            margin-bottom: 40px;
+        }
+        
+        .sidebar .main-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar .main-nav ul li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar .main-nav ul li a {
+            display: block;
+            padding: 12px 25px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .main-nav ul li a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .sidebar .main-nav ul li.active a {
+            background-color: rgba(24, 231, 124, 0.1);
+            color: var(--primary-color);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .sidebar .main-nav ul li a:hover {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding-left: 30px;
+        }
     </style>
 </head>
 <body>
@@ -829,6 +988,7 @@
                     <li><a href="slots.html"><i class="fas fa-coins"></i> Slots</a></li>
                     <li><a href="blackjack.html"><i class="fas fa-crown"></i> Blackjack</a></li>
                     <li><a href="flappybird.html"><i class="fas fa-dove"></i> Flappy Bird</a></li>
+                    <li><a href="#"><i class="fas fa-rocket"></i> Rocket Crash</a></li>
                 </ul>
             </nav>
             <div class="redeem-code">
@@ -864,7 +1024,7 @@
 
             <!-- Plinko Game Container -->
             <div class="plinko-container">
-                <h1 class="game-title glow-text">Plinko</h1>
+                <h1 class="game-title plinko-title glow-text">Plinko</h1>
                 
                 <div class="plinko-game-area">
                     <!-- Game Controls -->
@@ -875,7 +1035,7 @@
                         </div>
                         
                         <div class="bet-amount-section">
-                            <label for="betAmount">Amount</label>
+                            <label for="betAmount">AMOUNT</label>
                             <input type="number" id="betAmount" class="bet-input" value="0.00" min="0.1" step="0.1">
                             <div class="bet-shortcuts">
                                 <button class="bet-shortcut" data-value="½">½</button>
@@ -887,12 +1047,12 @@
                         
                         <div class="risk-section">
                             <div class="setting-item">
-                                <label for="riskLevel">Risk Level</label>
+                                <label for="riskLevel">RISK LEVEL</label>
                                 <div class="dropdown-wrapper">
                                     <select id="riskLevel" class="risk-dropdown">
-                                        <option value="low">Low Risk (Easy - More Frequent Wins)</option>
-                                        <option value="medium" selected>Medium Risk (Balanced)</option>
-                                        <option value="high">High Risk (Hard - Higher Payouts)</option>
+                                        <option value="low">Low Risk</option>
+                                        <option value="medium" selected>Medium Risk</option>
+                                        <option value="high">High Risk</option>
                                     </select>
                                 </div>
                                 <p class="setting-note">Lower risk gives more frequent wins!</p>
@@ -901,12 +1061,12 @@
                         
                         <div class="rows-section">
                             <div class="setting-item">
-                                <label for="rowsCount">Grid Size</label>
+                                <label for="rowsCount">GRID SIZE</label>
                                 <div class="dropdown-wrapper">
                                     <select id="rowsCount" class="rows-dropdown">
-                                        <option value="8">8 rows (Easier)</option>
-                                        <option value="12" selected>12 rows (Standard)</option>
-                                        <option value="16">16 rows (Challenging)</option>
+                                        <option value="8">8 rows</option>
+                                        <option value="12" selected>12 rows</option>
+                                        <option value="16">16 rows</option>
                                     </select>
                                 </div>
                                 <p class="setting-note">Fewer rows = easier to predict landing spot</p>
@@ -914,7 +1074,7 @@
                         </div>
                         
                         <div class="payout-display">
-                            <h3>Payouts</h3>
+                            <h3>PAYOUTS</h3>
                             <div class="payout-grid">
                                 <div class="payout-item red">0.2x</div>
                                 <div class="payout-item yellow">1.5x</div>
@@ -924,7 +1084,7 @@
                         
                         <!-- Manual bet panel - default active -->
                         <div id="manualBetPanel">
-                            <button id="playButton" class="play-button">Play</button>
+                            <button id="playButton" class="play-button">PLAY</button>
                         </div>
                         
                         <!-- Auto bet panel - hidden by default -->
@@ -933,7 +1093,7 @@
                                 <label for="autoBetCount">Number of Bets</label>
                                 <input type="number" id="autoBetCount" class="bet-input" value="10" min="1" max="100">
                             </div>
-                            <button id="autoPlayButton" class="play-button">Auto Play</button>
+                            <button id="autoPlayButton" class="play-button">AUTO PLAY</button>
                         </div>
                     </div>
                     
@@ -952,7 +1112,7 @@
                         
                         <!-- Instructions -->
                         <div class="instructions">
-                            <p>Hold <span class="key">Shift</span> while clicking PLAY to drop multiple balls</p>
+                            <p>Hold <span class="key">Shift</span> to drop multiple balls</p>
                         </div>
                     </div>
                 </div>
