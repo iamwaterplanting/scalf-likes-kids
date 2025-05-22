@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update potential win and odds
         updatePotentialWinAndOdds();
         
+        // Update balance from auth system
+        updateBalanceDisplay();
+        
         // Event listeners
         if (rollButton) {
             rollButton.addEventListener('click', handleRoll);
@@ -75,6 +78,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Load game history
         loadGameHistory();
+        
+        // Add auth change listener to update balance when it changes
+        if (window.BetaAuth) {
+            window.BetaAuth.addAuthChangeListener(updateBalanceDisplay);
+        }
     }
     
     // Update the dice display based on number
@@ -248,9 +256,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show result
         resultSection.style.display = 'block';
         resultNumber.textContent = finalRoll;
+        
+        // Apply appropriate styling based on win/loss
         resultText.textContent = won ? 'You Won!' : 'You Lost!';
+        resultText.className = won ? 'result-text win' : 'result-text loss';
+        
         resultAmount.textContent = formatCurrency(winAmount);
-        resultAmount.className = won ? 'win' : 'loss';
+        resultAmount.className = won ? 'result-amount win' : 'result-amount loss';
         
         // Reset game state
         isRolling = false;
@@ -308,6 +320,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Format time
     function formatTime(date) {
         return new Date(date).toLocaleString();
+    }
+    
+    // Update balance display from auth system
+    function updateBalanceDisplay() {
+        const balanceElement = document.querySelector('.balance-amount');
+        if (!balanceElement) return;
+        
+        const currentUser = window.BetaAuth?.getCurrentUser();
+        if (currentUser && currentUser.balance !== undefined) {
+            balanceElement.textContent = new Intl.NumberFormat().format(currentUser.balance);
+        } else {
+            balanceElement.textContent = '100'; // Default value if no user or balance
+        }
     }
 });
 
@@ -395,6 +420,31 @@ document.addEventListener('DOMContentLoaded', () => {
             right: 20%;
         }
         
+        .win {
+            color: var(--success-color) !important;
+            text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+            font-weight: bold;
+        }
+        
+        .loss {
+            color: var(--danger-color) !important;
+            text-shadow: 0 0 10px rgba(241, 90, 90, 0.5);
+            font-weight: bold;
+        }
+        
+        .result-text {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .result-amount {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
         .betting-options {
             flex: 2;
             min-width: 300px;
@@ -466,15 +516,6 @@ document.addEventListener('DOMContentLoaded', () => {
             font-size: 48px;
             font-weight: bold;
             margin-bottom: 5px;
-        }
-        
-        .result-text {
-            font-size: 20px;
-        }
-        
-        .result-amount {
-            font-size: 36px;
-            font-weight: bold;
         }
     `;
     
