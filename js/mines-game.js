@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Play reveal sound
             playSound('reveal');
             
-            // Found a gem
+            // Found a gem - create a gem first with the flip animation
             cell.classList.add('revealed-gem');
             
             // Create gem element with profit value
