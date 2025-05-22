@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Add click effect to cell
+    // Add click effect to cell content
     function addClickEffect(element) {
         const effect = document.createElement('div');
         effect.className = 'click-effect';

@@ -437,10 +437,6 @@
         .mine-cell {
             background-color: #1e293b;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.15s ease;
             position: relative;
             overflow: hidden;
             margin: 0;
@@ -451,6 +447,7 @@
             width: 100%;
             height: 0;
             padding-bottom: 100%; /* Makes it a perfect square */
+            transition: background-color 0.15s ease;
         }
         
         .mine-cell::after {
@@ -460,7 +457,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            border: 1px solid rgba(15, 23, 42, 0.6); /* Subtle dark border */
+            border: 0.5px solid rgba(15, 23, 42, 0.3); /* Much thinner, more subtle border */
             pointer-events: none;
         }
         
@@ -473,6 +470,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 1;
         }
         
         .mine-cell:hover {
@@ -481,10 +479,6 @@
         
         .mine-cell:active {
             background-color: #334155;
-        }
-        
-        .mine-cell:before {
-            content: none;
         }
         
         .mine-cell-content:before {
