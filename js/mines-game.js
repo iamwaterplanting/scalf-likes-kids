@@ -1,7 +1,10 @@
 // BetaGames Mines Game
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("Mines game script loaded");
+    
     // Game elements
     const minesGrid = document.getElementById('minesGrid');
+    console.log("Mines grid element:", minesGrid);
     const betAmount = document.getElementById('betAmount');
     const minesCount = document.getElementById('minesCount');
     const betButton = document.getElementById('betButton');

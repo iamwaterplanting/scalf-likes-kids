@@ -442,15 +442,25 @@
             box-shadow: none;
             position: relative;
             overflow: hidden;
+            z-index: 5; /* Ensure cells are above other elements */
         }
         
         .mine-cell:hover {
-            transform: none;
-            box-shadow: none;
+            background-color: #1a2538;
+        }
+        
+        .mine-cell:active {
+            background-color: #1e2a42;
+            transform: scale(0.95);
         }
         
         .mine-cell:before {
-            display: none;
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: none;
+            opacity: 0;
         }
         
         .mine-cell.revealed-gem {
@@ -914,12 +924,17 @@
         
         /* Card lift effect */
         .mines-settings-container:hover,
-        .mines-grid:hover,
         .mines-sidebar:hover,
         .game-history:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
             transition: all 0.3s ease;
+        }
+        
+        /* Don't add hover effect to the grid */
+        .mines-grid:hover {
+            transform: none;
+            box-shadow: none;
         }
     </style>
 </body>
