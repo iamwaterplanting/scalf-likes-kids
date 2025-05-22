@@ -374,6 +374,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function continuePlaying() {
         if (!isPlaying || !isSlowModeActive) return;
         
+        // Fully pause the game during countdown
+        gameSpeed = 0; // Set speed to 0 to completely pause the game
+        
         // Start countdown
         countdown.style.display = 'block';
         countdown.textContent = '3';
@@ -394,6 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isPlaying) return;
         
         isSlowModeActive = false;
+        // Resume game at appropriate speed based on pipes passed
         gameSpeed = 1 + (pipesPassed * 0.02); // Return to normal speed with pipe-based acceleration
         slowmoOverlay.style.display = 'none';
     }
@@ -627,8 +631,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         update() {
-            // Skip updates in slow-mo overlay choice mode
-            if (isSlowModeActive && !countdown.style.display) return;
+            // Skip updates in slow-mo overlay choice mode or during countdown (when gameSpeed is 0)
+            if ((isSlowModeActive && !countdown.style.display) || gameSpeed === 0) return;
             
             this.frameCount++;
             
