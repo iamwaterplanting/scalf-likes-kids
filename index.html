@@ -26,6 +26,7 @@
                     <li><a href="games/slots.html"><i class="fas fa-coins"></i> Slots</a></li>
                     <li><a href="games/blackjack-game.html"><i class="fas fa-crown"></i> Blackjack</a></li>
                     <li><a href="games/flappybird.html"><i class="fas fa-dove"></i> Flappy Bird</a></li>
+                    <li><a href="games/rocketcrash.html"><i class="fas fa-rocket"></i> Rocket Crash</a></li>
                 </ul>
             </nav>
             <div class="redeem-code">
@@ -41,6 +42,11 @@
                     <div class="balance glow-box">
                         <span class="balance-amount">0</span>
                         <span class="balance-currency">COINS</span>
+                    </div>
+                    <div class="online-users glow-box">
+                        <span class="online-dot"></span>
+                        <span class="online-count">0</span>
+                        <span class="online-text">online</span>
                     </div>
                 </div>
                 <div class="user-controls">
@@ -177,14 +183,14 @@
                             <a href="games/flappybird.html" class="play-btn glow-button">PLAY</a>
                         </div>
                     </div>
-                    <div class="game-card glow-box-hover coming-soon">
+                    <div class="game-card glow-box-hover" data-game="rocketcrash">
                         <div class="card-image">
-                            <i class="fas fa-dice-d20 fa-3x pulse-animation" style="color: var(--primary-color);"></i>
+                            <i class="fas fa-rocket fa-3x bounce-slow" style="color: var(--primary-color);"></i>
                         </div>
                         <div class="card-info">
-                            <h3>CRASH</h3>
+                            <h3>ROCKET CRASH</h3>
                             <p>Watch the multiplier go up before it crashes!</p>
-                            <span class="coming-soon-badge">SOON</span>
+                            <a href="games/rocketcrash.html" class="play-btn glow-button">PLAY</a>
                         </div>
                     </div>
                 </div>
@@ -201,16 +207,6 @@
                         <div class="card-info">
                             <h3>TOURNAMENTS</h3>
                             <p>Compete against other players for big prizes!</p>
-                            <span class="coming-soon-badge">SOON</span>
-                        </div>
-                    </div>
-                    <div class="game-card glow-box-hover coming-soon">
-                        <div class="card-image">
-                            <i class="fas fa-rocket fa-3x bounce-slow" style="color: var(--primary-color);"></i>
-                        </div>
-                        <div class="card-info">
-                            <h3>ROCKET RACE</h3>
-                            <p>Place your bets on how high the rocket will go!</p>
                             <span class="coming-soon-badge">SOON</span>
                         </div>
                     </div>
@@ -371,5 +367,6 @@
     <script src="js/admin.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/settings.js"></script>
+    <script src="js/online-users.js"></script>
 </body>
 </html> 
