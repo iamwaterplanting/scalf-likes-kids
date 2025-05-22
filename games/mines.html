@@ -449,7 +449,30 @@
             outline: 0;
             box-sizing: border-box;
             width: 100%;
-            height: 100%;
+            height: 0;
+            padding-bottom: 100%; /* Makes it a perfect square */
+        }
+        
+        .mine-cell::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 1px solid rgba(15, 23, 42, 0.6); /* Subtle dark border */
+            pointer-events: none;
+        }
+        
+        .mine-cell-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .mine-cell:hover {
@@ -461,6 +484,10 @@
         }
         
         .mine-cell:before {
+            content: none;
+        }
+        
+        .mine-cell-content:before {
             content: '';
             position: absolute;
             top: 50%;
@@ -471,14 +498,14 @@
             border-radius: 50%;
             border: 2px solid #2d3a50;
             opacity: 0.2;
+            pointer-events: none;
         }
         
-        .mine-cell.revealed-gem {
-            background: #1e293b;
+        .mine-cell.revealed-gem .mine-cell-content {
             perspective: 1000px;
         }
         
-        .mine-cell.revealed-mine {
+        .mine-cell.revealed-mine .mine-cell-content {
             background: #1e293b;
         }
         

@@ -46,6 +46,11 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.className = 'mine-cell';
             cell.dataset.index = i;
             
+            // Add content container
+            const cellContent = document.createElement('div');
+            cellContent.className = 'mine-cell-content';
+            cell.appendChild(cellContent);
+            
             // Add click event for revealing cells
             cell.addEventListener('click', () => {
                 if (!gameState.isPlaying) return;
@@ -203,13 +208,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!gameState.isPlaying || gameState.revealedCells.includes(index)) return;
         
         const cell = minesGrid.children[index];
+        const cellContent = cell.querySelector('.mine-cell-content');
         const isMine = gameState.minePositions.includes(parseInt(index));
         
         // Add to revealed cells
         gameState.revealedCells.push(parseInt(index));
         
         // Add click effect
-        addClickEffect(cell);
+        addClickEffect(cellContent);
         
         if (isMine) {
             // Play explosion sound
@@ -221,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Create mine element
             const mine = document.createElement('div');
             mine.className = 'mine';
-            cell.appendChild(mine);
+            cellContent.appendChild(mine);
             
             // Add screen shake effect
             addScreenShake();
@@ -249,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const gemProfit = calculateProfitForGem(gameState.currentBet, gameState.mines, gameState.revealedCells.length);
             gem.textContent = gemProfit.toFixed(2);
             
-            cell.appendChild(gem);
+            cellContent.appendChild(gem);
             
             // Update next payout and profit
             gameState.currentProfit = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length - 1) - gameState.currentBet;
@@ -271,15 +277,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Add click effect to cell
-    function addClickEffect(cell) {
+    function addClickEffect(element) {
         const effect = document.createElement('div');
         effect.className = 'click-effect';
-        cell.appendChild(effect);
+        element.appendChild(effect);
         
         // Remove effect after animation completes
         setTimeout(() => {
-            if (effect && effect.parentNode === cell) {
-                cell.removeChild(effect);
+            if (effect && effect.parentNode === element) {
+                element.removeChild(effect);
             }
         }, 400); // Match animation duration
     }
@@ -319,11 +325,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!gameState.revealedCells.includes(pos)) {
                 setTimeout(() => {
                     const cell = cells[pos];
+                    const cellContent = cell.querySelector('.mine-cell-content');
                     cell.classList.add('revealed-mine');
                     
                     const mine = document.createElement('div');
                     mine.className = 'mine';
-                    cell.appendChild(mine);
+                    cellContent.appendChild(mine);
                     
                     // Play a softer explosion sound for each revealed mine
                     if (index % 3 === 0) { // Only play sound for every 3rd mine to avoid sound spam
