@@ -414,6 +414,132 @@
             text-shadow: 0 0 10px rgba(255, 202, 40, 0.7);
             border-color: rgba(255, 202, 40, 0.5);
         }
+
+        /* Fixed sidebar styling to match homepage */
+        .sidebar {
+            width: 250px;
+            background-color: var(--secondary-color);
+            height: 100vh;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 10;
+            overflow-y: auto;
+        }
+
+        .logo {
+            padding: 0 20px;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #ffffff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo span {
+            color: var(--primary-color);
+            background: linear-gradient(to right, var(--primary-color), #5df5a9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-nav ul {
+            list-style: none;
+        }
+
+        .main-nav li {
+            padding: 12px 20px;
+            transition: background-color 0.3s, transform 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-nav li:hover, .main-nav li.active {
+            background-color: rgba(255, 255, 255, 0.05);
+            transform: translateX(5px);
+        }
+
+        .main-nav li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background-color: var(--primary-color);
+            transform: scaleY(0);
+            transition: transform 0.3s;
+        }
+
+        .main-nav li:hover::before, .main-nav li.active::before {
+            transform: scaleY(1);
+        }
+
+        .main-nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .main-nav i {
+            margin-right: 10px;
+            color: var(--primary-color);
+            width: 20px;
+            text-align: center;
+            transition: transform 0.3s, color 0.3s;
+        }
+
+        .main-nav li:hover i, .main-nav li.active i {
+            transform: scale(1.2);
+            color: #ffffff;
+        }
+
+        .redeem-code {
+            margin-top: auto;
+            padding: 20px;
+        }
+
+        .redeem-code button {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            border: none;
+            border-radius: 5px;
+            padding: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .redeem-code button:hover {
+            background-color: #16c96c;
+        }
+
+        /* Main content - add proper margin to avoid overlap */
+        .main-content {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+            padding: 20px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Additional layout fixes for game area */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
