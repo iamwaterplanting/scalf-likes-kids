@@ -208,15 +208,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add click effect
         addClickEffect(cell);
         
-        // Immediately show click effect
         if (isMine) {
             // Hit a mine - game over
             cell.classList.add('revealed-mine');
             
-            // Create mine element
-            const mine = document.createElement('i');
-            mine.className = 'fas fa-bomb mine';
-            cell.appendChild(mine);
+            // Wait for flip animation before showing mine
+            setTimeout(() => {
+                // Create mine element
+                const mine = document.createElement('i');
+                mine.className = 'fas fa-bomb mine';
+                cell.appendChild(mine);
+            }, 150); // Slightly faster reveal
             
             // Add screen shake effect
             addScreenShake();
@@ -224,21 +226,22 @@ document.addEventListener('DOMContentLoaded', () => {
             // Show all mines with cascading reveal
             revealAllMines();
             
-            // Game over
-            gameOver(false);
+            // Game over with a short delay to allow animations to play
+            setTimeout(() => {
+                gameOver(false);
+            }, 1000);
         } else {
             // Found a gem
             cell.classList.add('revealed-gem');
             
-            // Calculate the profit for this gem
-            const revealedCount = gameState.revealedCells.length;
-            const gemProfit = calculateProfitForGem(gameState.currentBet, gameState.mines, revealedCount);
-            
-            // Create gem element with profit value
-            const gem = document.createElement('div');
-            gem.className = 'gem';
-            gem.textContent = gemProfit.toFixed(2);
-            cell.appendChild(gem);
+            // Wait for flip animation before showing gem
+            setTimeout(() => {
+                // Create gem element with profit value
+                const gem = document.createElement('div');
+                gem.className = 'gem';
+                gem.textContent = calculateProfitForGem(gameState.currentBet, gameState.mines, gameState.revealedCells.length).toFixed(2);
+                cell.appendChild(gem);
+            }, 150); // Slightly faster reveal
             
             // Update next payout and profit
             gameState.currentProfit = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length - 1) - gameState.currentBet;
@@ -266,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (effect && effect.parentNode === cell) {
                 cell.removeChild(effect);
             }
-        }, 300);
+        }, 600); // Match animation duration
     }
     
     // Play sound effect
@@ -296,10 +299,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const cell = cells[pos];
                     cell.classList.add('revealed-mine');
                     
-                    const mine = document.createElement('i');
-                    mine.className = 'fas fa-bomb mine';
-                    cell.appendChild(mine);
-                }, index * 100); // Stagger the reveals
+                    // Wait for flip animation before showing mine
+                    setTimeout(() => {
+                        const mine = document.createElement('i');
+                        mine.className = 'fas fa-bomb mine';
+                        cell.appendChild(mine);
+                    }, 150); // Slightly faster reveal
+                }, index * 80); // Faster cascade to match reference
             }
         });
     }
