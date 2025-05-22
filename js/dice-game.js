@@ -233,6 +233,12 @@ document.addEventListener('DOMContentLoaded', () => {
             window.BetaAuth.updateBalance(outcomeAmount, 'Crypto Dice Game');
         }
         
+        // Apply win/loss color to main result display
+        diceResult.style.color = won ? '#44ff44' : '#ff4444';
+        diceResult.style.textShadow = won ? 
+            '0 0 10px rgba(68, 255, 68, 0.5)' : 
+            '0 0 10px rgba(255, 68, 68, 0.5)';
+        
         // Show result
         resultNumber.textContent = result;
         resultText.textContent = won ? 'You Won!' : 'You Lost!';
