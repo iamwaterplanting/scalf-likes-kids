@@ -463,4 +463,23 @@ function updateGameCards(generalMaintenance, gameStatus = {}) {
             }
         }
     });
-} 
+}
+
+// Add functionality for release banner close button
+document.addEventListener('DOMContentLoaded', function() {
+    const closeButton = document.querySelector('.close-banner');
+    const releaseBanner = document.querySelector('.release-banner');
+    
+    if (closeButton && releaseBanner) {
+        closeButton.addEventListener('click', function() {
+            releaseBanner.style.display = 'none';
+            // Store in localStorage to remember user closed it
+            localStorage.setItem('release_banner_closed', 'true');
+        });
+        
+        // Check if user previously closed the banner
+        if (localStorage.getItem('release_banner_closed') === 'true') {
+            releaseBanner.style.display = 'none';
+        }
+    }
+}); 

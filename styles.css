@@ -1426,4 +1426,55 @@ input:checked + .toggle-slider:before {
     font-size: 12px;
     opacity: 0.7;
     color: var(--primary-color);
+}
+
+/* Version tag */
+.version-tag {
+    font-size: 12px;
+    color: var(--primary-color);
+    opacity: 0.8;
+    margin-top: -5px;
+    letter-spacing: 1px;
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(24, 231, 124, 0.3);
+}
+
+/* Release notification banner */
+.release-banner {
+    background: linear-gradient(90deg, rgba(24, 231, 124, 0.15), rgba(24, 231, 124, 0.05));
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-left: 4px solid var(--primary-color);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+    position: relative;
+}
+
+.release-banner i {
+    color: var(--primary-color);
+    margin-right: 10px;
+}
+
+.close-banner {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: 0 5px;
+    transition: color 0.2s;
+}
+
+.close-banner:hover {
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .release-banner {
+        font-size: 12px;
+        padding: 8px 15px;
+    }
 } 
