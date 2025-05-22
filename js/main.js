@@ -84,7 +84,7 @@ function updateActivityTable(activities) {
         
         // User cell
         const userCell = document.createElement('td');
-        userCell.textContent = activity.user;
+        userCell.textContent = activity.username;
         
         // Game cell
         const gameCell = document.createElement('td');
@@ -313,7 +313,7 @@ async function trackGameBet(gameType, betAmount, result) {
     const username = currentUser.username;
     const timestamp = new Date().toISOString();
     const betRecord = {
-        user: username,
+        username: username,
         game: gameType,
         bet: betAmount,
         result: result,

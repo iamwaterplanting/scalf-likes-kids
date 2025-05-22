@@ -255,17 +255,16 @@
             align-items: center;
             font-weight: bold;
             font-size: 14px;
-            border-radius: 0;
             transition: all 0.3s ease;
             border: none;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
         
         .multiplier-bucket:last-child {
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: none;
         }
         
         .multiplier-bucket[data-value="0.2"],

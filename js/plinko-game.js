@@ -89,17 +89,32 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.width = plinkoBoard.clientWidth;
             canvas.height = plinkoBoard.clientHeight;
             
-            // Make sure the multiplier container aligns with the canvas
+            // Make sure the multiplier container aligns perfectly with the canvas
             if (multiplierContainer) {
+                // Set exact width with no margins or paddings
                 multiplierContainer.style.width = `${canvas.width}px`;
-                // Set the width through CSS to ensure proper alignment
+                multiplierContainer.style.left = '0';
+                multiplierContainer.style.right = '0';
+                multiplierContainer.style.padding = '0';
+                multiplierContainer.style.margin = '0';
+                multiplierContainer.style.boxSizing = 'border-box';
+                
+                // Add an important style to ensure the width is enforced
                 const style = document.createElement('style');
                 style.textContent = `
                     #multiplierContainer {
                         width: ${canvas.width}px !important;
-                        box-sizing: border-box;
-                        padding: 0;
-                        margin: 0;
+                        box-sizing: border-box !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        left: 0 !important;
+                        right: 0 !important;
+                    }
+                    
+                    .multiplier-bucket {
+                        box-sizing: border-box !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
                     }
                 `;
                 document.head.appendChild(style);
@@ -152,23 +167,38 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate pin spacing
         const boardWidth = canvas.width;
         const boardHeight = canvas.height;
-        const horizontalPadding = 50;
         const verticalPadding = 60;
         const bucketHeight = 60; // Height reserved for multiplier buckets
-        const availableWidth = boardWidth - (horizontalPadding * 2);
         const availableHeight = boardHeight - verticalPadding - bucketHeight;
         
-        const pinSpacing = Math.min(availableWidth / rowCount, availableHeight / rowCount);
+        // For the exact reference image layout with 16 rows and 16 buckets
+        const bucketCount = 16;
+        const bucketWidth = boardWidth / bucketCount;
         
-        // Create pins in triangular pattern
+        // Calculate vertical spacing to fit all rows
+        const verticalPinSpacing = availableHeight / (rowCount + 1);
+        
+        // Create pins in triangular pattern matching the reference image
         for (let row = 0; row < rowCount; row++) {
+            // Calculate how many pins for this row
+            // For perfect triangle, each row has row+1 pins (1 pin in first row, 2 in second, etc.)
             const pinsInRow = row + 1;
-            const rowWidth = pinsInRow * pinSpacing;
-            const startX = (boardWidth - rowWidth) / 2 + pinSpacing / 2;
+            
+            // For each row, calculate the total width covered
+            // Start with a width that's visually proportional to the board
+            // Each row expands to cover more of the board's width as we go down
+            const expansionFactor = row / (rowCount - 1); // 0 for first row, 1 for last row
+            const rowWidthProportion = 0.2 + 0.8 * expansionFactor; // Start at 20% width, expand to 100%
+            const rowWidth = boardWidth * rowWidthProportion;
+            
+            // Center this row
+            const startX = (boardWidth - rowWidth) / 2;
+            const pinSpacing = rowWidth / (pinsInRow - 1 || 1); // Avoid division by zero for first row
             
             for (let pin = 0; pin < pinsInRow; pin++) {
-                const x = startX + pin * pinSpacing;
-                const y = verticalPadding + row * pinSpacing;
+                // Special case for first row with only one pin
+                const x = pinsInRow === 1 ? boardWidth / 2 : startX + pin * pinSpacing;
+                const y = verticalPadding + row * verticalPinSpacing;
                 
                 gameState.pins.push({ 
                     x, 
@@ -208,12 +238,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const boardWidth = canvas.width;
         const boardHeight = canvas.height;
         const bucketHeight = 60;
-        const horizontalPadding = 0;
-        const bucketWidth = (boardWidth - (horizontalPadding * 2)) / bucketCount;
+        
+        // Force multiplier container to exact canvas width
+        multiplierContainer.style.width = `${boardWidth}px`;
+        
+        // Calculate the exact bucket width to fill the entire container
+        const bucketWidth = boardWidth / bucketCount;
         
         for (let i = 0; i < bucketCount; i++) {
             const multiplier = multipliers[i];
-            const x = horizontalPadding + (i * bucketWidth) + bucketWidth / 2;
+            const x = i * bucketWidth + bucketWidth / 2;
             const y = boardHeight - bucketHeight / 2;
             
             // Create visual bucket
@@ -221,7 +255,10 @@ document.addEventListener('DOMContentLoaded', () => {
             bucketElement.className = 'multiplier-bucket';
             bucketElement.textContent = `${multiplier}x`;
             bucketElement.dataset.value = multiplier;
-            bucketElement.style.width = `${bucketWidth - 2}px`;
+            bucketElement.style.width = `${bucketWidth}px`;
+            bucketElement.style.margin = '0';
+            bucketElement.style.padding = '0';
+            bucketElement.style.boxSizing = 'border-box';
             multiplierContainer.appendChild(bucketElement);
             
             // Add to game state
@@ -519,36 +556,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 ball.vx = Math.max(ball.vx - 0.5, -5);
             }
             
-            // Check for multiplier bucket collisions
-            if (ball.y > canvas.height - 65) { // Adjusted to match multiplier container height
-                for (const multiplier of gameState.multipliers) {
-                    const leftEdge = multiplier.x - multiplier.width / 2;
-                    const rightEdge = multiplier.x + multiplier.width / 2;
+            // Check for multiplier bucket collisions - use a more precise calculation
+            if (ball.y >= canvas.height - 65) {
+                // Calculate which bucket the ball is in based on x position
+                const bucketIndex = Math.floor(ball.x / (canvas.width / gameState.multipliers.length));
+                const bucketIndex_clamped = Math.max(0, Math.min(bucketIndex, gameState.multipliers.length - 1));
+                
+                const multiplier = gameState.multipliers[bucketIndex_clamped];
+                
+                if (multiplier) {
+                    ball.multiplier = multiplier.value;
+                    ball.done = true;
                     
-                    if (ball.x >= leftEdge && ball.x <= rightEdge) {
-                        ball.multiplier = multiplier.value;
-                        ball.done = true;
-                        
-                        // Highlight this bucket
-                        highlightBucket(multiplier);
-                        
-                        // Calculate payout
-                        const payout = ball.betAmount * ball.multiplier;
-                        
-                        // Update balance
-                        const profit = payout - ball.betAmount;
-                        if (window.BetaAuth) {
-                            window.BetaAuth.updateBalance(profit, 'Plinko Game');
-                        }
-                        
-                        // Show result popup
-                        showResult(profit);
-                        
-                        // Add to game history
-                        addToHistory(ball.betAmount, riskLevelSelect.value, ball.multiplier, profit);
-                        
-                        break;
+                    // Highlight this bucket
+                    highlightBucket(multiplier);
+                    
+                    // Calculate payout
+                    const payout = ball.betAmount * ball.multiplier;
+                    
+                    // Update balance
+                    const profit = payout - ball.betAmount;
+                    if (window.BetaAuth) {
+                        window.BetaAuth.updateBalance(profit, 'Plinko Game');
                     }
+                    
+                    // Show result popup
+                    showResult(profit);
+                    
+                    // Add to game history
+                    addToHistory(ball.betAmount, riskLevelSelect.value, ball.multiplier, profit);
                 }
             }
             
@@ -747,31 +783,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function drawMultiplierSlots() {
-        // Draw the container for multipliers
-        ctx.fillStyle = 'rgba(12, 14, 26, 0.5)';
-        ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
-        
-        // Draw divider lines
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 1;
-        
-        for (const multiplier of gameState.multipliers) {
-            const left = multiplier.x - multiplier.width / 2;
-            const right = multiplier.x + multiplier.width / 2;
-            
-            // Draw divider lines
-            ctx.beginPath();
-            ctx.moveTo(left, canvas.height - 60);
-            ctx.lineTo(left, canvas.height);
-            ctx.stroke();
-            
-            if (multiplier === gameState.multipliers[gameState.multipliers.length - 1]) {
-                ctx.beginPath();
-                ctx.moveTo(right, canvas.height - 60);
-                ctx.lineTo(right, canvas.height);
-                ctx.stroke();
-            }
-        }
+        // We don't need to draw anything here as we're using HTML elements
+        // which are more reliable for positioning
     }
     
     function showResult(profit) {

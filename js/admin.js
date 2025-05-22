@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // User cell
             const userCell = document.createElement('td');
-            userCell.textContent = activity.user;
+            userCell.textContent = activity.username;
             
             // Game cell
             const gameCell = document.createElement('td');
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
                 viewBtn.title = 'View Details';
                 viewBtn.addEventListener('click', () => {
-                    alert(`Bet Details:\nUser: ${activity.user}\nGame: ${activity.game}\nBet: ${activity.bet}\nResult: ${activity.result}\nTime: ${new Date(activity.time).toLocaleString()}`);
+                    alert(`Bet Details:\nUser: ${activity.username}\nGame: ${activity.game}\nBet: ${activity.bet}\nResult: ${activity.result}\nTime: ${new Date(activity.time).toLocaleString()}`);
                 });
                 actionsCell.appendChild(viewBtn);
                 row.appendChild(actionsCell);
