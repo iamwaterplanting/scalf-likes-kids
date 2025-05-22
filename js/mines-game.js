@@ -205,62 +205,48 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add to revealed cells
         gameState.revealedCells.push(parseInt(index));
         
-        // Add click effect
-        addClickEffect(cell);
-        
-        // Reveal with a slight delay for better animation effect
-        setTimeout(() => {
-            if (isMine) {
-                // Hit a mine - game over
-                cell.classList.add('revealed-mine');
-                
-                // Create mine element
-                const mine = document.createElement('i');
-                mine.className = 'fas fa-bomb mine';
-                cell.appendChild(mine);
-                
-                // Add explosion sound
-                playSound('explosion');
-                
-                // Add screen shake effect
-                addScreenShake();
-                
-                // Show all mines with cascading reveal
-                revealAllMines();
-                
-                // Game over
-                gameOver(false);
-            } else {
-                // Found a gem
-                cell.classList.add('revealed-gem');
-                
-                // Calculate the profit for this gem
-                const revealedCount = gameState.revealedCells.length;
-                const gemProfit = calculateProfitForGem(gameState.currentBet, gameState.mines, revealedCount);
-                
-                // Create gem element with profit value
-                const gem = document.createElement('div');
-                gem.className = 'gem';
-                gem.textContent = gemProfit.toFixed(2);
-                cell.appendChild(gem);
-                
-                // Add gem sound
-                playSound('gem');
-                
-                // Update next payout and profit
-                gameState.currentProfit = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length - 1) - gameState.currentBet;
-                gameState.nextPayout = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length);
-                
-                // Update display with animation
-                updateDisplayWithAnimation();
-                
-                // Check if all safe cells are revealed (win)
-                const totalSafeCells = gameState.totalCells - gameState.mines;
-                if (gameState.revealedCells.length >= totalSafeCells) {
-                    gameOver(true);
-                }
+        // Immediately show click effect
+        if (isMine) {
+            // Hit a mine - game over
+            cell.classList.add('revealed-mine');
+            
+            // Create mine element
+            const mine = document.createElement('i');
+            mine.className = 'fas fa-bomb mine';
+            cell.appendChild(mine);
+            
+            // Show all mines with cascading reveal
+            revealAllMines();
+            
+            // Game over
+            gameOver(false);
+        } else {
+            // Found a gem
+            cell.classList.add('revealed-gem');
+            
+            // Calculate the profit for this gem
+            const revealedCount = gameState.revealedCells.length;
+            const gemProfit = calculateProfitForGem(gameState.currentBet, gameState.mines, revealedCount);
+            
+            // Create gem element with profit value
+            const gem = document.createElement('div');
+            gem.className = 'gem';
+            gem.textContent = gemProfit.toFixed(2);
+            cell.appendChild(gem);
+            
+            // Update next payout and profit
+            gameState.currentProfit = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length - 1) - gameState.currentBet;
+            gameState.nextPayout = calculateNextPayout(gameState.currentBet, gameState.mines, gameState.revealedCells.length);
+            
+            // Update display with animation
+            updateDisplayWithAnimation();
+            
+            // Check if all safe cells are revealed (win)
+            const totalSafeCells = gameState.totalCells - gameState.mines;
+            if (gameState.revealedCells.length >= totalSafeCells) {
+                gameOver(true);
             }
-        }, 100);
+        }
     }
     
     // Add click effect to cell
@@ -298,16 +284,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function revealAllMines() {
         const cells = minesGrid.children;
         
-        gameState.minePositions.forEach((pos, index) => {
+        gameState.minePositions.forEach((pos) => {
             if (!gameState.revealedCells.includes(pos)) {
-                setTimeout(() => {
-                    const cell = cells[pos];
-                    cell.classList.add('revealed-mine');
-                    
-                    const mine = document.createElement('i');
-                    mine.className = 'fas fa-bomb mine';
-                    cell.appendChild(mine);
-                }, index * 100); // Stagger the reveals
+                const cell = cells[pos];
+                cell.classList.add('revealed-mine');
+                
+                const mine = document.createElement('i');
+                mine.className = 'fas fa-bomb mine';
+                cell.appendChild(mine);
             }
         });
     }
@@ -387,14 +371,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Calculate profit for a single gem
     function calculateProfitForGem(bet, mineCount, revealedCount) {
-        // Calculate profit based on the revealed gem's position
-        const prevRevealedCount = revealedCount - 1;
-        const multiplier = calculateMultiplier(mineCount, prevRevealedCount);
-        const profit = (bet * multiplier) - bet;
-        
-        // Return a random value between 5.00 and 9.99 for visual effect
-        // This is just for display purposes to match the reference image
-        return Math.floor((Math.random() * 5) + 5) + Math.random().toFixed(2);
+        // For visual purposes only - match the reference image
+        // Return a random value between 5.00 and 9.99
+        return parseFloat((Math.random() * 4 + 5).toFixed(2));
     }
     
     // Update game display
