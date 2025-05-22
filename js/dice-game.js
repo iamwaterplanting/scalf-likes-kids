@@ -112,7 +112,20 @@ document.addEventListener('DOMContentLoaded', () => {
         let winChanceValue = 0;
         let multiplierValue = 0;
         
-        // Calculate win chance and multiplier based on bet type
+        // Automatically switch bet type based on target number
+        // If target is high (>85), force "Roll Over" for fairness
+        if (targetNumber > 85 && currentBetType === 'under') {
+            rollOverButton.click(); // Programmatically switch to Roll Over
+            return; // Function will be called again after the click event
+        }
+        
+        // If target is low (<15), force "Roll Under" for fairness
+        if (targetNumber < 15 && currentBetType === 'over') {
+            rollUnderButton.click(); // Programmatically switch to Roll Under
+            return; // Function will be called again after the click event
+        }
+        
+        // Calculate win chance based on bet type
         if (currentBetType === 'under') {
             // For "Roll Under", win chance is the target number (e.g., roll under 75 = 75% chance)
             winChanceValue = targetNumber;
@@ -122,8 +135,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Calculate multiplier with house edge (5%)
-        // Formula: (100 / win chance) * 0.95
-        multiplierValue = (100 / winChanceValue) * 0.95;
+        // Base formula: (100 / win chance) * 0.95
+        
+        // Calculate distance from the 50% mark (optimal fairness point)
+        // As we move away from 50%, reduce the multiplier further
+        const distanceFrom50 = Math.abs(50 - winChanceValue);
+        
+        // Additional edge based on distance from 50%
+        // This creates diminishing returns as you approach very high win chances
+        let additionalEdge = 0;
+        
+        if (distanceFrom50 > 30) {
+            // Significant reduction for very high win chances (>80% or <20%)
+            additionalEdge = 0.2 + (distanceFrom50 - 30) * 0.015;
+        } else if (distanceFrom50 > 20) {
+            // Moderate reduction for high win chances (70-80% or 20-30%)
+            additionalEdge = 0.1 + (distanceFrom50 - 20) * 0.01;
+        } else if (distanceFrom50 > 10) {
+            // Small reduction for slightly favorable win chances (60-70% or 30-40%)
+            additionalEdge = 0.05 + (distanceFrom50 - 10) * 0.005;
+        }
+        
+        // Cap the additional edge at 0.4 (40%)
+        additionalEdge = Math.min(additionalEdge, 0.4);
+        
+        // Apply the combined edge (base 5% + additional based on distance from 50%)
+        const totalEdge = 0.05 + additionalEdge;
+        multiplierValue = (100 / winChanceValue) * (1 - totalEdge);
         
         // Update UI
         winChance.textContent = winChanceValue.toFixed(2) + '%';
@@ -213,17 +251,38 @@ document.addEventListener('DOMContentLoaded', () => {
             won = (resultValue > targetNumber);
         }
         
-        // Calculate multiplier and win/loss amount
+        // Calculate win chance value
         let winChanceValue = 0;
-        let multiplierValue = 0;
-        
         if (currentBetType === 'under') {
             winChanceValue = targetNumber;
         } else { // over
             winChanceValue = 100 - targetNumber;
         }
         
-        multiplierValue = (100 / winChanceValue) * 0.95; // 5% house edge
+        // Calculate multiplier with adaptive house edge
+        // Calculate distance from the 50% mark (optimal fairness point)
+        const distanceFrom50 = Math.abs(50 - winChanceValue);
+        
+        // Additional edge based on distance from 50%
+        let additionalEdge = 0;
+        
+        if (distanceFrom50 > 30) {
+            // Significant reduction for very high win chances (>80% or <20%)
+            additionalEdge = 0.2 + (distanceFrom50 - 30) * 0.015;
+        } else if (distanceFrom50 > 20) {
+            // Moderate reduction for high win chances (70-80% or 20-30%)
+            additionalEdge = 0.1 + (distanceFrom50 - 20) * 0.01;
+        } else if (distanceFrom50 > 10) {
+            // Small reduction for slightly favorable win chances (60-70% or 30-40%)
+            additionalEdge = 0.05 + (distanceFrom50 - 10) * 0.005;
+        }
+        
+        // Cap the additional edge at 0.4 (40%)
+        additionalEdge = Math.min(additionalEdge, 0.4);
+        
+        // Apply the combined edge (base 5% + additional based on distance from 50%)
+        const totalEdge = 0.05 + additionalEdge;
+        const multiplierValue = (100 / winChanceValue) * (1 - totalEdge);
         
         // Calculate outcome
         const outcomeAmount = won ? Math.floor(betAmount * multiplierValue) : -betAmount;
@@ -372,7 +431,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = usernames[Math.floor(Math.random() * usernames.length)];
             const bet = Math.floor(Math.random() * 1000) + 100;
             const betType = betTypes[Math.floor(Math.random() * betTypes.length)];
-            const targetNumber = Math.floor(Math.random() * 98) + 1; // 1-99
+            
+            // Generate more realistic target values that avoid extremes
+            let targetNumber;
+            if (betType === 'Roll Under') {
+                // For Roll Under, avoid very high targets (which would be exploitable)
+                targetNumber = Math.floor(Math.random() * 75) + 10; // 10-85
+            } else {
+                // For Roll Over, avoid very low targets (which would be exploitable)
+                targetNumber = Math.floor(Math.random() * 75) + 15; // 15-90
+            }
+            
             const result = (Math.random() * 100).toFixed(2);
             const resultValue = parseFloat(result);
             
@@ -384,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 won = (resultValue > targetNumber);
             }
             
-            // Calculate multiplier
+            // Calculate win chance
             let winChanceValue = 0;
             if (betType === 'Roll Under') {
                 winChanceValue = targetNumber;
@@ -392,7 +461,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 winChanceValue = 100 - targetNumber;
             }
             
-            const multiplierValue = (100 / winChanceValue) * 0.95; // 5% house edge
+            // Calculate multiplier with adaptive house edge
+            const distanceFrom50 = Math.abs(50 - winChanceValue);
+            let additionalEdge = 0;
+            
+            if (distanceFrom50 > 30) {
+                additionalEdge = 0.2 + (distanceFrom50 - 30) * 0.015;
+            } else if (distanceFrom50 > 20) {
+                additionalEdge = 0.1 + (distanceFrom50 - 20) * 0.01;
+            } else if (distanceFrom50 > 10) {
+                additionalEdge = 0.05 + (distanceFrom50 - 10) * 0.005;
+            }
+            
+            additionalEdge = Math.min(additionalEdge, 0.4);
+            const totalEdge = 0.05 + additionalEdge;
+            const multiplierValue = (100 / winChanceValue) * (1 - totalEdge);
             
             // Calculate outcome
             const outcome = won ? Math.floor(bet * multiplierValue) : -bet;

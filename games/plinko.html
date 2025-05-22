@@ -8,6 +8,439 @@
     <link rel="icon" href="../assets/favicon.ico.svg" type="image/x-icon">
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .plinko-container {
+            background-color: #141b2d;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .plinko-game-area {
+            display: flex;
+            flex-direction: row;
+            gap: 30px;
+        }
+        
+        .plinko-controls {
+            flex: 1;
+            background-color: #1c2639;
+            border-radius: 12px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(24, 231, 124, 0.1);
+            max-width: 300px;
+        }
+        
+        .bet-amount-section, .risk-section, .rows-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .bet-amount-section label, .risk-section label, .rows-section label {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .bet-input {
+            background-color: #0d1321;
+            border: 1px solid #2c3e50;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 18px;
+            padding: 15px;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .bet-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(24, 231, 124, 0.3), inset 0 2px 5px rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+        
+        .bet-shortcuts {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .bet-shortcut {
+            background-color: #0d1321;
+            border: 1px solid #2c3e50;
+            padding: 8px 0;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .bet-shortcut:hover {
+            background-color: #263752;
+            transform: translateY(-2px);
+        }
+        
+        .risk-dropdown, .rows-dropdown {
+            background-color: #0d1321;
+            border: 1px solid #2c3e50;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            padding: 12px;
+            width: 100%;
+            appearance: none;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .risk-dropdown:focus, .rows-dropdown:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        
+        .dropdown-wrapper {
+            position: relative;
+        }
+        
+        .dropdown-wrapper::after {
+            content: "\f107";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #fff;
+            pointer-events: none;
+        }
+        
+        .payout-display {
+            background-color: #0d1321;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        
+        .payout-display h3 {
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+        
+        .payout-grid {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .payout-item {
+            text-align: center;
+            padding: 8px 0;
+            border-radius: 4px;
+            font-weight: bold;
+            width: 100%;
+        }
+        
+        .payout-item.red {
+            background-color: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+        }
+        
+        .payout-item.yellow {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        
+        .payout-item.green {
+            background-color: rgba(24, 231, 124, 0.2);
+            color: #18e77c;
+        }
+        
+        .play-button {
+            background: linear-gradient(135deg, var(--primary-color), #16c96c);
+            border: none;
+            border-radius: 8px;
+            color: #0c0e1a;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 18px 0;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .play-button:hover {
+            background: linear-gradient(135deg, #16c96c, var(--primary-color));
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .play-button:active {
+            transform: translateY(-1px);
+        }
+        
+        .plinko-board {
+            flex: 2;
+            background-color: #1c2639;
+            border-radius: 12px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(24, 231, 124, 0.1);
+            position: relative;
+            min-height: 600px;
+            overflow: hidden;
+        }
+        
+        #plinkoCanvas {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        .multiplier-container {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            padding: 0 25px;
+        }
+        
+        .multiplier-bucket {
+            width: 60px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .multiplier-bucket[data-value="0.2"],
+        .multiplier-bucket[data-value="0.3"],
+        .multiplier-bucket[data-value="0.5"] {
+            background-color: rgba(255, 68, 68, 0.7);
+            color: #fff;
+        }
+        
+        .multiplier-bucket[data-value="0.8"],
+        .multiplier-bucket[data-value="1.0"],
+        .multiplier-bucket[data-value="1.5"] {
+            background-color: rgba(255, 193, 7, 0.7);
+            color: #000;
+        }
+        
+        .multiplier-bucket[data-value="2.0"],
+        .multiplier-bucket[data-value="5.0"],
+        .multiplier-bucket[data-value="10.0"] {
+            background-color: rgba(24, 231, 124, 0.7);
+            color: #000;
+        }
+        
+        .game-history {
+            background-color: #141b2d;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(24, 231, 124, 0.1);
+        }
+        
+        .game-history h2 {
+            color: #fff;
+            font-size: 22px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .game-history h2:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), transparent);
+            border-radius: 3px;
+        }
+        
+        .history-table {
+            overflow-x: auto;
+        }
+        
+        .history-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .history-table th {
+            background-color: #0d1321;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+            text-align: left;
+            padding: 15px;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+        
+        .history-table td {
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+        
+        .history-table tr:hover td {
+            background-color: rgba(24, 231, 124, 0.05);
+        }
+        
+        .history-table td.win {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .history-table td.loss {
+            color: #ff4444;
+            font-weight: bold;
+        }
+        
+        /* Ball animation */
+        @keyframes ballBounce {
+            0% { transform: scale(1); }
+            10% { transform: scale(0.8); }
+            20% { transform: scale(1); }
+            100% { transform: scale(1); }
+        }
+        
+        .ball {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #18e77c);
+            box-shadow: 0 0 10px rgba(24, 231, 124, 0.7);
+            position: absolute;
+            z-index: 2;
+            animation: ballBounce 0.3s ease-out;
+        }
+        
+        /* Result animation */
+        .result-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(12, 14, 26, 0.9);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            z-index: 10;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 30px rgba(24, 231, 124, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .result-popup.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .result-popup h3 {
+            color: #fff;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .result-amount {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .result-amount.win {
+            color: var(--primary-color);
+        }
+        
+        .result-amount.loss {
+            color: #ff4444;
+        }
+        
+        @media (max-width: 992px) {
+            .plinko-game-area {
+                flex-direction: column;
+            }
+            
+            .plinko-controls {
+                max-width: 100%;
+            }
+            
+            .plinko-board {
+                min-height: 500px;
+            }
+        }
+
+        /* Auto/Manual Tabs */
+        .bet-mode-tabs {
+            display: flex;
+            background-color: #0d1321;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .bet-mode-tab {
+            flex: 1;
+            padding: 12px 0;
+            text-align: center;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .bet-mode-tab.active {
+            background-color: var(--primary-color);
+            color: #0c0e1a;
+        }
+        
+        /* Auto betting panel */
+        .auto-bet-panel {
+            display: none;
+        }
+        
+        .auto-bet-panel.active {
+            display: block;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -57,18 +490,167 @@
                 </div>
             </header>
 
-            <!-- Game Container -->
-            <div class="game-container">
-                <h1 class="game-title">Plinko</h1>
-                <div class="coming-soon-message">
-                    <div class="message-content">
-                        <i class="fas fa-sort-amount-down fa-4x pulse-animation" style="color: var(--primary-color);"></i>
-                        <h2>Coming Soon!</h2>
-                        <p>Our Plinko game is currently under development. Please check back later!</p>
-                        <a href="../index.html" class="btn-primary glow-button">Return Home</a>
+            <!-- Plinko Game Container -->
+            <div class="plinko-container">
+                <h1 class="game-title glow-text">Plinko</h1>
+                
+                <div class="plinko-game-area">
+                    <!-- Game Controls -->
+                    <div class="plinko-controls">
+                        <div class="bet-mode-tabs">
+                            <div class="bet-mode-tab active" id="manualTab">Manual</div>
+                            <div class="bet-mode-tab" id="autoTab">Auto</div>
+                        </div>
+                        
+                        <div class="bet-amount-section">
+                            <label for="betAmount">Amount</label>
+                            <input type="number" id="betAmount" class="bet-input" value="0.00" min="0.1" step="0.1">
+                            <div class="bet-shortcuts">
+                                <button class="bet-shortcut" data-value="½">½</button>
+                                <button class="bet-shortcut" data-value="1">1</button>
+                                <button class="bet-shortcut" data-value="2">2</button>
+                                <button class="bet-shortcut" data-value="max">MAX</button>
+                            </div>
+                        </div>
+                        
+                        <div class="risk-section">
+                            <label for="riskLevel">Risk</label>
+                            <div class="dropdown-wrapper">
+                                <select id="riskLevel" class="risk-dropdown">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="rows-section">
+                            <label for="rowsCount">Rows</label>
+                            <div class="dropdown-wrapper">
+                                <select id="rowsCount" class="rows-dropdown">
+                                    <option value="8">8</option>
+                                    <option value="12">12</option>
+                                    <option value="16" selected>16</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="payout-display">
+                            <h3>Payouts</h3>
+                            <div class="payout-grid">
+                                <div class="payout-item red">0.2x</div>
+                                <div class="payout-item yellow">1.5x</div>
+                                <div class="payout-item green">10x</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Manual bet panel - default active -->
+                        <div id="manualBetPanel">
+                            <button id="playButton" class="play-button">Play</button>
+                        </div>
+                        
+                        <!-- Auto bet panel - hidden by default -->
+                        <div id="autoBetPanel" class="auto-bet-panel">
+                            <div class="bet-amount-section">
+                                <label for="autoBetCount">Number of Bets</label>
+                                <input type="number" id="autoBetCount" class="bet-input" value="10" min="1" max="100">
+                            </div>
+                            <button id="autoPlayButton" class="play-button">Auto Play</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Game Board -->
+                    <div class="plinko-board">
+                        <canvas id="plinkoCanvas"></canvas>
+                        
+                        <!-- Multiplier buckets will be added dynamically -->
+                        <div class="multiplier-container" id="multiplierContainer"></div>
+                        
+                        <!-- Result popup -->
+                        <div class="result-popup" id="resultPopup">
+                            <h3>Result</h3>
+                            <div class="result-amount" id="resultAmount">+0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Game History -->
+                <div class="game-history">
+                    <h2>Game History</h2>
+                    <div class="history-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Bet Amount</th>
+                                    <th>Risk</th>
+                                    <th>Multiplier</th>
+                                    <th>Payout</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gameHistoryBody">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="signupModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Sign Up</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Sign Up</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="redeemModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Redeem Code</h2>
+            <form id="redeemForm">
+                <div class="form-group">
+                    <label for="redeemCode">Enter Code</label>
+                    <input type="text" id="redeemCode" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Redeem</button>
+            </form>
         </div>
     </div>
 
@@ -77,5 +659,6 @@
     <script src="../js/supabase-config.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/main.js"></script>
+    <script src="../js/plinko-game.js"></script>
 </body>
 </html> 
