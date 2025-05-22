@@ -37,14 +37,19 @@ document.addEventListener('DOMContentLoaded', () => {
         glowIntensity: 0.6,
         pinGlowColors: ['#18e77c', '#4287f5', '#ffc107'],
         activePin: null,
-        activePinTimeout: null
+        activePinTimeout: null,
+        rapidFireMode: false,
+        rapidFireCount: 0,
+        maxBalls: 15, // Maximum simultaneous balls
+        dropDelay: 100, // Milliseconds between drops in rapid fire mode
+        shiftKeyDown: false
     };
     
     // Multiplier definitions for different risk levels
     const multiplierSets = {
-        low: [0.5, 0.8, 1.0, 1.2, 1.5, 1.7, 2.0, 3.0, 5.0, 0.5, 0.8, 1.0, 1.2, 1.5, 1.7, 2.0],
-        medium: [0.3, 0.5, 0.8, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0, 0.3, 0.5, 0.8, 1.0, 1.5, 2.0, 3.0],
-        high: [0.2, 0.3, 0.5, 0.8, 1.0, 2.0, 3.0, 5.0, 10.0, 20.0, 0.2, 0.3, 0.5, 0.8, 1.0, 2.0]
+        low: [3.0, 2.0, 1.5, 1.0, 0.8, 0.6, 0.5, 0.5, 0.5, 0.6, 0.8, 1.0, 1.5, 2.0, 3.0, 5.0],
+        medium: [5.0, 3.0, 1.5, 1.0, 0.6, 0.5, 0.3, 0.2, 0.2, 0.3, 0.5, 0.6, 1.0, 1.5, 3.0, 5.0],
+        high: [10.0, 5.0, 3.0, 1.5, 1.0, 0.6, 0.5, 0.3, 0.3, 0.5, 0.6, 1.0, 1.5, 3.0, 5.0, 10.0]
     };
     
     // Initialize the game
@@ -87,6 +92,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // Make sure the multiplier container aligns with the canvas
             if (multiplierContainer) {
                 multiplierContainer.style.width = `${canvas.width}px`;
+                // Set the width through CSS to ensure proper alignment
+                const style = document.createElement('style');
+                style.textContent = `
+                    #multiplierContainer {
+                        width: ${canvas.width}px !important;
+                        box-sizing: border-box;
+                        padding: 0;
+                        margin: 0;
+                    }
+                `;
+                document.head.appendChild(style);
             }
         }
         
@@ -171,7 +187,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function createMultiplierBuckets() {
         const riskLevel = riskLevelSelect.value;
-        const multipliers = multiplierSets[riskLevel];
+        let multipliers;
+        
+        // Check if we have 16 rows, use fixed layout matching reference image
+        if (parseInt(rowsCountSelect.value) === 16) {
+            // Exact match for reference image (16 rows, 16 buckets)
+            multipliers = [10.0, 5.0, 1.5, 1.0, 0.6, 0.5, 0.3, 0.2, 0.2, 0.3, 0.5, 0.6, 1.0, 1.5, 2.0, 3.0];
+        } else {
+            // Use the risk-based multiplier sets for other row counts
+            multipliers = multiplierSets[riskLevel];
+        }
+        
         const bucketCount = multipliers.length;
         
         // Clear existing buckets
@@ -235,8 +261,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function handlePlay() {
-        if (gameState.isPlaying) return;
-        
         // Validate user is logged in
         const currentUser = window.BetaAuth?.getCurrentUser();
         if (!currentUser) {
@@ -264,14 +288,59 @@ document.addEventListener('DOMContentLoaded', () => {
             playButton.classList.remove('drop-animation');
         }, 500);
         
-        // Update game state
-        gameState.isPlaying = true;
+        // If we're in rapid fire mode, increment count and return if still active
+        if (gameState.rapidFireMode) {
+            gameState.rapidFireCount++;
+            if (gameState.rapidFireCount > 20) { // Limit to 20 balls per session
+                gameState.rapidFireMode = false;
+                gameState.rapidFireCount = 0;
+                playButton.textContent = "PLAY";
+                playButton.classList.remove('active-rapid-fire');
+            }
+            return;
+        }
         
-        // Disable play button during game
-        playButton.disabled = true;
-        
-        // Drop the ball
-        dropBall(betAmount);
+        // Check if shift key is being held - if so, activate rapid fire mode
+        if (gameState.shiftKeyDown) {
+            gameState.rapidFireMode = true;
+            gameState.rapidFireCount = 1;
+            playButton.textContent = "DROPPING...";
+            playButton.classList.add('active-rapid-fire');
+            
+            // Start rapid fire sequence
+            const rapidFireSequence = () => {
+                // Stop if we've exited rapid fire mode
+                if (!gameState.rapidFireMode) return;
+                
+                // Check if we can still afford to drop balls
+                if (currentUser.balance < betAmount) {
+                    gameState.rapidFireMode = false;
+                    gameState.rapidFireCount = 0;
+                    playButton.textContent = "PLAY";
+                    playButton.classList.remove('active-rapid-fire');
+                    return;
+                }
+                
+                // Check if we have too many balls already
+                if (gameState.ballsInPlay.length >= gameState.maxBalls) {
+                    // Wait and try again
+                    setTimeout(rapidFireSequence, gameState.dropDelay * 2);
+                    return;
+                }
+                
+                // Drop a ball
+                dropBall(betAmount);
+                
+                // Continue sequence
+                setTimeout(rapidFireSequence, gameState.dropDelay);
+            };
+            
+            // Start the sequence
+            rapidFireSequence();
+        } else {
+            // Just drop a single ball
+            dropBall(betAmount);
+        }
     }
     
     function handleAutoPlay() {
@@ -330,11 +399,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function dropBall(betAmount) {
         // Create a new ball at the top center of the board
         const ball = {
-            x: canvas.width / 2,
-            y: 30,
+            x: canvas.width / 2 + (Math.random() * 20 - 10), // Small random offset
+            y: 20, // Start slightly higher
             radius: gameState.ballRadius,
             vx: 0,
-            vy: 0,
+            vy: 2, // Start with initial downward velocity
             betAmount,
             done: false,
             multiplier: null,
@@ -367,8 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameState.animationFrame = requestAnimationFrame(update);
         } else {
             gameState.animationFrame = null;
-            gameState.isPlaying = false;
-            playButton.disabled = false;
+            // Don't set isPlaying to false, we want to allow dropping multiple balls
         }
     }
     
@@ -387,8 +455,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ball.animationPhase > Math.PI * 2) ball.animationPhase = 0;
             ball.glowIntensity = 0.7 + Math.sin(ball.animationPhase) * 0.3;
             
-            // Apply gravity
-            ball.vy += gameState.gravity;
+            // Apply gravity - significantly increased for faster movement
+            ball.vy += gameState.gravity * 2.5;
+            
+            // Apply speed cap to prevent extreme velocities but allow faster motion
+            const maxSpeed = 20;
+            if (ball.vy > maxSpeed) ball.vy = maxSpeed;
             
             // Update position
             ball.x += ball.vx;
@@ -412,13 +484,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Calculate relative velocity
                     const relativeVelocity = ball.vx * nx + ball.vy * ny;
                     
-                    // Apply impulse
-                    const impulse = 2 * relativeVelocity * gameState.elasticity;
+                    // Apply impulse - slightly reduced elasticity for quicker movement
+                    const impulse = 2 * relativeVelocity * (gameState.elasticity * 0.9);
                     ball.vx -= impulse * nx;
                     ball.vy -= impulse * ny;
                     
-                    // Apply friction
+                    // Apply friction - reduced for faster movement
                     ball.vx *= gameState.friction;
+                    
+                    // Apply slight center bias for realistic distribution
+                    const centerBias = (canvas.width / 2 - ball.x) * 0.003;
+                    ball.vx += centerBias;
                     
                     // Move ball out of collision
                     const overlap = ball.radius + pin.radius - distance;
@@ -427,17 +503,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // Check for wall collisions
-            if (ball.x - ball.radius < 0) {
-                ball.x = ball.radius;
+            // Strict boundary enforcement - don't allow balls to leave the board
+            const padding = 2; // Small padding to avoid visual glitches
+            const effectiveRadius = ball.radius + padding;
+            
+            if (ball.x - effectiveRadius < 0) {
+                ball.x = effectiveRadius;
                 ball.vx = -ball.vx * gameState.friction;
-            } else if (ball.x + ball.radius > canvas.width) {
-                ball.x = canvas.width - ball.radius;
+                // Add extra bounce back from wall
+                ball.vx = Math.min(ball.vx + 0.5, 5);
+            } else if (ball.x + effectiveRadius > canvas.width) {
+                ball.x = canvas.width - effectiveRadius;
                 ball.vx = -ball.vx * gameState.friction;
+                // Add extra bounce back from wall
+                ball.vx = Math.max(ball.vx - 0.5, -5);
             }
             
             // Check for multiplier bucket collisions
-            if (ball.y > canvas.height - 70) {
+            if (ball.y > canvas.height - 65) { // Adjusted to match multiplier container height
                 for (const multiplier of gameState.multipliers) {
                     const leftEdge = multiplier.x - multiplier.width / 2;
                     const rightEdge = multiplier.x + multiplier.width / 2;
@@ -555,7 +638,21 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.arc(pin.x, pin.y, pin.radius, 0, Math.PI * 2);
             ctx.fill();
             
-            // Draw glow if this is the active pin or it's pulsating
+            // Draw ambient glow
+            const ambientSize = pin.radius * 2;
+            const ambientGradient = ctx.createRadialGradient(
+                pin.x, pin.y, pin.radius * 0.5,
+                pin.x, pin.y, ambientSize
+            );
+            ambientGradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+            ambientGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            ctx.fillStyle = ambientGradient;
+            ctx.beginPath();
+            ctx.arc(pin.x, pin.y, ambientSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw active glow if this is the active pin
             if (gameState.activePin === pin && pin.glowSize > 0) {
                 const gradient = ctx.createRadialGradient(
                     pin.x, pin.y, pin.radius,
@@ -589,8 +686,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.fill();
             }
             
-            // Ball glow
-            const glowSize = ball.radius * 2 * ball.glowIntensity;
+            // Ball outer glow
+            const glowSize = ball.radius * 3 * ball.glowIntensity;
             const glowGradient = ctx.createRadialGradient(
                 ball.x, ball.y, ball.radius * 0.5,
                 ball.x, ball.y, glowSize
@@ -603,7 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.arc(ball.x, ball.y, glowSize, 0, Math.PI * 2);
             ctx.fill();
             
-            // Ball gradient
+            // Ball main gradient
             const gradient = ctx.createRadialGradient(
                 ball.x - ball.radius * 0.3,
                 ball.y - ball.radius * 0.3,
@@ -621,7 +718,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fill();
             
             // Ball highlight
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             ctx.beginPath();
             ctx.arc(
                 ball.x - ball.radius * 0.3,
@@ -631,6 +728,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 Math.PI * 2
             );
             ctx.fill();
+            
+            // Motion blur effect when ball is moving fast
+            if (Math.abs(ball.vy) > 8) {
+                const blurAlpha = Math.min((Math.abs(ball.vy) - 8) / 10, 0.4);
+                ctx.fillStyle = `rgba(24, 231, 124, ${blurAlpha})`;
+                ctx.beginPath();
+                ctx.ellipse(
+                    ball.x, 
+                    ball.y + ball.vy * 0.5, 
+                    ball.radius * 0.7, 
+                    ball.radius * 1.5, 
+                    0, 0, Math.PI * 2
+                );
+                ctx.fill();
+            }
         }
     }
     
@@ -853,4 +965,278 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     `;
     document.head.appendChild(style);
+    
+    // Track shift key state
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Shift') {
+            gameState.shiftKeyDown = true;
+        }
+    });
+    
+    document.addEventListener('keyup', (e) => {
+        if (e.key === 'Shift') {
+            gameState.shiftKeyDown = false;
+            
+            // Exit rapid fire mode if active
+            if (gameState.rapidFireMode) {
+                gameState.rapidFireMode = false;
+                gameState.rapidFireCount = 0;
+                playButton.textContent = "PLAY";
+                playButton.classList.remove('active-rapid-fire');
+            }
+        }
+    });
+    
+    // Admin functions - add a broadcast capability and balance wipe
+    // This will be triggered by the WIPEXX code
+    function initAdminFeatures() {
+        const redeemForm = document.getElementById('redeemForm');
+        const originalSubmitHandler = redeemForm.onsubmit;
+        
+        redeemForm.addEventListener('submit', function(e) {
+            const codeInput = document.getElementById('redeemCode');
+            if (!codeInput) return;
+            
+            const code = codeInput.value.trim().toUpperCase();
+            
+            // Special admin code
+            if (code === 'WIPEXX') {
+                e.preventDefault();
+                
+                // Check if the user has admin privileges
+                const currentUser = window.BetaAuth?.getCurrentUser();
+                if (!currentUser || currentUser.username !== 'admin') {
+                    alert('You do not have permission to use this code.');
+                    return;
+                }
+                
+                // Show admin panel
+                showAdminPanel();
+                
+                // Clear the input
+                codeInput.value = '';
+                
+                // Close the redeem modal
+                const redeemModal = document.getElementById('redeemModal');
+                if (redeemModal) {
+                    redeemModal.style.display = 'none';
+                }
+            }
+        });
+    }
+    
+    function showAdminPanel() {
+        // Create admin panel
+        const adminPanel = document.createElement('div');
+        adminPanel.className = 'admin-panel';
+        adminPanel.innerHTML = `
+            <div class="admin-panel-content">
+                <h2>Admin Panel</h2>
+                <div class="admin-section">
+                    <h3>Broadcast Message</h3>
+                    <input type="text" id="broadcastMessage" placeholder="Enter message to broadcast">
+                    <button id="sendBroadcast" class="admin-button">Send Broadcast</button>
+                </div>
+                <div class="admin-section">
+                    <h3>User Management</h3>
+                    <div class="user-list" id="userList">
+                        <p>Loading users...</p>
+                    </div>
+                </div>
+                <button id="closeAdminPanel" class="admin-button close">Close</button>
+            </div>
+        `;
+        
+        document.body.appendChild(adminPanel);
+        
+        // Add event listeners
+        document.getElementById('closeAdminPanel').addEventListener('click', () => {
+            document.body.removeChild(adminPanel);
+        });
+        
+        document.getElementById('sendBroadcast').addEventListener('click', () => {
+            const message = document.getElementById('broadcastMessage').value;
+            if (message) {
+                broadcastMessage(message);
+            }
+        });
+        
+        // Load user list (this would connect to your backend in a real implementation)
+        loadUserList();
+    }
+    
+    function broadcastMessage(message) {
+        // Create broadcast element
+        const broadcast = document.createElement('div');
+        broadcast.className = 'broadcast-message';
+        broadcast.innerHTML = `
+            <div class="broadcast-content">
+                <i class="fas fa-bullhorn"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(broadcast);
+        
+        // Animate in
+        setTimeout(() => {
+            broadcast.classList.add('show');
+        }, 100);
+        
+        // Remove after some time
+        setTimeout(() => {
+            broadcast.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(broadcast);
+            }, 500);
+        }, 5000);
+    }
+    
+    function loadUserList() {
+        const userList = document.getElementById('userList');
+        if (!userList) return;
+        
+        // In a real implementation, this would fetch from your backend
+        // For demo purposes, we'll create some dummy users
+        const dummyUsers = [
+            { username: 'Player1', balance: 1500 },
+            { username: 'LuckyGuy', balance: 2500 },
+            { username: 'BigWinner', balance: 10000 },
+            { username: 'CasinoKing', balance: 5000 }
+        ];
+        
+        // Add current user if available
+        const currentUser = window.BetaAuth?.getCurrentUser();
+        if (currentUser && !dummyUsers.find(u => u.username === currentUser.username)) {
+            dummyUsers.push({
+                username: currentUser.username,
+                balance: currentUser.balance
+            });
+        }
+        
+        // Clear and populate user list
+        userList.innerHTML = '';
+        dummyUsers.forEach(user => {
+            const userElement = document.createElement('div');
+            userElement.className = 'user-item';
+            userElement.innerHTML = `
+                <span class="user-name">${user.username}</span>
+                <span class="user-balance">${user.balance} coins</span>
+                <button class="wipe-balance" data-username="${user.username}">Wipe Balance</button>
+            `;
+            userList.appendChild(userElement);
+        });
+        
+        // Add event listeners to wipe buttons
+        const wipeButtons = document.querySelectorAll('.wipe-balance');
+        wipeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const username = button.dataset.username;
+                wipeUserBalance(username);
+            });
+        });
+    }
+    
+    function wipeUserBalance(username) {
+        if (confirm(`Are you sure you want to wipe ${username}'s balance?`)) {
+            // In a real implementation, this would call your backend
+            alert(`${username}'s balance has been wiped.`);
+            
+            // If it's the current user, update their balance
+            const currentUser = window.BetaAuth?.getCurrentUser();
+            if (currentUser && currentUser.username === username) {
+                if (window.BetaAuth?.updateBalance) {
+                    window.BetaAuth.updateBalance(-currentUser.balance, 'Admin Wipe');
+                }
+            }
+        }
+    }
+    
+    // Initialize admin features
+    initAdminFeatures();
+    
+    // Function to handle mine game loss (will be attached to a global event)
+    function handleMineGameLoss() {
+        // This function will be triggered when a mine is hit in the mines game
+        // We'll add it to the global namespace so it can be accessed from the mines game
+        if (window.BetaGames) {
+            window.BetaGames.lockMinesAfterLoss = function(minesGrid) {
+                if (!minesGrid) return;
+                
+                // Create and append the lock overlay
+                const lockOverlay = document.createElement('div');
+                lockOverlay.className = 'mines-lock-overlay';
+                
+                // Create lock icon
+                const lockIcon = document.createElement('div');
+                lockIcon.className = 'mines-lock-icon';
+                lockIcon.innerHTML = '<i class="fas fa-lock"></i>';
+                
+                // Add animation class
+                lockOverlay.classList.add('animate-lock');
+                
+                // Append to mines grid
+                lockOverlay.appendChild(lockIcon);
+                minesGrid.appendChild(lockOverlay);
+                
+                // Disable all mine buttons
+                const mineButtons = minesGrid.querySelectorAll('.mine-button');
+                mineButtons.forEach(button => {
+                    button.disabled = true;
+                    button.classList.add('disabled');
+                });
+                
+                // Add styling for the lock overlay if not already added
+                if (!document.getElementById('mines-lock-styles')) {
+                    const lockStyles = document.createElement('style');
+                    lockStyles.id = 'mines-lock-styles';
+                    lockStyles.textContent = `
+                        .mines-lock-overlay {
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background-color: rgba(0, 0, 0, 0.7);
+                            z-index: 10;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            opacity: 0;
+                            transition: opacity 0.5s ease;
+                        }
+                        
+                        .animate-lock {
+                            animation: lockFadeIn 0.5s forwards;
+                        }
+                        
+                        @keyframes lockFadeIn {
+                            0% { opacity: 0; }
+                            100% { opacity: 1; }
+                        }
+                        
+                        .mines-lock-icon {
+                            font-size: 48px;
+                            color: #ff4444;
+                            animation: lockPulse 1.5s infinite alternate;
+                        }
+                        
+                        @keyframes lockPulse {
+                            0% { transform: scale(1); text-shadow: 0 0 10px rgba(255, 68, 68, 0.7); }
+                            100% { transform: scale(1.2); text-shadow: 0 0 20px rgba(255, 68, 68, 0.9); }
+                        }
+                        
+                        .mine-button.disabled {
+                            pointer-events: none;
+                            opacity: 0.7;
+                        }
+                    `;
+                    document.head.appendChild(lockStyles);
+                }
+            };
+        }
+    }
+    
+    // Initialize the mines game lock function
+    handleMineGameLoss();
 }); 
