@@ -48,10 +48,16 @@ body {
     font-size: 24px;
     font-weight: 700;
     letter-spacing: 1px;
+    background: linear-gradient(to right, #ffffff, #e0e0e0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .logo span {
     color: var(--primary-color);
+    background: linear-gradient(to right, var(--primary-color), #5df5a9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .glow-text {

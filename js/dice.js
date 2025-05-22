@@ -253,16 +253,28 @@ document.addEventListener('DOMContentLoaded', () => {
         
         await gameHistoryOperations.addGameHistory(gameData);
         
-        // Show result
-        resultSection.style.display = 'block';
+        // Show result and apply styling immediately
         resultNumber.textContent = finalRoll;
         
-        // Apply appropriate styling based on win/loss
-        resultText.textContent = won ? 'You Won!' : 'You Lost!';
-        resultText.className = won ? 'result-text win' : 'result-text loss';
+        // Clear any existing classes first
+        resultText.className = '';
+        resultAmount.className = '';
         
-        resultAmount.textContent = formatCurrency(winAmount);
-        resultAmount.className = won ? 'result-amount win' : 'result-amount loss';
+        // Then set the appropriate classes
+        if (won) {
+            resultText.textContent = 'You Won!';
+            resultText.classList.add('result-text', 'win');
+            resultAmount.textContent = formatCurrency(winAmount);
+            resultAmount.classList.add('result-amount', 'win');
+        } else {
+            resultText.textContent = 'You Lost!';
+            resultText.classList.add('result-text', 'loss');
+            resultAmount.textContent = formatCurrency(winAmount);
+            resultAmount.classList.add('result-amount', 'loss');
+        }
+        
+        // Show the result section after styles are applied
+        resultSection.style.display = 'block';
         
         // Reset game state
         isRolling = false;
@@ -424,18 +436,23 @@ document.addEventListener('DOMContentLoaded', () => {
             color: var(--success-color) !important;
             text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
             font-weight: bold;
+            transition: none !important;
+            animation: none !important;
         }
         
         .loss {
             color: var(--danger-color) !important;
             text-shadow: 0 0 10px rgba(241, 90, 90, 0.5);
             font-weight: bold;
+            transition: none !important;
+            animation: none !important;
         }
         
         .result-text {
             font-size: 24px;
             font-weight: bold;
             margin: 10px 0;
+            transition: none !important;
         }
         
         .result-amount {
@@ -443,6 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
             font-weight: bold;
             margin: 15px 0;
             text-align: center;
+            transition: none !important;
         }
         
         .betting-options {
