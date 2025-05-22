@@ -7,6 +7,7 @@ const GLOBAL_STATE_KEY = 'rocketcrash_global_state';
 const GLOBAL_BETS_KEY = 'rocketcrash_global_bets';
 const CRASH_HISTORY_KEY = 'rocketcrash_crash_history';
 let lastSyncTime = 0;
+let supabaseEnabled = false; // Flag to track if Supabase is available
 
 document.addEventListener('DOMContentLoaded', () => {
     // Game elements
@@ -63,8 +64,184 @@ document.addEventListener('DOMContentLoaded', () => {
         return Date.now().toString() + Math.random().toString().slice(2, 8);
     }
     
+    // Check if Supabase is available
+    function checkSupabase() {
+        if (window.SupabaseDB) {
+            supabaseEnabled = true;
+            console.log('Supabase is available for real-time synchronization');
+            
+            // Setup subscription to listen for game state changes
+            setupSupabaseSubscription();
+            return true;
+        } else {
+            console.log('Supabase not available, using localStorage for synchronization');
+            return false;
+        }
+    }
+    
+    // Setup Supabase real-time subscription
+    function setupSupabaseSubscription() {
+        if (!supabaseEnabled) return;
+        
+        try {
+            // Subscribe to game state changes
+            window.SupabaseDB
+                .channel('rocket-crash-channel')
+                .on('broadcast', { event: 'game_state_update' }, payload => {
+                    handleSupabaseStateUpdate(payload);
+                })
+                .on('broadcast', { event: 'game_bets_update' }, payload => {
+                    handleSupabaseBetsUpdate(payload);
+                })
+                .on('broadcast', { event: 'game_crash' }, payload => {
+                    handleSupabaseCrash(payload);
+                })
+                .subscribe();
+                
+            console.log('Subscribed to Supabase real-time updates');
+        } catch (error) {
+            console.error('Error setting up Supabase subscription:', error);
+            supabaseEnabled = false;
+        }
+    }
+    
+    // Handle Supabase game state update
+    function handleSupabaseStateUpdate(payload) {
+        if (!payload || !payload.payload) return;
+        
+        const data = payload.payload;
+        
+        // Update game state from Supabase data
+        if (data.gameActive && !gameState.gameActive) {
+            // Game started
+            gameState.gameActive = true;
+            gameState.serverStartTime = data.serverStartTime;
+            gameState.localStartTime = Date.now();
+            gameState.crashPoint = data.crashPoint;
+            
+            // Calculate current multiplier based on elapsed time
+            const elapsedSeconds = (Date.now() - gameState.serverStartTime) / 1000;
+            const targetMultiplier = calculateMultiplierAtTime(elapsedSeconds);
+            gameState.currentMultiplier = targetMultiplier;
+            
+            joinRunningGame();
+        } else if (data.gameActive && gameState.gameActive) {
+            // Sync multiplier if needed
+            if (Math.abs(data.currentMultiplier - gameState.currentMultiplier) > 0.5) {
+                gameState.currentMultiplier = data.currentMultiplier;
+                updateMultiplierDisplay();
+            }
+        } else if (!data.gameActive && gameState.gameActive) {
+            // Game crashed
+            handleCrash();
+        } else if (data.currentCountdown > 0 && !gameState.gameActive) {
+            // Update countdown
+            gameState.currentCountdown = data.currentCountdown;
+            if (countdownDisplay) {
+                countdownDisplay.textContent = `Next launch: ${gameState.currentCountdown}s`;
+                countdownDisplay.style.display = 'block';
+            }
+        }
+    }
+    
+    // Handle Supabase bets update
+    function handleSupabaseBetsUpdate(payload) {
+        if (!payload || !payload.payload) return;
+        
+        const data = payload.payload;
+        
+        // Update active bets
+        gameState.activeBets = data.activeBets;
+        updateActiveBetsList();
+    }
+    
+    // Handle Supabase crash event
+    function handleSupabaseCrash(payload) {
+        if (!payload || !payload.payload) return;
+        
+        const data = payload.payload;
+        
+        // Update crash history
+        gameState.recentCrashes = data.recentCrashes;
+        updateCrashHistoryDisplay();
+        
+        // If we're still in a game, handle the crash
+        if (gameState.gameActive) {
+            handleCrash();
+        }
+    }
+    
+    // Broadcast game state via Supabase
+    async function broadcastGameState() {
+        if (!supabaseEnabled) return;
+        
+        try {
+            const data = {
+                gameActive: gameState.gameActive,
+                currentMultiplier: gameState.currentMultiplier,
+                serverStartTime: gameState.serverStartTime,
+                currentCountdown: gameState.currentCountdown,
+                crashPoint: gameState.crashPoint,
+                lastUpdate: Date.now()
+            };
+            
+            await window.SupabaseDB
+                .channel('rocket-crash-channel')
+                .send({
+                    type: 'broadcast',
+                    event: 'game_state_update',
+                    payload: data
+                });
+        } catch (error) {
+            console.error('Error broadcasting game state:', error);
+        }
+    }
+    
+    // Broadcast active bets via Supabase
+    async function broadcastBets() {
+        if (!supabaseEnabled) return;
+        
+        try {
+            await window.SupabaseDB
+                .channel('rocket-crash-channel')
+                .send({
+                    type: 'broadcast',
+                    event: 'game_bets_update',
+                    payload: {
+                        activeBets: gameState.activeBets
+                    }
+                });
+        } catch (error) {
+            console.error('Error broadcasting bets:', error);
+        }
+    }
+    
+    // Broadcast crash event via Supabase
+    async function broadcastCrash() {
+        if (!supabaseEnabled) return;
+        
+        try {
+            await window.SupabaseDB
+                .channel('rocket-crash-channel')
+                .send({
+                    type: 'broadcast',
+                    event: 'game_crash',
+                    payload: {
+                        recentCrashes: gameState.recentCrashes,
+                        crashPoint: gameState.crashPoint
+                    }
+                });
+        } catch (error) {
+            console.error('Error broadcasting crash:', error);
+        }
+    }
+    
     // Load or initialize global state
     function initGlobalState() {
+        // First check if Supabase is available
+        checkSupabase();
+        
+        // Fallback to localStorage
         let globalState = localStorage.getItem(GLOBAL_STATE_KEY);
         
         if (globalState) {
@@ -122,12 +299,24 @@ document.addEventListener('DOMContentLoaded', () => {
             lastUpdate: Date.now()
         };
         
+        // Save to localStorage as fallback
         localStorage.setItem(GLOBAL_STATE_KEY, JSON.stringify(globalState));
+        
+        // If Supabase is available, broadcast the state
+        if (supabaseEnabled) {
+            broadcastGameState();
+        }
     }
     
     // Save active bets globally
     function saveGlobalBets() {
+        // Save to localStorage as fallback
         localStorage.setItem(GLOBAL_BETS_KEY, JSON.stringify(gameState.activeBets));
+        
+        // If Supabase is available, broadcast the bets
+        if (supabaseEnabled) {
+            broadcastBets();
+        }
     }
     
     // Load bets from global storage
@@ -145,7 +334,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Save crash history globally
     function saveCrashHistory() {
+        // Save to localStorage as fallback
         localStorage.setItem(CRASH_HISTORY_KEY, JSON.stringify(gameState.recentCrashes));
+        
+        // If Supabase is available, broadcast the crash
+        if (supabaseEnabled) {
+            broadcastCrash();
+        }
     }
     
     // Load crash history from global storage
@@ -777,8 +972,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function handleCrash() {
-        // Game crashed
+        // Stop game activity
         gameState.gameActive = false;
+        
+        // Play crash sound
+        playCrashSound();
+        
+        // Show crash animation
+        showCrashAnimation();
+        
+        // Display crash message
+        multiplierDisplay.textContent = `CRASH @ ${gameState.currentMultiplier.toFixed(2)}x`;
+        multiplierDisplay.style.color = '#ff4b2b';
+        multiplierDisplay.style.animation = 'crash-text 0.5s ease';
         
         // Cancel animation
         if (gameState.animationFrame) {
@@ -786,64 +992,48 @@ document.addEventListener('DOMContentLoaded', () => {
             gameState.animationFrame = null;
         }
         
-        // Add crash to history
-        const crashColor = gameState.currentMultiplier < 1.5 ? '#ff4444' : '#18e77c';
-        gameState.recentCrashes.unshift({ 
-            multiplier: gameState.currentMultiplier,
-            color: crashColor
+        // Process all remaining bets as losses
+        gameState.activeBets.forEach(bet => {
+            // Only process bets that haven't been cashed out
+            if (!bet.cashedOut) {
+                // Add to history as a loss
+                addGameHistoryEntry(bet.username, bet.amount, 0, true);
+                
+                // Update UI
+                updateActiveBetsList();
+            }
         });
         
-        // Keep only last 8 crashes
+        // Add crash to recent crashes
+        gameState.recentCrashes.unshift(gameState.currentMultiplier.toFixed(2));
+        
+        // Keep only the most recent 8 crashes
         if (gameState.recentCrashes.length > 8) {
             gameState.recentCrashes.pop();
         }
         
-        // Save crash history globally
-        saveCrashHistory();
-        
         // Update crash history display
         updateCrashHistoryDisplay();
         
-        // Mark all remaining bets as crashed
-        for (const bet of gameState.activeBets) {
-            if (!bet.cashedOut) {
-                bet.cashedOut = true;
-                bet.cashoutMultiplier = 0;
-                bet.profit = -bet.amount;
-                
-                // Add to history
-                gameState.gameHistory.unshift({
-                    user: bet.user,
-                    betAmount: bet.amount,
-                    multiplier: 0,
-                    payout: -bet.amount,
-                    time: new Date()
-                });
-            }
-        }
+        // Save crash history
+        saveCrashHistory();
         
-        // Save global state (game ended)
+        // Save global state
         saveGlobalState();
         
-        // Save global bets (all cashed out now)
+        // Clear active bets
+        gameState.activeBets = [];
         saveGlobalBets();
         
-        // Update history table
-        updateHistoryTable();
+        // Broadcast crash via Supabase if available
+        if (supabaseEnabled) {
+            broadcastCrash();
+        }
         
-        // Show crash animation
-        showCrashAnimation();
-        
-        // Reset active bets
-        gameState.activeBets = [];
-        updateActiveBetsList();
-        
-        // Reset UI for current user
-        betButton.disabled = false;
-        cashoutButton.style.display = 'none';
-        
-        // Start countdown for next game
-        startGameCountdown();
+        // Start new game countdown after a delay
+        setTimeout(() => {
+            startGameCountdown();
+        }, 3000);
     }
     
     function showCrashAnimation() {

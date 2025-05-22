@@ -182,14 +182,81 @@ body {
     font-size: 18px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
 }
 
-.leaderboard-header h3 i {
-    color: #ffc107;
+.top-emoji-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+}
+
+.glow-icon {
+    color: gold;
+    animation: glow-pulse 2s infinite alternate;
+    filter: drop-shadow(0 0 5px gold);
+    font-size: 20px;
+}
+
+@keyframes glow-pulse {
+    0% { filter: drop-shadow(0 0 3px gold); }
+    100% { filter: drop-shadow(0 0 8px gold); }
+}
+
+.leaderboard-toggle {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+    opacity: 0.7;
+}
+
+.leaderboard-toggle:hover {
+    opacity: 1;
+}
+
+.leaderboard-toggle.collapsed i {
+    transform: rotate(180deg);
+}
+
+/* Top players preview (always visible) */
+.top-players-preview {
+    background-color: rgba(12, 14, 26, 0.7);
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(24, 231, 124, 0.2);
+}
+
+.top-players-preview .player-item {
+    padding: 8px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.2s ease;
+}
+
+.top-players-preview .player-item:hover {
+    background-color: rgba(24, 231, 124, 0.05);
+}
+
+/* Collapsed state */
+.leaderboard-body.collapsed {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
 }
 
 .leaderboard-body {
+    max-height: 400px;
+    transition: max-height 0.3s ease;
+    overflow-y: auto;
     padding: 0;
 }
 
@@ -221,6 +288,40 @@ body {
     text-align: center;
     font-style: italic;
     padding: 20px 15px !important;
+}
+
+/* Custom rank icons */
+.rank-1-icon {
+    color: gold;
+    animation: glow-gold 2s infinite alternate;
+    filter: drop-shadow(0 0 5px gold);
+}
+
+.rank-2-icon {
+    color: silver;
+    animation: glow-silver 2s infinite alternate;
+    filter: drop-shadow(0 0 5px silver);
+}
+
+.rank-3-icon {
+    color: #cd7f32;
+    animation: glow-bronze 2s infinite alternate;
+    filter: drop-shadow(0 0 5px #cd7f32);
+}
+
+@keyframes glow-gold {
+    0% { filter: drop-shadow(0 0 3px gold); }
+    100% { filter: drop-shadow(0 0 8px gold); }
+}
+
+@keyframes glow-silver {
+    0% { filter: drop-shadow(0 0 3px silver); }
+    100% { filter: drop-shadow(0 0 6px silver); }
+}
+
+@keyframes glow-bronze {
+    0% { filter: drop-shadow(0 0 3px #cd7f32); }
+    100% { filter: drop-shadow(0 0 6px #cd7f32); }
 }
 
 .player-rank {

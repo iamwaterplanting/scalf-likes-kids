@@ -8,11 +8,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Initialize the leaderboard
 async function initLeaderboard() {
-    // Check if the leaderboard element exists
+    // Check if the leaderboard elements exist
     const leaderboardList = document.getElementById('leaderboardList');
+    const topPlayersPreview = document.getElementById('topPlayersPreview');
+    const leaderboardBody = document.getElementById('leaderboardBody');
+    const leaderboardToggle = document.querySelector('.leaderboard-toggle');
+    
     if (!leaderboardList) return;
     
     console.log('Initializing leaderboard');
+    
+    // Setup toggle functionality for leaderboard
+    if (leaderboardToggle && leaderboardBody) {
+        leaderboardToggle.addEventListener('click', () => {
+            // Toggle collapsed state
+            leaderboardBody.classList.toggle('collapsed');
+            leaderboardToggle.classList.toggle('collapsed');
+            
+            // Save preference to localStorage
+            const isCollapsed = leaderboardBody.classList.contains('collapsed');
+            localStorage.setItem('leaderboardCollapsed', isCollapsed.toString());
+        });
+        
+        // Check if leaderboard was previously collapsed
+        const wasCollapsed = localStorage.getItem('leaderboardCollapsed') === 'true';
+        if (wasCollapsed) {
+            leaderboardBody.classList.add('collapsed');
+            leaderboardToggle.classList.add('collapsed');
+        }
+    }
     
     // Load leaderboard data
     await loadLeaderboard();
@@ -21,18 +45,36 @@ async function initLeaderboard() {
     setInterval(loadLeaderboard, 120000);
 }
 
+// Get custom rank emoji based on position
+function getRankEmoji(rank) {
+    switch(rank) {
+        case 1:
+            return '<i class="fas fa-crown rank-1-icon"></i>';
+        case 2:
+            return '<i class="fas fa-medal rank-2-icon"></i>';
+        case 3:
+            return '<i class="fas fa-award rank-3-icon"></i>';
+        default:
+            return `<div class="player-rank rank-${rank}">${rank}</div>`;
+    }
+}
+
 // Load leaderboard data from Supabase
 async function loadLeaderboard() {
     try {
         console.log('Loading leaderboard data');
         const leaderboardList = document.getElementById('leaderboardList');
+        const topPlayersPreview = document.getElementById('topPlayersPreview');
+        
+        if (!leaderboardList || !topPlayersPreview) return;
         
         // Show loading state
         leaderboardList.innerHTML = '<li class="leaderboard-loading">Loading top players...</li>';
+        topPlayersPreview.innerHTML = '<div class="player-item leaderboard-loading">Loading top players...</div>';
         
-        // Check if Supabase is configured
+        // Ensure Supabase is properly configured
         if (!window.SupabaseDB) {
-            console.log('Supabase not configured, using mock data');
+            console.error('Supabase not configured properly');
             loadMockLeaderboardData();
             return;
         }
@@ -44,7 +86,10 @@ async function loadLeaderboard() {
             .order('balance', { ascending: false })
             .limit(10);
             
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase query error:', error);
+            throw error;
+        }
         
         console.log('Leaderboard data:', data);
         
@@ -55,10 +100,32 @@ async function loadLeaderboard() {
             return;
         }
         
-        // Clear the list
+        // Clear the lists
         leaderboardList.innerHTML = '';
+        topPlayersPreview.innerHTML = '';
         
-        // Add each player to the leaderboard
+        // Show top 3 players in the preview section
+        const topPlayers = data.slice(0, 3);
+        topPlayers.forEach((player, index) => {
+            const rank = index + 1;
+            const avatarUrl = player.avatar_url || '../assets/default-avatar.svg';
+            
+            // Create the top player item with custom emoji
+            const previewItem = document.createElement('div');
+            previewItem.className = 'player-item';
+            previewItem.innerHTML = `
+                ${getRankEmoji(rank)}
+                <img src="${avatarUrl}" alt="${player.username}" class="player-avatar">
+                <div class="player-info">
+                    <div class="player-name">${player.username}</div>
+                    <div class="player-balance">${player.balance.toLocaleString()} coins</div>
+                </div>
+            `;
+            
+            topPlayersPreview.appendChild(previewItem);
+        });
+        
+        // Add all players to the full leaderboard
         data.forEach((player, index) => {
             const rank = index + 1;
             const avatarUrl = player.avatar_url || '../assets/default-avatar.svg';
@@ -68,7 +135,7 @@ async function loadLeaderboard() {
             
             const listItem = document.createElement('li');
             listItem.innerHTML = `
-                <div class="player-rank rank-${rank}">${rank}</div>
+                ${getRankEmoji(rank)}
                 <img src="${avatarUrl}" alt="${player.username}" class="player-avatar">
                 <div class="player-info">
                     <div class="player-name">
@@ -93,7 +160,9 @@ async function loadLeaderboard() {
 // Mock data for testing (will be used if Supabase fails)
 function loadMockLeaderboardData() {
     const leaderboardList = document.getElementById('leaderboardList');
-    if (!leaderboardList) return;
+    const topPlayersPreview = document.getElementById('topPlayersPreview');
+    
+    if (!leaderboardList || !topPlayersPreview) return;
     
     const mockPlayers = [
         { username: 'CasinoKing', balance: 25680, avatar_url: '../assets/default-avatar.svg' },
@@ -108,16 +177,37 @@ function loadMockLeaderboardData() {
         { username: 'WinnerAlways', balance: 1280, avatar_url: '../assets/default-avatar.svg' }
     ];
     
-    // Clear the list
+    // Clear the lists
     leaderboardList.innerHTML = '';
+    topPlayersPreview.innerHTML = '';
     
-    // Add each player to the leaderboard
+    // Show top 3 players in the preview section
+    const topPlayers = mockPlayers.slice(0, 3);
+    topPlayers.forEach((player, index) => {
+        const rank = index + 1;
+        
+        // Create the top player item with custom emoji
+        const previewItem = document.createElement('div');
+        previewItem.className = 'player-item';
+        previewItem.innerHTML = `
+            ${getRankEmoji(rank)}
+            <img src="${player.avatar_url}" alt="${player.username}" class="player-avatar">
+            <div class="player-info">
+                <div class="player-name">${player.username}</div>
+                <div class="player-balance">${player.balance.toLocaleString()} coins</div>
+            </div>
+        `;
+        
+        topPlayersPreview.appendChild(previewItem);
+    });
+    
+    // Add all players to the full leaderboard
     mockPlayers.forEach((player, index) => {
         const rank = index + 1;
         
         const listItem = document.createElement('li');
         listItem.innerHTML = `
-            <div class="player-rank rank-${rank}">${rank}</div>
+            ${getRankEmoji(rank)}
             <img src="${player.avatar_url}" alt="${player.username}" class="player-avatar">
             <div class="player-info">
                 <div class="player-name">${player.username}</div>

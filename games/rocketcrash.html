@@ -554,6 +554,30 @@
                 </div>
             </header>
 
+            <!-- Leaderboard Box -->
+            <div class="leaderboard-container">
+                <div class="leaderboard-box glow-box">
+                    <div class="leaderboard-header">
+                        <h3>
+                            <div class="top-emoji-container"><i class="fas fa-crown glow-icon"></i></div>
+                            <span>Top Players</span>
+                            <button class="leaderboard-toggle"><i class="fas fa-chevron-down"></i></button>
+                        </h3>
+                    </div>
+                    <!-- Always visible top players (even when collapsed) -->
+                    <div class="top-players-preview" id="topPlayersPreview">
+                        <!-- Will show top 3 players -->
+                    </div>
+                    <!-- Full leaderboard (collapsible) -->
+                    <div class="leaderboard-body" id="leaderboardBody">
+                        <ul id="leaderboardList">
+                            <!-- Will be populated by JavaScript -->
+                            <li class="leaderboard-loading">Loading top players...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <!-- Rocket Crash Game Container -->
             <div class="rocket-container">
                 <h1 class="game-title rocket-title glow-text">Rocket Crash</h1>
