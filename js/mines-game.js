@@ -213,8 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.classList.add('revealed-mine');
             
             // Create mine element
-            const mine = document.createElement('i');
-            mine.className = 'fas fa-bomb mine';
+            const mine = document.createElement('div');
+            mine.className = 'mine';
             cell.appendChild(mine);
             
             // Add screen shake effect
@@ -234,7 +234,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Create gem element with profit value
             const gem = document.createElement('div');
             gem.className = 'gem';
-            gem.textContent = calculateProfitForGem(gameState.currentBet, gameState.mines, gameState.revealedCells.length).toFixed(2);
+            
+            // Calculate a profit value like in the reference image
+            const gemProfit = calculateProfitForGem(gameState.currentBet, gameState.mines, gameState.revealedCells.length);
+            gem.textContent = gemProfit.toFixed(2);
+            
             cell.appendChild(gem);
             
             // Update next payout and profit
@@ -296,8 +300,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const cell = cells[pos];
                     cell.classList.add('revealed-mine');
                     
-                    const mine = document.createElement('i');
-                    mine.className = 'fas fa-bomb mine';
+                    const mine = document.createElement('div');
+                    mine.className = 'mine';
                     cell.appendChild(mine);
                 }, index * 80); // Fast cascade for better visual effect
             }
@@ -379,9 +383,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Calculate profit for a single gem
     function calculateProfitForGem(bet, mineCount, revealedCount) {
-        // For visual purposes only - match the reference image
-        // Return a random value between 5.00 and 9.99
-        return parseFloat((Math.random() * 4 + 5).toFixed(2));
+        // Generate values that look like the reference image (values between 6.0 and 8.5)
+        const baseValue = 6.0;
+        const randomVariation = Math.random() * 2.5;
+        return parseFloat((baseValue + randomVariation).toFixed(2));
     }
     
     // Update game display
