@@ -205,23 +205,81 @@ function processRedeemCode(code) {
         return;
     }
     
-    let amount = 0;
-    let validCode = true;
-    switch (code.toUpperCase()) {
-        case 'WELCOME': amount = 5000; break;
-        case 'BONUS': amount = 10000; break;
-        case 'VIP': amount = 50000; break;
-        case 'LOL': amount = 100; break;
-        case 'BETAGAMES': amount = 1000; break;
-        case 'FREEMONEY': amount = 2500; break;
-        default: validCode = false;
-    }
-    if (!validCode) {
+    // Get redeem history from localStorage
+    const redeemHistory = JSON.parse(localStorage.getItem('redeem_history') || '{}');
+    const userHistory = redeemHistory[currentUser.username] || {};
+    
+    // Code definitions with amounts and cooldowns (in minutes)
+    const codes = {
+        'WELCOME': { amount: 5000, cooldown: 0 },
+        'BONUS': { amount: 10000, cooldown: 0 },
+        'VIP': { amount: 50000, cooldown: 0 },
+        'LOL': { amount: 100, cooldown: 0 }, // Keeping old codes
+        'BETAGAMES': { amount: 1000, cooldown: 0 },
+        'FREEMONEY': { amount: 2500, cooldown: 0 },
+        
+        // New codes
+        'LOL UPDATE THIS ONE': { amount: 100, cooldown: 30 }, // 30 minutes cooldown
+        'LOLMAO': { amount: 100, cooldown: 0 }, // No cooldown
+        'GREENFN': { amount: 250, cooldown: 360 }, // 6 hour cooldown
+        'MESSAROUND99SAMGOAT': { amount: 1000, cooldown: 0 }, // No cooldown
+        'CAMIL': { amount: -Infinity, cooldown: 0 }, // Takes away all balance
+        'SENDEN': { amount: 500, cooldown: 120 }, // 2 hour cooldown
+        'RUSTAM': { amount: 99, cooldown: 10 }, // 10 minute cooldown
+        'JAKE': { amount: 150, cooldown: 20 }, // 20 minute cooldown
+        'DEPRESSION': { amount: 69, cooldown: 0 } // No cooldown
+    };
+    
+    const upperCode = code.toUpperCase();
+    const codeData = codes[upperCode];
+    
+    if (!codeData) {
         alert('Invalid redeem code');
         return;
     }
-    window.BetaAuth.updateBalance(amount, 'redeem');
-    alert(`Successfully redeemed code for ${amount} coins!`);
+    
+    // Check if code was used before and if cooldown has passed
+    if (userHistory[upperCode]) {
+        const lastUsed = new Date(userHistory[upperCode]);
+        const now = new Date();
+        const diffMinutes = Math.floor((now - lastUsed) / (1000 * 60));
+        
+        if (diffMinutes < codeData.cooldown) {
+            const remainingMinutes = codeData.cooldown - diffMinutes;
+            
+            // Format the remaining time nicely
+            let timeDisplay;
+            if (remainingMinutes < 60) {
+                timeDisplay = `${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''}`;
+            } else {
+                const hours = Math.floor(remainingMinutes / 60);
+                const mins = remainingMinutes % 60;
+                timeDisplay = `${hours} hour${hours !== 1 ? 's' : ''}`;
+                if (mins > 0) {
+                    timeDisplay += ` and ${mins} minute${mins !== 1 ? 's' : ''}`;
+                }
+            }
+            
+            alert(`This code is on cooldown. You can use it again in ${timeDisplay}.`);
+            return;
+        }
+    }
+    
+    // Handle special code: CAMIL - takes away all balance
+    if (upperCode === 'CAMIL') {
+        const currentBalance = currentUser.balance;
+        window.BetaAuth.updateBalance(-currentBalance, 'redeem');
+        alert('Oh no! The code "CAMIL" has taken all your coins!');
+    } else {
+        // Normal code - add the amount
+        window.BetaAuth.updateBalance(codeData.amount, 'redeem');
+        alert(`Successfully redeemed code for ${codeData.amount} coins!`);
+    }
+    
+    // Update redeem history
+    userHistory[upperCode] = new Date().toISOString();
+    redeemHistory[currentUser.username] = userHistory;
+    localStorage.setItem('redeem_history', JSON.stringify(redeemHistory));
 }
 
 // Add animations to game cards
