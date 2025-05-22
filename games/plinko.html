@@ -147,6 +147,8 @@
             cursor: pointer;
             position: relative;
             transition: all 0.3s;
+            min-width: 150px;
+            padding-right: 30px;
         }
         
         .risk-dropdown:focus, .rows-dropdown:focus {
@@ -334,11 +336,12 @@
             left: 0;
             right: 0;
             z-index: 2;
-            background-color: rgba(12, 14, 26, 0.5);
+            background-color: rgba(12, 14, 26, 0.8);
             padding: 0;
             margin: 0;
             box-sizing: border-box;
             height: 60px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .multiplier-bucket {
@@ -354,6 +357,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            flex: 1;
         }
         
         .multiplier-bucket:last-child {

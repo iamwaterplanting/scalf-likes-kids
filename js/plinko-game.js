@@ -48,23 +48,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Multiplier definitions with exact colors from the reference image
     const multiplierSets = {
         low: [
-            {value: 30, color: '#FF0000'},  // Red
-            {value: 10, color: '#FF4500'},  // Orange Red
-            {value: 5, color: '#FFA500'},   // Orange
-            {value: 3, color: '#FFFF00'},   // Yellow
+            {value: 50, color: '#FF0000'},  // Red
+            {value: 20, color: '#FF4500'},  // Orange Red
+            {value: 10, color: '#FFA500'},   // Orange
+            {value: 5, color: '#FFFF00'},   // Yellow
+            {value: 2, color: '#90EE90'}, // Light Green
             {value: 1.5, color: '#90EE90'}, // Light Green
-            {value: 1.4, color: '#90EE90'}, // Light Green
-            {value: 1.3, color: '#90EE90'}, // Light Green
-            {value: 1.2, color: '#90EE90'}, // Light Green
-            {value: 1.2, color: '#90EE90'}, // Light Green
-            {value: 1.2, color: '#90EE90'}, // Light Green
-            {value: 1.3, color: '#90EE90'}, // Light Green
-            {value: 1.4, color: '#90EE90'}, // Light Green
+            {value: 1, color: '#90EE90'}, // Light Green
+            {value: 0.5, color: '#FF6347'}, // Tomato
+            {value: 0.3, color: '#FF6347'}, // Tomato
+            {value: 0.2, color: '#FF6347'}, // Tomato
+            {value: 0.2, color: '#FF6347'}, // Tomato
+            {value: 0.3, color: '#FF6347'}, // Tomato
+            {value: 0.5, color: '#FF6347'}, // Tomato
+            {value: 1, color: '#90EE90'}, // Light Green
             {value: 1.5, color: '#90EE90'}, // Light Green
-            {value: 3, color: '#FFFF00'},   // Yellow
-            {value: 5, color: '#FFA500'},   // Orange
-            {value: 10, color: '#FF4500'},  // Orange Red
-            {value: 30, color: '#FF0000'}   // Red
+            {value: 2, color: '#90EE90'}, // Light Green
+            {value: 5, color: '#FFFF00'},   // Yellow
+            {value: 10, color: '#FFA500'},  // Orange
+            {value: 20, color: '#FF4500'},  // Orange Red
+            {value: 50, color: '#FF0000'}   // Red
         ],
         medium: [
             {value: 50, color: '#FF0000'},  // Red
@@ -76,6 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
             {value: 1, color: '#90EE90'},   // Light Green
             {value: 0.5, color: '#FF6347'}, // Tomato
             {value: 0.3, color: '#FF6347'}, // Tomato
+            {value: 0.2, color: '#FF6347'}, // Tomato
+            {value: 0.2, color: '#FF6347'}, // Tomato
             {value: 0.3, color: '#FF6347'}, // Tomato
             {value: 0.5, color: '#FF6347'}, // Tomato
             {value: 1, color: '#90EE90'},   // Light Green
@@ -83,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
             {value: 2, color: '#90EE90'},   // Light Green
             {value: 5, color: '#FFFF00'},   // Yellow
             {value: 10, color: '#FFA500'},  // Orange
+            {value: 20, color: '#FF4500'},  // Orange Red
             {value: 50, color: '#FF0000'}   // Red
         ],
         high: [
@@ -94,14 +100,19 @@ document.addEventListener('DOMContentLoaded', () => {
             {value: 2, color: '#90EE90'},   // Light Green
             {value: 1, color: '#90EE90'},   // Light Green
             {value: 0.5, color: '#FF6347'}, // Tomato
+            {value: 0.3, color: '#FF6347'}, // Tomato
             {value: 0.2, color: '#FF6347'}, // Tomato
+            {value: 0.1, color: '#FF6347'}, // Tomato
+            {value: 0.1, color: '#FF6347'}, // Tomato
             {value: 0.2, color: '#FF6347'}, // Tomato
+            {value: 0.3, color: '#FF6347'}, // Tomato
             {value: 0.5, color: '#FF6347'}, // Tomato
             {value: 1, color: '#90EE90'},   // Light Green
             {value: 2, color: '#90EE90'},   // Light Green
             {value: 5, color: '#90EE90'},   // Light Green
             {value: 10, color: '#FFFF00'},  // Yellow
             {value: 20, color: '#FFA500'},  // Orange
+            {value: 50, color: '#FF4500'},  // Orange Red
             {value: 100, color: '#FF0000'}  // Red
         ]
     };
@@ -212,8 +223,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const topPadding = 40;
         const availableHeight = boardHeight - topPadding - multiplierHeight;
         
-        // Create a perfect triangle of pins
-        const horizontalSpacing = boardWidth / 17; // For 16 buckets
+        // Get the current risk level to determine bucket count
+        const riskLevel = riskLevelSelect.value;
+        const bucketCount = multiplierSets[riskLevel].length;
+        
+        // Create a perfect triangle of pins that aligns with multiplier buckets
+        const horizontalSpacing = boardWidth / (bucketCount - 1);
         const verticalSpacing = availableHeight / (rowCount + 1);
         
         // Create pins in triangular pattern
