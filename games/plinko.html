@@ -68,6 +68,8 @@
             letter-spacing: 0.5px;
             text-transform: uppercase;
             margin-bottom: 5px;
+            white-space: nowrap;
+            display: inline-block;
         }
         
         .bet-input {
@@ -174,6 +176,7 @@
             font-size: 12px;
             color: rgba(255, 255, 255, 0.6);
             font-style: italic;
+            display: none;
         }
         
         .payout-display {
@@ -1100,7 +1103,7 @@
                         
                         <div class="risk-section">
                             <div class="setting-item">
-                                <label for="riskLevel">RISK LEVEL</label>
+                                <label for="riskLevel">Risk level</label>
                                 <div class="dropdown-wrapper">
                                     <select id="riskLevel" class="risk-dropdown">
                                         <option value="low">Low Risk</option>
@@ -1108,13 +1111,12 @@
                                         <option value="high">High Risk</option>
                                     </select>
                                 </div>
-                                <p class="setting-note">Lower risk gives more frequent wins!</p>
                             </div>
                         </div>
                         
                         <div class="rows-section">
                             <div class="setting-item">
-                                <label for="rowsCount">GRID SIZE</label>
+                                <label for="rowsCount">Grid size</label>
                                 <div class="dropdown-wrapper">
                                     <select id="rowsCount" class="rows-dropdown">
                                         <option value="8">8 rows</option>
@@ -1122,7 +1124,6 @@
                                         <option value="16">16 rows</option>
                                     </select>
                                 </div>
-                                <p class="setting-note">Fewer rows = easier to predict landing spot</p>
                             </div>
                         </div>
                         
