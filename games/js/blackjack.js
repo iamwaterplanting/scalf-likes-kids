@@ -223,7 +223,7 @@ function startNewHand() {
     }, 300);
     
     setTimeout(() => {
-        dealCard(dealerHand, dealerHandElement, false);
+        dealCard(dealerHand, dealerHandElement, false); // First dealer card face down
         updateDealerScore();
     }, 600);
     
@@ -231,9 +231,12 @@ function startNewHand() {
         dealCard(playerHand, playerHandElement, true);
         updatePlayerScore();
         
-        // Check for blackjack
-        if (calculateHandValue(playerHand) === 21) {
+        // Check for player blackjack
+        const playerScore = calculateHandValue(playerHand);
+        if (playerScore === 21) {
             playerScoreElement.classList.add('pulse-once');
+            
+            // Wait a moment then stand
             setTimeout(() => {
                 playerStand();
             }, 1000);
@@ -241,7 +244,7 @@ function startNewHand() {
     }, 900);
     
     setTimeout(() => {
-        dealCard(dealerHand, dealerHandElement, true);
+        dealCard(dealerHand, dealerHandElement, true); // Second dealer card face up
         updateDealerScore();
     }, 1200);
     
@@ -418,8 +421,10 @@ function playerStand() {
     doubleButton.disabled = true;
     
     // Flip dealer's first card
-    const firstCardElement = dealerHandElement.querySelector('.card');
-    flipCard(firstCardElement, dealerHand[0]);
+    const firstCardElement = dealerHandElement.querySelector('.card.hidden-card');
+    if (firstCardElement) {
+        flipCard(firstCardElement, dealerHand[0]);
+    }
     
     // Show dealer's full score
     setTimeout(() => {
@@ -502,17 +507,22 @@ function dealerPlay() {
         return;
     }
     
-    // If dealer has blackjack
-    if (dealerScore === 21 && dealerHand.length === 2) {
-        // Check if player also has blackjack (push)
-        if (playerScore === 21 && playerHand.length === 2) {
+    // Player has blackjack - check first before dealer's blackjack check
+    if (playerScore === 21 && playerHand.length === 2) {
+        // If dealer also has blackjack (push)
+        if (dealerScore === 21 && dealerHand.length === 2) {
             setTimeout(() => {
                 showResult('Both blackjack! Push.', 'push');
                 returnBet();
             }, 500);
         } else {
             setTimeout(() => {
-                showResult('Dealer blackjack! You lose.');
+                showResult('Blackjack! You win!', 'win');
+                payoutBlackjack();
+                blackjacks++;
+                blackjacksElement.textContent = blackjacks;
+                handsWon++;
+                handsWonElement.textContent = handsWon;
             }, 500);
         }
         
@@ -524,15 +534,10 @@ function dealerPlay() {
         return;
     }
     
-    // If player has blackjack
-    if (playerScore === 21 && playerHand.length === 2 && dealerScore !== 21) {
+    // If dealer has blackjack (and player doesn't)
+    if (dealerScore === 21 && dealerHand.length === 2) {
         setTimeout(() => {
-            showResult('Blackjack! You win!', 'win');
-            payoutBlackjack();
-            blackjacks++;
-            blackjacksElement.textContent = blackjacks;
-            handsWon++;
-            handsWonElement.textContent = handsWon;
+            showResult('Dealer blackjack! You lose.');
         }, 500);
         
         // Show new hand button
@@ -639,12 +644,14 @@ function payoutWin() {
 
 // Payout for blackjack (3:2)
 function payoutBlackjack() {
-    const winAmount = currentBet * 2.5; // Return bet + win 1.5x bet
+    const blackjackPayout = Math.floor(currentBet * 1.5); // Blackjack pays 3:2
+    const totalReturn = currentBet + blackjackPayout; // Return original bet + blackjack payout
+    
     const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
-    document.querySelector('.balance-amount').textContent = currentBalance + Math.floor(winAmount);
+    document.querySelector('.balance-amount').textContent = currentBalance + totalReturn;
     
     // Update total profit
-    totalProfit += Math.floor(currentBet * 1.5);
+    totalProfit += blackjackPayout;
     totalProfitElement.textContent = totalProfit;
     
     // Animate chips
