@@ -184,6 +184,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        // Deduct bet amount from balance
+        if (window.BetaAuth) {
+            window.BetaAuth.updateBalance(-betAmount, 'Flappy Bird Bet');
+        }
+        
         // Switch views
         gameSetup.style.display = 'none';
         gameCanvas.style.display = 'block';
@@ -250,12 +255,12 @@ document.addEventListener('DOMContentLoaded', () => {
         game.stop();
         isPlaying = false;
         
-        // Calculate winnings
-        const winnings = betAmount * currentMultiplier;
+        // Calculate winnings (the full amount including original bet)
+        const totalWinnings = betAmount * currentMultiplier;
         
-        // Update user balance
+        // Update user balance (only add the winnings, since bet was already deducted)
         if (window.BetaAuth) {
-            window.BetaAuth.updateBalance(winnings, 'Flappy Bird');
+            window.BetaAuth.updateBalance(totalWinnings, 'Flappy Bird Win');
         }
         
         // Show result
@@ -263,9 +268,12 @@ document.addEventListener('DOMContentLoaded', () => {
         resultSection.style.display = 'block';
         slowmoOverlay.style.display = 'none';
         
+        // Calculate profit (what was won above the original bet)
+        const profit = totalWinnings - betAmount;
+        
         resultText.textContent = 'You cashed out!';
         resultText.style.color = 'var(--success-color)';
-        resultAmount.textContent = formatCurrency(winnings);
+        resultAmount.textContent = formatCurrency(profit);
         resultAmount.style.color = 'var(--success-color)';
         finalPipes.textContent = pipesPassed;
         finalMultiplier.textContent = currentMultiplier.toFixed(1) + 'x';
@@ -277,13 +285,13 @@ document.addEventListener('DOMContentLoaded', () => {
             multiplierCap: multiplierCap,
             pipesPassed: pipesPassed,
             finalMultiplier: currentMultiplier,
-            outcome: winnings,
+            outcome: profit,
             time: new Date()
         });
         
         // Track bet in main system
         if (window.BetaGames?.trackGameBet) {
-            window.BetaGames.trackGameBet('Flappy Bird', betAmount, winnings);
+            window.BetaGames.trackGameBet('Flappy Bird', betAmount, profit);
         }
     }
     
