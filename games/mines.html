@@ -272,7 +272,7 @@
         }
         
         .mines-settings-container {
-            background-color: #141b2d;
+            background-color: #0c0e1a;
             border-radius: 12px;
             padding: 25px;
             margin-bottom: 30px;
@@ -416,13 +416,13 @@
         }
         
         .mines-grid {
-            background-color: #141b2d;
+            background-color: #0c0e1a;
             border-radius: 12px;
-            padding: 25px;
+            padding: 15px;
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             grid-template-rows: repeat(4, 1fr);
-            gap: 15px;
+            gap: 6px;
             flex: 3;
             aspect-ratio: 1/0.8;
             max-width: 550px;
@@ -431,8 +431,8 @@
         }
         
         .mine-cell {
-            background-color: #1c2639;
-            border-radius: 8px;
+            background-color: #141b2d;
+            border-radius: 6px;
             cursor: pointer;
             aspect-ratio: 1/1;
             display: flex;
@@ -464,13 +464,13 @@
         }
         
         .mine-cell.revealed-gem {
-            background: linear-gradient(135deg, #141b2d, rgba(24, 231, 124, 0.3));
+            background: #141b2d;
             transform: scale(1);
             animation: revealGem 0.5s ease forwards;
         }
         
         .mine-cell.revealed-mine {
-            background: linear-gradient(135deg, #141b2d, rgba(241, 90, 90, 0.3));
+            background: #141b2d;
             transform: scale(1);
             animation: revealMine 0.5s ease forwards;
         }
@@ -490,10 +490,26 @@
         }
         
         .gem {
-            color: var(--primary-color);
-            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 80%;
+            height: 80%;
+            background: linear-gradient(135deg, #124d2e, #18e77c);
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
             animation: gemGlow 2s infinite alternate, gemSpin 1s ease forwards;
             filter: drop-shadow(0 0 10px rgba(24, 231, 124, 0.5));
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .gem:before {
+            content: '+';
+            position: absolute;
+            left: 10%;
         }
         
         @keyframes gemGlow {
