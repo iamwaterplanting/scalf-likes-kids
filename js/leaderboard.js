@@ -41,7 +41,10 @@ async function initLeaderboard() {
     // Load leaderboard data
     await loadLeaderboard();
     
-    // Refresh leaderboard data every 2 minutes
+    // Set up real-time subscription if Supabase is available
+    setupSupabaseSubscription();
+    
+    // Refresh leaderboard data every 2 minutes as fallback
     setInterval(loadLeaderboard, 120000);
 }
 
@@ -55,7 +58,34 @@ function getRankEmoji(rank) {
         case 3:
             return '<i class="fas fa-award rank-3-icon"></i>';
         default:
-            return `<div class="player-rank rank-${rank}">${rank}</div>`;
+            return `<div class="player-rank rank-${rank <= 10 ? rank : ''}">${rank}</div>`;
+    }
+}
+
+// Set up Supabase real-time subscription for leaderboard updates
+function setupSupabaseSubscription() {
+    if (!window.SupabaseDB) {
+        console.log('Supabase not available for real-time leaderboard updates');
+        return;
+    }
+    
+    try {
+        // Subscribe to profile changes
+        window.SupabaseDB
+            .channel('profiles-channel')
+            .on('postgres_changes', { 
+                event: '*', 
+                schema: 'public', 
+                table: 'profiles'
+            }, payload => {
+                console.log('Profile change detected, refreshing leaderboard');
+                loadLeaderboard();
+            })
+            .subscribe();
+            
+        console.log('Subscribed to real-time leaderboard updates');
+    } catch (error) {
+        console.error('Error setting up Supabase leaderboard subscription:', error);
     }
 }
 
@@ -82,7 +112,7 @@ async function loadLeaderboard() {
         // Fetch top 10 users ordered by balance
         const { data, error } = await window.SupabaseDB
             .from('profiles')
-            .select('username, balance, avatar_url')
+            .select('id, username, balance, avatar_url')
             .order('balance', { ascending: false })
             .limit(10);
             
@@ -118,7 +148,7 @@ async function loadLeaderboard() {
                 <img src="${avatarUrl}" alt="${player.username}" class="player-avatar">
                 <div class="player-info">
                     <div class="player-name">${player.username}</div>
-                    <div class="player-balance">${player.balance.toLocaleString()} coins</div>
+                    <div class="player-balance">${Math.floor(player.balance).toLocaleString()} coins</div>
                 </div>
             `;
             
@@ -130,10 +160,20 @@ async function loadLeaderboard() {
             const rank = index + 1;
             const avatarUrl = player.avatar_url || '../assets/default-avatar.svg';
             
+            // Check if user is current user
+            const currentUser = window.BetaAuth?.getCurrentUser();
+            const isCurrentUser = currentUser && currentUser.id === player.id;
+            
             // Check if user is owner
             const isOwner = window.BetaAdmin && window.BetaAdmin.isOwner && window.BetaAdmin.isOwner(player.username);
             
             const listItem = document.createElement('li');
+            if (isCurrentUser) {
+                listItem.className = 'current-user';
+                listItem.style.backgroundColor = 'rgba(24, 231, 124, 0.1)';
+                listItem.style.borderLeft = '3px solid var(--primary-color)';
+            }
+            
             listItem.innerHTML = `
                 ${getRankEmoji(rank)}
                 <img src="${avatarUrl}" alt="${player.username}" class="player-avatar">
@@ -141,8 +181,9 @@ async function loadLeaderboard() {
                     <div class="player-name">
                         ${player.username}
                         ${isOwner ? '<i class="fas fa-crown" style="color: gold; margin-left: 5px; font-size: 0.8em;"></i>' : ''}
+                        ${isCurrentUser ? '<span style="color: var(--primary-color); margin-left: 5px; font-size: 0.8em;">(You)</span>' : ''}
                     </div>
-                    <div class="player-balance">${player.balance.toLocaleString()} coins</div>
+                    <div class="player-balance">${Math.floor(player.balance).toLocaleString()} coins</div>
                 </div>
             `;
             
@@ -219,7 +260,50 @@ function loadMockLeaderboardData() {
     });
 }
 
+// Function to create initial users for testing - call this from console if needed
+async function createInitialUsers() {
+    if (!window.SupabaseDB) {
+        console.error('Supabase not configured');
+        return;
+    }
+    
+    const testUsers = [
+        { username: 'CasinoKing', balance: 25680 },
+        { username: 'BigWinner', balance: 18450 },
+        { username: 'LuckyGuy', balance: 12750 },
+        { username: 'PlinkoMaster', balance: 9840 },
+        { username: 'Player123', balance: 7520 },
+        { username: 'GamblerPro', balance: 6320 },
+        { username: 'BetaChamp', balance: 4890 },
+        { username: 'RollTheNice', balance: 3750 },
+        { username: 'SlotKing', balance: 2430 },
+        { username: 'WinnerAlways', balance: 1280 }
+    ];
+    
+    for (const user of testUsers) {
+        try {
+            const { data, error } = await window.SupabaseDB
+                .from('profiles')
+                .upsert({
+                    id: crypto.randomUUID(), // Generate UUID
+                    username: user.username,
+                    balance: user.balance,
+                    avatar_url: '../assets/default-avatar.svg'
+                });
+                
+            if (error) {
+                console.error(`Error creating user ${user.username}:`, error);
+            } else {
+                console.log(`Created/updated user ${user.username}`);
+            }
+        } catch (e) {
+            console.error(`Error creating user ${user.username}:`, e);
+        }
+    }
+}
+
 // Export functions for global access
 window.BetaLeaderboard = {
-    refresh: loadLeaderboard
+    refresh: loadLeaderboard,
+    createTestData: createInitialUsers
 }; 
