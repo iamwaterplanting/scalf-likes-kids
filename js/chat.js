@@ -17,7 +17,7 @@ let chatBadge;
 
 // Initialize chat
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Initializing chat');
+    console.log('Initializing chat UI components');
     
     // Create chat UI elements if they don't exist
     createChatUI();
@@ -30,6 +30,17 @@ document.addEventListener('DOMContentLoaded', () => {
     messageInput = document.getElementById('messageInput');
     chatBadge = document.getElementById('chatBadge');
     
+    console.log('Chat elements found:', 
+        {
+            chatContainer: !!chatContainer, 
+            chatToggle: !!chatToggle, 
+            chatMessagesList: !!chatMessagesList,
+            chatForm: !!chatForm,
+            messageInput: !!messageInput,
+            chatBadge: !!chatBadge
+        }
+    );
+    
     // Setup event listeners
     setupEventListeners();
     
@@ -39,52 +50,63 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up real-time subscription for new messages
     enableRealtimeForChat();
     subscribeToNewMessages();
+    
+    console.log('Chat initialization complete');
 });
 
 // Create chat UI
 function createChatUI() {
+    console.log('Creating chat UI elements');
+    
     // Check if chat container already exists
     if (document.getElementById('chatContainer')) {
+        console.log('Chat container already exists, skipping creation');
         return;
     }
     
-    // Create chat toggle button
-    const toggleBtn = document.createElement('div');
-    toggleBtn.id = 'chatToggle';
-    toggleBtn.className = 'chat-toggle';
-    toggleBtn.innerHTML = `
-        <i class="fas fa-comments"></i>
-        <span id="chatBadge" class="chat-badge">0</span>
-    `;
-    
-    // Create chat container
-    const container = document.createElement('div');
-    container.id = 'chatContainer';
-    container.className = 'chat-container';
-    container.innerHTML = `
-        <div class="chat-header">
-            <h3>Live Chat</h3>
-            <button id="chatClose" class="chat-close">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="chat-body">
-            <ul id="chatMessages" class="chat-messages"></ul>
-        </div>
-        <form id="chatForm" class="chat-form">
-            <input type="text" id="messageInput" placeholder="Type a message..." required>
-            <button type="submit">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </form>
-    `;
-    
-    // Add chat elements to body
-    document.body.appendChild(toggleBtn);
-    document.body.appendChild(container);
-    
-    // Add chat styles
-    addChatStyles();
+    try {
+        // Create chat toggle button
+        const toggleBtn = document.createElement('div');
+        toggleBtn.id = 'chatToggle';
+        toggleBtn.className = 'chat-toggle';
+        toggleBtn.innerHTML = `
+            <i class="fas fa-comments"></i>
+            <span id="chatBadge" class="chat-badge">0</span>
+        `;
+        
+        // Create chat container
+        const container = document.createElement('div');
+        container.id = 'chatContainer';
+        container.className = 'chat-container';
+        container.innerHTML = `
+            <div class="chat-header">
+                <h3>Live Chat</h3>
+                <button id="chatClose" class="chat-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="chat-body">
+                <ul id="chatMessages" class="chat-messages"></ul>
+            </div>
+            <form id="chatForm" class="chat-form">
+                <input type="text" id="messageInput" placeholder="Type a message..." required>
+                <button type="submit">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        `;
+        
+        // Add chat elements to body
+        document.body.appendChild(toggleBtn);
+        document.body.appendChild(container);
+        
+        console.log('Chat UI elements created and appended to document body');
+        
+        // Add chat styles
+        addChatStyles();
+    } catch (error) {
+        console.error('Error creating chat UI:', error);
+    }
 }
 
 // Add CSS styles for chat
@@ -302,54 +324,32 @@ function updateBadge() {
     }
 }
 
-// Load existing chat messages
+// Load chat messages from Supabase
 async function loadChatMessages() {
+    console.log('Loading chat messages from database');
+    
     try {
-        console.log('Loading existing chat messages...');
+        // Get current user
+        const { data: { user } } = await window.SupabaseDB.auth.getUser();
         
-        const { data, error } = await window.SupabaseDB
+        // Fetch messages from Supabase
+        const { data: messages, error } = await window.SupabaseDB
             .from('chat_messages')
             .select('*')
             .order('created_at', { ascending: true })
             .limit(50);
-            
-        if (error) throw error;
         
-        console.log('Loaded chat messages:', data);
+        if (error) {
+            throw error;
+        }
         
-        chatMessages = data || [];
+        console.log(`Loaded ${messages ? messages.length : 0} chat messages`);
         
-        if (chatMessages.length === 0) {
-            console.log('No existing chat messages found');
-            
-            // Try to create a test message if no messages exist
-            if (window.BetaAuth?.getCurrentUser()) {
-                const testMessage = {
-                    username: 'System',
-                    message: 'Welcome to the BetaGames chat!',
-                    created_at: new Date().toISOString()
-                };
-                
-                try {
-                    console.log('Creating welcome message...');
-                    await window.SupabaseDB.from('chat_messages').insert([testMessage]);
-                    console.log('Welcome message created');
-                    
-                    // Reload messages
-                    const { data: refreshData } = await window.SupabaseDB
-                        .from('chat_messages')
-                        .select('*')
-                        .order('created_at', { ascending: true })
-                        .limit(50);
-                        
-                    if (refreshData && refreshData.length > 0) {
-                        chatMessages = refreshData;
-                        console.log('Reloaded messages after creating welcome message:', chatMessages);
-                    }
-                } catch (welcomeError) {
-                    console.error('Error creating welcome message:', welcomeError);
-                }
-            }
+        if (messages && messages.length > 0) {
+            chatMessages = messages;
+        } else {
+            console.log('No messages found in database');
+            chatMessages = [];
         }
         
         renderChatMessages();
@@ -608,4 +608,36 @@ window.BetaChat = {
     showChat,
     hideChat,
     sendMessage
-}; 
+};
+
+// Self-executing initialization function to ensure chat is loaded
+(function() {
+    console.log('Checking document readiness for chat initialization');
+    
+    // If DOM is already loaded, initialize chat immediately
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        console.log('Document already loaded, initializing chat now');
+        setTimeout(() => {
+            // Create chat UI elements if they don't exist
+            createChatUI();
+            
+            // Initialize variables
+            chatContainer = document.getElementById('chatContainer');
+            chatToggle = document.getElementById('chatToggle');
+            chatMessagesList = document.getElementById('chatMessages');
+            chatForm = document.getElementById('chatForm');
+            messageInput = document.getElementById('messageInput');
+            chatBadge = document.getElementById('chatBadge');
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Load existing messages
+            loadChatMessages();
+            
+            // Set up real-time subscription for new messages
+            enableRealtimeForChat();
+            subscribeToNewMessages();
+        }, 500); // Small delay to ensure everything is loaded
+    }
+})(); 
