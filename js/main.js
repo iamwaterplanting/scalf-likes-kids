@@ -10,6 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add animations to game cards
     animateGameCards();
+    
+    // Initialize Supabase if available
+    if (window.SupabaseDB) {
+        checkGameAvailability();
+    }
 });
 
 // Game history and activity tracking
@@ -357,4 +362,105 @@ window.BetaGames = {
     formatCurrency,
     formatTime,
     gameHistory
-}; 
+};
+
+// Check game availability
+async function checkGameAvailability() {
+    if (!window.SupabaseDB) return;
+    
+    try {
+        // Check maintenance mode
+        const { data: maintenanceData, error: maintenanceError } = await window.SupabaseDB
+            .from('settings')
+            .select('value')
+            .eq('key', 'maintenance_mode')
+            .single();
+            
+        if (maintenanceError && maintenanceError.code !== 'PGRST116') {
+            console.error('Error checking maintenance mode:', maintenanceError);
+        }
+        
+        const generalMaintenance = maintenanceData && maintenanceData.value === 'on';
+        
+        // Check plinko availability
+        const { data: plinkoData, error: plinkoError } = await window.SupabaseDB
+            .from('settings')
+            .select('value')
+            .eq('key', 'plinko')
+            .single();
+            
+        if (plinkoError && plinkoError.code !== 'PGRST116') {
+            console.error('Error checking plinko setting:', plinkoError);
+        }
+        
+        const plinkoMaintenance = plinkoData && plinkoData.value === 'off';
+        
+        // Update game cards based on maintenance status
+        updateGameCards(generalMaintenance, { plinko: plinkoMaintenance });
+    } catch (error) {
+        console.error('Error checking game availability:', error);
+    }
+}
+
+// Update game cards based on maintenance status
+function updateGameCards(generalMaintenance, gameStatus = {}) {
+    // Get all game cards
+    const gameCards = document.querySelectorAll('.game-card');
+    
+    gameCards.forEach(card => {
+        const gameName = card.dataset.game?.toLowerCase();
+        if (!gameName) return;
+        
+        // Get status badge
+        const statusBadge = card.querySelector('.game-status');
+        if (!statusBadge) return;
+        
+        // Check if this specific game is in maintenance
+        const isGameMaintenance = gameStatus[gameName] === true;
+        
+        // Apply maintenance status
+        if (generalMaintenance || isGameMaintenance) {
+            statusBadge.textContent = 'Maintenance';
+            statusBadge.className = 'game-status maintenance';
+            
+            // Disable click on card
+            card.classList.add('disabled');
+            card.style.pointerEvents = 'none';
+            card.style.opacity = '0.7';
+            
+            // Add maintenance overlay to card
+            let maintenanceIcon = card.querySelector('.maintenance-icon');
+            if (!maintenanceIcon) {
+                maintenanceIcon = document.createElement('div');
+                maintenanceIcon.className = 'maintenance-icon';
+                maintenanceIcon.innerHTML = '<i class="fas fa-tools"></i>';
+                card.appendChild(maintenanceIcon);
+            }
+        } else {
+            // Remove maintenance status if not in maintenance
+            const maintenanceIcon = card.querySelector('.maintenance-icon');
+            if (maintenanceIcon) {
+                card.removeChild(maintenanceIcon);
+            }
+            
+            // Restore click on card
+            card.classList.remove('disabled');
+            card.style.pointerEvents = '';
+            card.style.opacity = '';
+            
+            // Set appropriate status
+            if (statusBadge.textContent === 'Maintenance') {
+                if (gameName === 'rocket-crash' || gameName === 'plinko') {
+                    statusBadge.textContent = 'Popular';
+                    statusBadge.className = 'game-status popular';
+                } else if (gameName === 'mines' || gameName === 'roulette') {
+                    statusBadge.textContent = 'New';
+                    statusBadge.className = 'game-status new';
+                } else {
+                    statusBadge.textContent = 'Live';
+                    statusBadge.className = 'game-status live';
+                }
+            }
+        }
+    });
+} 

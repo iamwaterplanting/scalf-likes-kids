@@ -1035,4 +1035,153 @@ window.BetaAdmin = {
     isBanned: (username) => adminState.bannedUsers.includes(username),
     isOwner: (username) => adminState.owner === username,
     sendAlert: showAdminAlert
-}; 
+};
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Check if we're on the admin page
+    const isAdminPage = document.querySelector('.admin-dashboard');
+    if (!isAdminPage) return;
+    
+    // Get UI elements
+    const houseEdgeInput = document.getElementById('houseEdge');
+    const maintenanceModeToggle = document.getElementById('maintenanceMode');
+    const plinkoEnabledToggle = document.getElementById('plinkoEnabled');
+    const updateSettingsBtn = document.getElementById('updateSettingsBtn');
+    
+    // Load current settings
+    await loadSettings();
+    
+    // Add event listener for the update button
+    if (updateSettingsBtn) {
+        updateSettingsBtn.addEventListener('click', updateAllSettings);
+    }
+    
+    // Load current settings from Supabase
+    async function loadSettings() {
+        if (!window.SupabaseDB) {
+            console.error('Supabase not configured');
+            return;
+        }
+        
+        try {
+            // Load house edge
+            const { data: edgeData, error: edgeError } = await window.SupabaseDB
+                .from('settings')
+                .select('value')
+                .eq('key', 'house_edge')
+                .single();
+                
+            if (edgeError && edgeError.code !== 'PGRST116') {
+                console.error('Error loading house edge:', edgeError);
+            } else if (edgeData) {
+                houseEdgeInput.value = edgeData.value;
+            }
+            
+            // Load maintenance mode
+            const { data: maintenanceData, error: maintenanceError } = await window.SupabaseDB
+                .from('settings')
+                .select('value')
+                .eq('key', 'maintenance_mode')
+                .single();
+                
+            if (maintenanceError && maintenanceError.code !== 'PGRST116') {
+                console.error('Error loading maintenance mode:', maintenanceError);
+            } else if (maintenanceData) {
+                maintenanceModeToggle.checked = maintenanceData.value === 'on';
+            }
+            
+            // Load plinko enabled status
+            const { data: plinkoData, error: plinkoError } = await window.SupabaseDB
+                .from('settings')
+                .select('value')
+                .eq('key', 'plinko')
+                .single();
+                
+            if (plinkoError && plinkoError.code !== 'PGRST116') {
+                console.error('Error loading plinko status:', plinkoError);
+            } else if (plinkoData) {
+                plinkoEnabledToggle.checked = plinkoData.value === 'on';
+            }
+        } catch (error) {
+            console.error('Error loading settings:', error);
+        }
+    }
+    
+    // Update all settings at once
+    async function updateAllSettings() {
+        if (!window.SupabaseDB) {
+            console.error('Supabase not configured');
+            return;
+        }
+        
+        try {
+            // Get values from inputs
+            const houseEdge = houseEdgeInput.value;
+            const maintenanceMode = maintenanceModeToggle.checked ? 'on' : 'off';
+            const plinkoEnabled = plinkoEnabledToggle.checked ? 'on' : 'off';
+            
+            // Update house edge
+            const { error: edgeError } = await window.SupabaseDB
+                .from('settings')
+                .update({ value: houseEdge })
+                .eq('key', 'house_edge');
+                
+            if (edgeError) {
+                console.error('Error updating house edge:', edgeError);
+                alert('Error updating house edge');
+                return;
+            }
+            
+            // Update maintenance mode
+            const { error: maintenanceError } = await window.SupabaseDB
+                .from('settings')
+                .update({ value: maintenanceMode })
+                .eq('key', 'maintenance_mode');
+                
+            if (maintenanceError) {
+                console.error('Error updating maintenance mode:', maintenanceError);
+                alert('Error updating maintenance mode');
+                return;
+            }
+            
+            // Update plinko enabled status
+            const { error: plinkoError } = await window.SupabaseDB
+                .from('settings')
+                .update({ value: plinkoEnabled })
+                .eq('key', 'plinko');
+                
+            if (plinkoError) {
+                console.error('Error updating plinko status:', plinkoError);
+                
+                // If the setting doesn't exist, create it
+                if (plinkoError.code === 'PGRST116') {
+                    const { error: insertError } = await window.SupabaseDB
+                        .from('settings')
+                        .insert({ 
+                            id: crypto.randomUUID(), 
+                            key: 'plinko', 
+                            value: plinkoEnabled 
+                        });
+                        
+                    if (insertError) {
+                        console.error('Error creating plinko setting:', insertError);
+                        alert('Error updating plinko status');
+                        return;
+                    }
+                } else {
+                    alert('Error updating plinko status');
+                    return;
+                }
+            }
+            
+            // Show success message
+            alert('Settings updated successfully');
+            
+            // Reload settings
+            await loadSettings();
+        } catch (error) {
+            console.error('Error updating settings:', error);
+            alert('Error updating settings');
+        }
+    }
+}); 

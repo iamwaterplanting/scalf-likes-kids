@@ -18,6 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const multiplierContainer = document.getElementById('multiplierContainer');
     const gameHistoryBody = document.getElementById('gameHistoryBody');
     const plinkoBoard = document.querySelector('.plinko-board');
+    const maintenanceOverlay = document.getElementById('maintenanceOverlay');
+    const adminPasswordInput = document.getElementById('adminPassword');
+    const adminAccessBtn = document.getElementById('adminAccessBtn');
+    
+    // Admin password
+    const ADMIN_PASSWORD = "howlgowl";
+    
+    // Check if in maintenance mode
+    let maintenanceMode = false;
     
     // Game state
     let gameState = {
@@ -117,10 +126,91 @@ document.addEventListener('DOMContentLoaded', () => {
         ]
     };
     
-    // Initialize the game
-    initGame();
+    // Check maintenance mode from Supabase
+    async function checkMaintenanceMode() {
+        if (!window.SupabaseDB) {
+            console.error('Supabase not configured');
+            return false;
+        }
+        
+        try {
+            const { data, error } = await window.SupabaseDB
+                .from('settings')
+                .select('value')
+                .eq('key', 'maintenance_mode')
+                .single();
+                
+            if (error) {
+                console.error('Error checking maintenance mode:', error);
+                return false;
+            }
+            
+            // Check if plinko should be in maintenance mode
+            const { data: plinkoSetting, error: plinkoError } = await window.SupabaseDB
+                .from('settings')
+                .select('value')
+                .eq('key', 'plinko')
+                .single();
+                
+            if (plinkoError && plinkoError.code !== 'PGRST116') {
+                console.error('Error checking plinko setting:', plinkoError);
+                return false;
+            }
+            
+            // Game is in maintenance if general maintenance is on OR plinko-specific setting is "off"
+            const generalMaintenance = data && data.value === 'on';
+            const plinkoMaintenance = plinkoSetting && plinkoSetting.value === 'off';
+            
+            return generalMaintenance || plinkoMaintenance;
+        } catch (error) {
+            console.error('Error checking maintenance mode:', error);
+            return false;
+        }
+    }
     
-    function initGame() {
+    // Initialize the game
+    async function initGame() {
+        // Check if in maintenance mode
+        maintenanceMode = await checkMaintenanceMode();
+        
+        if (maintenanceMode) {
+            // Show maintenance overlay
+            if (maintenanceOverlay) {
+                maintenanceOverlay.style.display = 'flex';
+            }
+            
+            // Admin access button event
+            if (adminAccessBtn) {
+                adminAccessBtn.addEventListener('click', () => {
+                    const password = adminPasswordInput.value;
+                    if (password === ADMIN_PASSWORD) {
+                        maintenanceOverlay.style.display = 'none';
+                        maintenanceMode = false;
+                        setupGame();
+                    } else {
+                        adminPasswordInput.value = '';
+                        adminPasswordInput.placeholder = 'Incorrect password';
+                        adminPasswordInput.style.borderColor = 'red';
+                        setTimeout(() => {
+                            adminPasswordInput.placeholder = '';
+                            adminPasswordInput.style.borderColor = '';
+                        }, 2000);
+                    }
+                });
+            }
+        } else {
+            // Hide maintenance overlay
+            if (maintenanceOverlay) {
+                maintenanceOverlay.style.display = 'none';
+            }
+            
+            // Setup the game
+            setupGame();
+        }
+    }
+    
+    // Setup the game (only run when not in maintenance mode or after admin login)
+    function setupGame() {
         // Setup canvas size
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
@@ -143,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Start ambient animation
         animatePins();
         
-        // Load game history with some sample data
+        // Load real game history from Supabase
         loadGameHistory();
     }
     
@@ -854,9 +944,30 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update history table
         updateHistoryTable();
         
-        // Track in main system if available
-        if (window.BetaGames?.trackGameBet) {
-            window.BetaGames.trackGameBet('Plinko', betAmount, profit);
+        // Save to Supabase game_history table
+        saveGameHistory(username, betAmount, risk, multiplier, profit);
+    }
+    
+    // Save game history to Supabase
+    async function saveGameHistory(username, betAmount, riskLevel, multiplier, result) {
+        if (!window.SupabaseDB) return;
+        
+        try {
+            const { error } = await window.SupabaseDB
+                .from('game_history')
+                .insert({
+                    username: username,
+                    game: 'Plinko',
+                    bet: betAmount,
+                    result: result,
+                    time: new Date().toISOString()
+                });
+                
+            if (error) {
+                console.error('Error saving game history:', error);
+            }
+        } catch (error) {
+            console.error('Error saving game history:', error);
         }
     }
     
@@ -939,45 +1050,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Load initial game history with sample data
-    function loadGameHistory() {
-        const riskLevels = ['low', 'medium', 'high'];
-        const usernames = ['Player123', 'LuckyGuy', 'BigWinner', 'CasinoKing', 'PlinkoMaster'];
-        
-        // Get current user if available
-        const currentUser = window.BetaAuth?.getCurrentUser();
-        if (currentUser) {
-            usernames.push(currentUser.username);
-        }
-        
-        // Generate random history
-        for (let i = 0; i < 10; i++) {
-            const username = usernames[Math.floor(Math.random() * usernames.length)];
-            const betAmount = Math.random() * 100 + 10;
-            const risk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
-            const multiplier = multiplierSets[risk][Math.floor(Math.random() * multiplierSets[risk].length)];
-            const payout = betAmount * multiplier - betAmount;
-            
-            gameState.gameHistory.push({
-                user: username,
-                betAmount,
-                risk,
-                multiplier,
-                payout,
-                time: new Date(Date.now() - Math.random() * 3600000)
-            });
-        }
-        
-        // Sort by time (most recent first)
-        gameState.gameHistory.sort((a, b) => b.time - a.time);
-        
-        // Update history table
-        updateHistoryTable();
-    }
-    
     // Event listener for risk level changes
     riskLevelSelect.addEventListener('change', () => {
-        createMultiplierBuckets();
+        const risk = riskLevelSelect.value;
+        gameState.multipliers = [...multiplierSets[risk]];
+        drawMultipliers();
     });
     
     // Event listener for rows count changes
@@ -1284,4 +1361,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize the mines game lock function
     handleMineGameLoss();
+    
+    // Initialize the game
+    initGame();
 }); 

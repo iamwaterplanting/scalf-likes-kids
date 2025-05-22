@@ -68,4 +68,22 @@ Created by [Your Name] as a demonstration project. Icons from Font Awesome.
 
 ## License
 
-This project is for personal and educational use only. 
+This project is for personal and educational use only.
+
+## Maintenance Mode
+
+The platform includes a comprehensive maintenance mode system that can be applied to the entire site or to specific games:
+
+- **Global Maintenance Mode**: When enabled, the entire site shows maintenance mode.
+- **Game-Specific Maintenance**: Individual games like Plinko can be put into maintenance mode.
+- **Admin Override**: Admins can access games in maintenance mode by entering the password "howlgowl".
+- **Admin Controls**: Toggle maintenance mode via the admin panel.
+
+## Game History
+
+Game history is now stored in the Supabase database:
+
+- All game results are recorded in the `game_history` table
+- Real-time history display on game pages
+- Accurate historical data for analytics and player tracking
+- Data includes username, bet amount, result, and timestamp 
