@@ -273,8 +273,11 @@ document.addEventListener('DOMContentLoaded', () => {
             resultAmount.classList.add('result-amount', 'loss');
         }
         
-        // Show the result section after styles are applied
-        resultSection.style.display = 'block';
+        // Force browser to apply styles before showing the result section
+        // This prevents animation/transition interference
+        setTimeout(() => {
+            resultSection.style.display = 'block';
+        }, 0);
         
         // Reset game state
         isRolling = false;
@@ -432,27 +435,59 @@ document.addEventListener('DOMContentLoaded', () => {
             right: 20%;
         }
         
+        /* Enhanced win/loss styles with !important to take precedence */
         .win {
             color: var(--success-color) !important;
-            text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
-            font-weight: bold;
+            text-shadow: 0 0 10px rgba(46, 204, 113, 0.5) !important;
+            font-weight: bold !important;
             transition: none !important;
             animation: none !important;
         }
         
         .loss {
             color: var(--danger-color) !important;
-            text-shadow: 0 0 10px rgba(241, 90, 90, 0.5);
-            font-weight: bold;
+            text-shadow: 0 0 10px rgba(241, 90, 90, 0.5) !important;
+            font-weight: bold !important;
             transition: none !important;
             animation: none !important;
+        }
+        
+        /* Prevent any transitions on result elements */
+        .result-text, .result-amount {
+            -webkit-transition: none !important;
+            -moz-transition: none !important;
+            -o-transition: none !important;
+            transition: none !important;
+            -webkit-animation: none !important;
+            -moz-animation: none !important;
+            -o-animation: none !important;
+            animation: none !important;
+            -webkit-transform: none !important;
+            -moz-transform: none !important;
+            -o-transform: none !important;
+            transform: none !important;
+        }
+        
+        .result-text.win {
+            color: var(--success-color) !important;
+        }
+        
+        .result-text.loss {
+            color: var(--danger-color) !important;
+        }
+        
+        .result-amount.win {
+            color: var(--success-color) !important;
+        }
+        
+        .result-amount.loss {
+            color: var(--danger-color) !important;
         }
         
         .result-text {
             font-size: 24px;
             font-weight: bold;
             margin: 10px 0;
-            transition: none !important;
         }
         
         .result-amount {
@@ -460,7 +495,6 @@ document.addEventListener('DOMContentLoaded', () => {
             font-weight: bold;
             margin: 15px 0;
             text-align: center;
-            transition: none !important;
         }
         
         .betting-options {
