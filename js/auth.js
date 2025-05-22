@@ -64,10 +64,8 @@ function updateUIForLoggedInUser() {
             userAvatar.src = currentUser.avatar;
         }
         
-        // Update balance
-        if (currentUser.balance) {
-            balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance);
-        }
+        // Update balance - ensure it always shows the actual database balance
+        balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance || 0);
     }
 }
 
@@ -176,30 +174,38 @@ async function updateProfile(profileData) {
 async function updateBalance(amount, reason = 'game') {
     if (!currentUser) return false;
     
+    // Calculate new balance
     const newBalance = currentUser.balance + amount;
-    if (newBalance >= 0) {
-        try {
-            // Update in Supabase
-            const { data: updatedUser, error } = await window.SupabaseDB
-                .from('users')
-                .update({ balance: newBalance })
-                .eq('username', currentUser.username)
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            // Update local data
-            currentUser.balance = newBalance;
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
-            balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance);
-            return true;
-        } catch (error) {
-            console.error('Error updating balance:', error);
-            return false;
-        }
+    
+    // Don't allow negative balances
+    if (newBalance < 0 && reason !== 'redeem_camil') {
+        return false;
     }
-    return false;
+    
+    try {
+        // Update in Supabase
+        const { data: updatedUser, error } = await window.SupabaseDB
+            .from('users')
+            .update({ balance: Math.max(0, newBalance) }) // Ensure we never store negative balance
+            .eq('username', currentUser.username)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Update local data
+        currentUser.balance = updatedUser.balance;
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentUser));
+        
+        // Update UI
+        if (balanceAmount) {
+            balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance);
+        }
+        return true;
+    } catch (error) {
+        console.error('Error updating balance:', error);
+        return false;
+    }
 }
 
 // Function to toggle dropdown visibility
