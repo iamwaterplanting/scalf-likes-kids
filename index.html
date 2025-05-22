@@ -57,6 +57,21 @@
                 </div>
             </header>
 
+            <!-- Leaderboard Box -->
+            <div class="leaderboard-container">
+                <div class="leaderboard-box glow-box">
+                    <div class="leaderboard-header">
+                        <h3><i class="fas fa-trophy"></i> Top Players</h3>
+                    </div>
+                    <div class="leaderboard-body">
+                        <ul id="leaderboardList">
+                            <!-- Will be populated by JavaScript -->
+                            <li class="leaderboard-loading">Loading top players...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <!-- Featured Game Banner -->
             <div class="featured-banner slide-in">
                 <div class="banner-content">
@@ -291,14 +306,12 @@
         </div>
     </div>
 
-    <!-- Supabase -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <script src="js/supabase-config.js"></script>
-    
-    <!-- BetaGames Scripts -->
     <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
     <script src="js/animations.js"></script>
-    <script src="js/chat.js"></script>
+    <script src="js/leaderboard.js"></script>
 </body>
 </html> 

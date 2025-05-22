@@ -30,26 +30,80 @@ document.addEventListener('DOMContentLoaded', () => {
         pins: [],
         multipliers: [],
         pinRadius: 4,
-        ballRadius: 8, // Smaller ball for easier passage
-        gravity: 0.15,  // Reduced gravity for slower, more controlled movement
-        friction: 0.9,  // Increased friction for more realistic bounces
-        elasticity: 0.7, // Increased elasticity for more bouncy effect
+        ballRadius: 6,
+        gravity: 0.12,
+        friction: 0.9,
+        elasticity: 0.65,
         glowIntensity: 0.6,
-        pinGlowColors: ['#18e77c', '#4287f5', '#ffc107'],
+        pinGlowColors: ['#FFFFFF'],
         activePin: null,
         activePinTimeout: null,
         rapidFireMode: false,
         rapidFireCount: 0,
-        maxBalls: 15, // Maximum simultaneous balls
-        dropDelay: 100, // Milliseconds between drops in rapid fire mode
+        maxBalls: 15,
+        dropDelay: 100,
         shiftKeyDown: false
     };
     
-    // Multiplier definitions for different risk levels - Modified for easier wins
+    // Multiplier definitions with exact colors from the reference image
     const multiplierSets = {
-        low: [3.0, 2.0, 1.5, 1.2, 0.9, 0.8, 0.8, 0.8, 0.8, 0.8, 0.9, 1.2, 1.5, 2.0, 3.0, 5.0],
-        medium: [5.0, 3.0, 2.0, 1.5, 0.9, 0.8, 0.5, 0.5, 0.5, 0.5, 0.8, 0.9, 1.5, 2.0, 3.0, 5.0],
-        high: [10.0, 5.0, 3.0, 2.0, 1.5, 0.9, 0.8, 0.5, 0.5, 0.8, 0.9, 1.5, 2.0, 3.0, 5.0, 10.0]
+        low: [
+            {value: 30, color: '#FF0000'},  // Red
+            {value: 10, color: '#FF4500'},  // Orange Red
+            {value: 5, color: '#FFA500'},   // Orange
+            {value: 3, color: '#FFFF00'},   // Yellow
+            {value: 1.5, color: '#90EE90'}, // Light Green
+            {value: 1.4, color: '#90EE90'}, // Light Green
+            {value: 1.3, color: '#90EE90'}, // Light Green
+            {value: 1.2, color: '#90EE90'}, // Light Green
+            {value: 1.2, color: '#90EE90'}, // Light Green
+            {value: 1.2, color: '#90EE90'}, // Light Green
+            {value: 1.3, color: '#90EE90'}, // Light Green
+            {value: 1.4, color: '#90EE90'}, // Light Green
+            {value: 1.5, color: '#90EE90'}, // Light Green
+            {value: 3, color: '#FFFF00'},   // Yellow
+            {value: 5, color: '#FFA500'},   // Orange
+            {value: 10, color: '#FF4500'},  // Orange Red
+            {value: 30, color: '#FF0000'}   // Red
+        ],
+        medium: [
+            {value: 50, color: '#FF0000'},  // Red
+            {value: 20, color: '#FF4500'},  // Orange Red
+            {value: 10, color: '#FFA500'},  // Orange
+            {value: 5, color: '#FFFF00'},   // Yellow
+            {value: 2, color: '#90EE90'},   // Light Green
+            {value: 1.5, color: '#90EE90'}, // Light Green
+            {value: 1, color: '#90EE90'},   // Light Green
+            {value: 0.5, color: '#FF6347'}, // Tomato
+            {value: 0.3, color: '#FF6347'}, // Tomato
+            {value: 0.3, color: '#FF6347'}, // Tomato
+            {value: 0.5, color: '#FF6347'}, // Tomato
+            {value: 1, color: '#90EE90'},   // Light Green
+            {value: 1.5, color: '#90EE90'}, // Light Green
+            {value: 2, color: '#90EE90'},   // Light Green
+            {value: 5, color: '#FFFF00'},   // Yellow
+            {value: 10, color: '#FFA500'},  // Orange
+            {value: 50, color: '#FF0000'}   // Red
+        ],
+        high: [
+            {value: 100, color: '#FF0000'}, // Red
+            {value: 50, color: '#FF4500'},  // Orange Red
+            {value: 20, color: '#FFA500'},  // Orange
+            {value: 10, color: '#FFFF00'},  // Yellow
+            {value: 5, color: '#90EE90'},   // Light Green
+            {value: 2, color: '#90EE90'},   // Light Green
+            {value: 1, color: '#90EE90'},   // Light Green
+            {value: 0.5, color: '#FF6347'}, // Tomato
+            {value: 0.2, color: '#FF6347'}, // Tomato
+            {value: 0.2, color: '#FF6347'}, // Tomato
+            {value: 0.5, color: '#FF6347'}, // Tomato
+            {value: 1, color: '#90EE90'},   // Light Green
+            {value: 2, color: '#90EE90'},   // Light Green
+            {value: 5, color: '#90EE90'},   // Light Green
+            {value: 10, color: '#FFFF00'},  // Yellow
+            {value: 20, color: '#FFA500'},  // Orange
+            {value: 100, color: '#FF0000'}  // Red
+        ]
     };
     
     // Initialize the game
@@ -83,53 +137,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function resizeCanvas() {
-        // First, ensure the board container is properly sized
         if (plinkoBoard) {
-            // Make the canvas smaller for better playability
             const containerWidth = plinkoBoard.clientWidth;
             const containerHeight = plinkoBoard.clientHeight;
             
-            // Make the game board more compact
-            const scale = 0.85; // 85% of original size
-            canvas.width = containerWidth * scale;
-            canvas.height = containerHeight * scale;
+            // Make canvas slightly smaller than container for padding
+            canvas.width = containerWidth * 0.95;
+            canvas.height = containerHeight * 0.9;
             
             // Center the canvas in the container
             canvas.style.position = 'absolute';
             canvas.style.left = `${(containerWidth - canvas.width) / 2}px`;
-            canvas.style.top = `${(containerHeight - canvas.height) / 2}px`;
+            canvas.style.top = `${(containerHeight - canvas.height) / 10}px`;
             
-            // Make sure the multiplier container aligns perfectly with the canvas
+            // Adjust multiplier container
             if (multiplierContainer) {
-                // Set exact width with no margins or paddings
                 multiplierContainer.style.width = `${canvas.width}px`;
                 multiplierContainer.style.left = `${(containerWidth - canvas.width) / 2}px`;
-                multiplierContainer.style.right = 'auto';
+                multiplierContainer.style.bottom = '0';
                 multiplierContainer.style.padding = '0';
                 multiplierContainer.style.margin = '0';
                 multiplierContainer.style.boxSizing = 'border-box';
                 multiplierContainer.style.position = 'absolute';
-                multiplierContainer.style.bottom = '0';
-                
-                // Add an important style to ensure the width is enforced
-                const style = document.createElement('style');
-                style.textContent = `
-                    #multiplierContainer {
-                        width: ${canvas.width}px !important;
-                        box-sizing: border-box !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                        left: ${(containerWidth - canvas.width) / 2}px !important;
-                        right: auto !important;
-                    }
-                    
-                    .multiplier-bucket {
-                        box-sizing: border-box !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                    }
-                `;
-                document.head.appendChild(style);
             }
         }
         
@@ -172,51 +201,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function initGameBoard() {
-        const rowCount = parseInt(rowsCountSelect.value);
+        const rowCount = parseInt(rowsCountSelect.value) || 16;
         gameState.pins = [];
         gameState.multipliers = [];
         
-        // Calculate pin spacing
+        // Calculate available space
         const boardWidth = canvas.width;
         const boardHeight = canvas.height;
-        const verticalPadding = 60;
-        const bucketHeight = 60; // Height reserved for multiplier buckets
-        const availableHeight = boardHeight - verticalPadding - bucketHeight;
+        const multiplierHeight = 60;
+        const topPadding = 40;
+        const availableHeight = boardHeight - topPadding - multiplierHeight;
         
-        // For the exact reference image layout with 16 rows and 16 buckets
-        const bucketCount = 16;
-        const bucketWidth = boardWidth / bucketCount;
+        // Create a perfect triangle of pins
+        const horizontalSpacing = boardWidth / 17; // For 16 buckets
+        const verticalSpacing = availableHeight / (rowCount + 1);
         
-        // Calculate vertical spacing to fit all rows
-        const verticalPinSpacing = availableHeight / (rowCount + 1);
-        
-        // Create pins in triangular pattern matching the reference image
+        // Create pins in triangular pattern
         for (let row = 0; row < rowCount; row++) {
-            // Calculate how many pins for this row
-            // For perfect triangle, each row has row+1 pins (1 pin in first row, 2 in second, etc.)
-            const pinsInRow = row + 1;
+            const pinsInThisRow = row + 1;
+            const rowWidth = pinsInThisRow * horizontalSpacing;
+            const startX = (boardWidth - rowWidth) / 2 + horizontalSpacing / 2;
             
-            // For each row, calculate the total width covered
-            // Start with a width that's visually proportional to the board
-            // Each row expands to cover more of the board's width as we go down
-            const expansionFactor = row / (rowCount - 1); // 0 for first row, 1 for last row
-            const rowWidthProportion = 0.2 + 0.8 * expansionFactor; // Start at 20% width, expand to 100%
-            const rowWidth = boardWidth * rowWidthProportion;
-            
-            // Center this row
-            const startX = (boardWidth - rowWidth) / 2;
-            const pinSpacing = rowWidth / (pinsInRow - 1 || 1); // Avoid division by zero for first row
-            
-            for (let pin = 0; pin < pinsInRow; pin++) {
-                // Special case for first row with only one pin
-                const x = pinsInRow === 1 ? boardWidth / 2 : startX + pin * pinSpacing;
-                const y = verticalPadding + row * verticalPinSpacing;
+            for (let i = 0; i < pinsInThisRow; i++) {
+                const x = startX + i * horizontalSpacing;
+                const y = topPadding + (row + 1) * verticalSpacing;
                 
-                gameState.pins.push({ 
-                    x, 
-                    y, 
+                gameState.pins.push({
+                    x,
+                    y,
                     radius: gameState.pinRadius,
-                    glowColor: gameState.pinGlowColors[Math.floor(Math.random() * gameState.pinGlowColors.length)],
+                    glowColor: gameState.pinGlowColors[0],
                     glowSize: 0,
                     animationSpeed: 0.01 + Math.random() * 0.02
                 });
@@ -229,18 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function createMultiplierBuckets() {
         const riskLevel = riskLevelSelect.value;
-        let multipliers;
-        
-        // Check if we have 16 rows, use fixed layout matching reference image
-        if (parseInt(rowsCountSelect.value) === 16) {
-            // Exact match for reference image (16 rows, 16 buckets)
-            multipliers = [10.0, 5.0, 1.5, 1.0, 0.6, 0.5, 0.3, 0.2, 0.2, 0.3, 0.5, 0.6, 1.0, 1.5, 2.0, 3.0];
-        } else {
-            // Use the risk-based multiplier sets for other row counts
-            multipliers = multiplierSets[riskLevel];
-        }
-        
-        const bucketCount = multipliers.length;
+        const multipliers = multiplierSets[riskLevel];
         
         // Clear existing buckets
         multiplierContainer.innerHTML = '';
@@ -250,24 +253,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const boardWidth = canvas.width;
         const boardHeight = canvas.height;
         const bucketHeight = 60;
+        const bucketCount = multipliers.length;
+        const bucketWidth = boardWidth / bucketCount;
         
         // Force multiplier container to exact canvas width
         multiplierContainer.style.width = `${boardWidth}px`;
         
-        // Calculate the exact bucket width to fill the entire container
-        const bucketWidth = boardWidth / bucketCount;
-        
         for (let i = 0; i < bucketCount; i++) {
-            const multiplier = multipliers[i];
+            const multiplierData = multipliers[i];
             const x = i * bucketWidth + bucketWidth / 2;
             const y = boardHeight - bucketHeight / 2;
             
             // Create visual bucket
             const bucketElement = document.createElement('div');
             bucketElement.className = 'multiplier-bucket';
-            bucketElement.textContent = `${multiplier}x`;
-            bucketElement.dataset.value = multiplier;
+            bucketElement.textContent = `${multiplierData.value}x`;
+            bucketElement.dataset.value = multiplierData.value;
             bucketElement.style.width = `${bucketWidth}px`;
+            bucketElement.style.backgroundColor = multiplierData.color;
+            bucketElement.style.color = getContrastColor(multiplierData.color);
             bucketElement.style.margin = '0';
             bucketElement.style.padding = '0';
             bucketElement.style.boxSizing = 'border-box';
@@ -275,7 +279,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Add to game state
             gameState.multipliers.push({
-                value: multiplier,
+                value: multiplierData.value,
+                color: multiplierData.color,
                 x,
                 y,
                 width: bucketWidth,
@@ -285,28 +290,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 activeTime: 0
             });
         }
-        
-        // Color the buckets based on multiplier values
-        colorMultiplierBuckets();
     }
     
-    function colorMultiplierBuckets() {
-        const buckets = document.querySelectorAll('.multiplier-bucket');
+    // Determine if text should be white or black based on background color brightness
+    function getContrastColor(hexColor) {
+        // Convert hex to RGB
+        let r = parseInt(hexColor.substring(1, 3), 16);
+        let g = parseInt(hexColor.substring(3, 5), 16);
+        let b = parseInt(hexColor.substring(5, 7), 16);
         
-        buckets.forEach(bucket => {
-            const value = parseFloat(bucket.dataset.value);
-            
-            if (value < 1.0) {
-                bucket.style.backgroundColor = 'rgba(255, 68, 68, 0.7)'; // Red
-                bucket.style.color = '#fff';
-            } else if (value >= 1.0 && value < 2.0) {
-                bucket.style.backgroundColor = 'rgba(255, 193, 7, 0.7)'; // Yellow
-                bucket.style.color = '#000';
-            } else {
-                bucket.style.backgroundColor = 'rgba(24, 231, 124, 0.7)'; // Green
-                bucket.style.color = '#000';
-            }
-        });
+        // Calculate brightness (0-255)
+        let brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        
+        // Return white for dark backgrounds, black for light backgrounds
+        return brightness > 128 ? '#000000' : '#FFFFFF';
     }
     
     function handlePlay() {
