@@ -5,7 +5,6 @@ let reels = [];
 let symbols = [];
 let spinning = false;
 let autoSpinActive = false;
-let balance = 0;
 let winAmount = 0;
 let betAmount = 100;
 let lineCount = 5;
@@ -69,7 +68,6 @@ let winText;
 // Initialize the game
 document.addEventListener('DOMContentLoaded', () => {
     initializeGame();
-    updateBalanceFromStorage();
     createReelSymbols();
     setupEventListeners();
 });
@@ -93,8 +91,7 @@ function initializeGame() {
         reels.push([]);
     }
     
-    // Get balance from localStorage or default
-    updateBalanceDisplay();
+    updateBetDisplay();
 }
 
 // Create symbols for the reels
@@ -192,41 +189,39 @@ function updateBalanceDisplay() {
     // Get balance element from the DOM
     const balanceElement = document.querySelector('.balance-amount');
     if (balanceElement) {
-        balanceElement.textContent = balance;
+        // Make sure we don't display NaN
+        balanceElement.textContent = isNaN(parseInt(balanceElement.textContent)) ? 0 : balanceElement.textContent;
     }
-}
-
-// Update balance from storage
-function updateBalanceFromStorage() {
-    // Try to get the balance from localStorage
-    let storedBalance = localStorage.getItem('userBalance');
-    if (storedBalance !== null) {
-        balance = parseInt(storedBalance);
-    } else {
-        // Default balance
-        balance = 10000;
-        localStorage.setItem('userBalance', balance);
-    }
-    updateBalanceDisplay();
-}
-
-// Save balance to storage
-function saveBalance() {
-    localStorage.setItem('userBalance', balance);
-    updateBalanceDisplay();
 }
 
 // Spin the reels
-function spin() {
+async function spin() {
+    // Get current balance from DOM
+    const balanceElement = document.querySelector('.balance-amount');
+    if (!balanceElement) {
+        console.error('Balance element not found');
+        return;
+    }
+    
+    const currentBalance = parseInt(balanceElement.textContent);
+    
     // Check if we have enough balance
-    if (balance < totalBet) {
+    if (currentBalance < totalBet) {
         alert('Not enough balance to place this bet!');
         return;
     }
     
-    // Deduct the bet amount from balance
-    balance -= totalBet;
-    saveBalance();
+    // Deduct the bet amount from balance using the auth.js updateBalance function
+    if (window.updateBalance) {
+        const success = await window.updateBalance(-totalBet, 'slots-bet');
+        if (!success) {
+            alert('Failed to place bet. Please try again.');
+            return;
+        }
+    } else {
+        // Fallback if updateBalance function is not available
+        balanceElement.textContent = currentBalance - totalBet;
+    }
     
     // Reset previous wins
     winAmount = 0;
@@ -252,7 +247,7 @@ function spin() {
     }
     
     // When all reels have stopped
-    Promise.all(reelPromises).then(() => {
+    Promise.all(reelPromises).then(async () => {
         spinning = false;
         spinButton.disabled = false;
         
@@ -262,7 +257,8 @@ function spin() {
         // Continue auto spin if active
         if (autoSpinActive) {
             setTimeout(() => {
-                if (balance >= totalBet) {
+                const updatedBalance = parseInt(document.querySelector('.balance-amount').textContent);
+                if (updatedBalance >= totalBet) {
                     spin();
                 } else {
                     // Disable auto spin if not enough balance
@@ -280,9 +276,14 @@ function spinReel(reelIndex, callback) {
     const reelResult = [];
     for (let i = 0; i < 3; i++) {
         const randomIndex = Math.floor(Math.random() * allSymbols.length);
-        reelResult.push(allSymbols[randomIndex]);
+        const symbolWithWeight = getRandomWeightedSymbol();
+        reelResult.push(symbolWithWeight);
     }
     spinResults.push(reelResult);
+    
+    // Save the original symbols in case we need to restore them
+    const originalSymbols = Array.from(reelWrappers[reelIndex].children);
+    const originalSymbolTexts = originalSymbols.map(s => s.textContent);
     
     // Determine the random stop position
     const stopPosition = -((Math.floor(Math.random() * 10) + 10) * 120);
@@ -292,11 +293,10 @@ function spinReel(reelIndex, callback) {
     
     // Add symbols before the visible ones (for animation)
     for (let i = 0; i < 10; i++) {
-        const randomIndex = Math.floor(Math.random() * allSymbols.length);
         const symbolElement = document.createElement('div');
         symbolElement.className = 'symbol';
         symbolElement.style.top = ((i - 10) * 120) + 'px';
-        symbolElement.textContent = allSymbols[randomIndex];
+        symbolElement.textContent = getRandomWeightedSymbol();
         reelWrappers[reelIndex].appendChild(symbolElement);
     }
     
@@ -311,11 +311,10 @@ function spinReel(reelIndex, callback) {
     
     // Add symbols after the visible ones (for animation)
     for (let i = 0; i < 10; i++) {
-        const randomIndex = Math.floor(Math.random() * allSymbols.length);
         const symbolElement = document.createElement('div');
         symbolElement.className = 'symbol';
         symbolElement.style.top = ((i + reelResult.length) * 120) + 'px';
-        symbolElement.textContent = allSymbols[randomIndex];
+        symbolElement.textContent = getRandomWeightedSymbol();
         reelWrappers[reelIndex].appendChild(symbolElement);
     }
     
@@ -332,18 +331,44 @@ function spinReel(reelIndex, callback) {
     
     // Wait for animation to complete
     setTimeout(() => {
-        // Position the reel at the final position with the result symbols
-        reelWrappers[reelIndex].style.transition = 'none';
-        reelWrappers[reelIndex].style.transform = 'translateY(-1200px)';
-        
-        // Clear and re-add only the result symbols
-        reelWrappers[reelIndex].innerHTML = '';
-        for (let i = 0; i < reelResult.length; i++) {
-            const symbolElement = document.createElement('div');
-            symbolElement.className = 'symbol';
-            symbolElement.style.top = (i * 120) + 'px';
-            symbolElement.textContent = reelResult[i];
-            reelWrappers[reelIndex].appendChild(symbolElement);
+        try {
+            // Position the reel at the final position with the result symbols
+            reelWrappers[reelIndex].style.transition = 'none';
+            reelWrappers[reelIndex].style.transform = 'translateY(-1200px)';
+            
+            // Clear and re-add only the result symbols
+            reelWrappers[reelIndex].innerHTML = '';
+            
+            // Add the result symbols with proper positioning
+            for (let i = 0; i < reelResult.length; i++) {
+                const symbolElement = document.createElement('div');
+                symbolElement.className = 'symbol';
+                symbolElement.style.top = (i * 120) + 'px';
+                symbolElement.textContent = reelResult[i];
+                reelWrappers[reelIndex].appendChild(symbolElement);
+            }
+            
+            // Error handling - if symbols disappeared, restore them
+            if (reelWrappers[reelIndex].children.length === 0) {
+                console.error('Symbols disappeared, restoring...');
+                for (let i = 0; i < Math.min(reelResult.length, 3); i++) {
+                    const symbolElement = document.createElement('div');
+                    symbolElement.className = 'symbol';
+                    symbolElement.style.top = (i * 120) + 'px';
+                    symbolElement.textContent = reelResult[i] || getRandomWeightedSymbol();
+                    reelWrappers[reelIndex].appendChild(symbolElement);
+                }
+            }
+        } catch (error) {
+            console.error('Error in spinReel:', error);
+            // If there's an error, ensure we have symbols
+            for (let i = 0; i < 3; i++) {
+                const symbolElement = document.createElement('div');
+                symbolElement.className = 'symbol';
+                symbolElement.style.top = (i * 120) + 'px';
+                symbolElement.textContent = getRandomWeightedSymbol();
+                reelWrappers[reelIndex].appendChild(symbolElement);
+            }
         }
         
         // Animation complete callback
@@ -351,8 +376,22 @@ function spinReel(reelIndex, callback) {
     }, 3000);
 }
 
+// Helper function to get a random symbol based on weights
+function getRandomWeightedSymbol() {
+    // Create a weighted array of symbols
+    let weightedSymbols = [];
+    for (const symbol in symbolWeights) {
+        for (let i = 0; i < symbolWeights[symbol]; i++) {
+            weightedSymbols.push(symbol);
+        }
+    }
+    
+    const randomIndex = Math.floor(Math.random() * weightedSymbols.length);
+    return weightedSymbols[randomIndex];
+}
+
 // Check for winning combinations
-function checkWins() {
+async function checkWins() {
     let totalWin = 0;
     let winLines = [];
     
@@ -398,8 +437,17 @@ function checkWins() {
     
     // Add winnings to balance
     if (winAmount > 0) {
-        balance += winAmount;
-        saveBalance();
+        // Use auth.js updateBalance function to add winnings
+        if (window.updateBalance) {
+            await window.updateBalance(winAmount, 'slots-win');
+        } else {
+            // Fallback if updateBalance function is not available
+            const balanceElement = document.querySelector('.balance-amount');
+            if (balanceElement) {
+                const currentBalance = parseInt(balanceElement.textContent);
+                balanceElement.textContent = currentBalance + winAmount;
+            }
+        }
         
         // Show win animations
         showWinAnimation(winAmount);
