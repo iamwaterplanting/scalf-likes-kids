@@ -3,202 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blackjack - BetaGames</title>
+    <meta http-equiv="refresh" content="0;url=blackjack-game.html">
+    <title>Redirecting to Blackjack Game - BetaGames</title>
     <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="../assets/favicon.ico.svg" type="image/x-icon">
-    <link rel="stylesheet" href="../styles.css">
-    <link rel="stylesheet" href="css/blackjack.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #0c0e1a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        
+        .redirect-message {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #18e77c;
+            box-shadow: 0 0 15px rgba(24, 231, 124, 0.5);
+            max-width: 500px;
+        }
+        
+        h1 {
+            color: #18e77c;
+            margin-bottom: 20px;
+        }
+        
+        a {
+            color: #18e77c;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="logo glow-text">
-                <h1>BETA<span>GAMES</span></h1>
-            </div>
-            <nav class="main-nav">
-                <ul>
-                    <li><a href="../index.html"><i class="fas fa-home"></i> Home</a></li>
-                    <li><a href="dice.html"><i class="fas fa-dice"></i> Dice</a></li>
-                    <li><a href="roulette.html"><i class="fas fa-circle"></i> Roulette</a></li>
-                    <li><a href="mines.html"><i class="fas fa-bomb"></i> Mines</a></li>
-                    <li><a href="plinko.html"><i class="fas fa-sort-amount-down"></i> Plinko</a></li>
-                    <li><a href="slots.html"><i class="fas fa-coins"></i> Slots</a></li>
-                    <li class="active"><a href="blackjack.html"><i class="fas fa-crown"></i> Blackjack</a></li>
-                    <li><a href="flappybird.html"><i class="fas fa-dove"></i> Flappy Bird</a></li>
-                    <li><a href="rocketcrash.html"><i class="fas fa-rocket"></i> Rocket Crash</a></li>
-                </ul>
-            </nav>
-            <div class="redeem-code">
-                <button id="redeemButton" class="glow-button"><i class="fas fa-gift"></i> Redeem Code</button>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Header -->
-            <header class="header">
-                <div class="user-info">
-                    <div class="balance glow-box">
-                        <span class="balance-amount">0</span>
-                        <span class="balance-currency">COINS</span>
-                    </div>
-                </div>
-                <div class="user-controls">
-                    <button id="loginButton" class="login-button pulse-animation">Login</button>
-                    <button id="signupButton" class="signup-button glow-button">Sign Up</button>
-                    <div class="user-profile" style="display: none;">
-                        <img src="../assets/default-avatar.svg" alt="User Avatar" id="userAvatar" class="rotate-slow">
-                        <span id="username">Guest</span>
-                        <div class="dropdown-menu glow-box">
-                            <a href="#" id="profileSettings"><i class="fas fa-cog spin-icon"></i> Settings</a>
-                            <a href="#" id="logoutButton"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Game Container -->
-            <div class="game-container">
-                <h1 class="game-title">Blackjack</h1>
-                
-                <div class="blackjack-table">
-                    <div class="dealer-area">
-                        <span class="area-label">Dealer</span>
-                        <div class="score-display show" id="dealerScore">0</div>
-                        <div class="hand" id="dealerHand"></div>
-                    </div>
-                    
-                    <div class="result-message" id="resultMessage"></div>
-                    
-                    <div class="player-area">
-                        <span class="area-label">Player</span>
-                        <div class="score-display show" id="playerScore">0</div>
-                        <div class="hand" id="playerHand"></div>
-                    </div>
-                    
-                    <div class="current-bet">
-                        <span class="current-bet-label">Current Bet:</span>
-                        <span class="current-bet-amount" id="betAmount">0</span>
-                    </div>
-                    
-                    <div class="bet-chips" id="betChips">
-                        <div class="chip chip-10" data-value="10">10</div>
-                        <div class="chip chip-25" data-value="25">25</div>
-                        <div class="chip chip-50" data-value="50">50</div>
-                        <div class="chip chip-100" data-value="100">100</div>
-                        <div class="chip chip-500" data-value="500">500</div>
-                    </div>
-                    
-                    <div class="game-controls">
-                        <button id="dealButton" class="action-btn btn-deal">
-                            <i class="fas fa-play"></i> Deal Cards
-                        </button>
-                        
-                        <button id="hitButton" class="action-btn btn-hit" disabled>
-                            <i class="fas fa-plus"></i> Hit
-                        </button>
-                        
-                        <button id="standButton" class="action-btn btn-stand" disabled>
-                            <i class="fas fa-hand"></i> Stand
-                        </button>
-                        
-                        <button id="doubleButton" class="action-btn btn-double" disabled>
-                            <i class="fas fa-arrow-up"></i> Double
-                        </button>
-                        
-                        <button id="newHandButton" class="action-btn btn-new-hand" style="display: none;">
-                            <i class="fas fa-redo"></i> New Hand
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="game-stats">
-                    <div class="stat-item">
-                        <span class="stat-value" id="handsPlayed">0</span>
-                        <span class="stat-label">Hands Played</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="handsWon">0</span>
-                        <span class="stat-label">Hands Won</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="blackjacks">0</span>
-                        <span class="stat-label">Blackjacks</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="totalProfit">0</span>
-                        <span class="stat-label">Total Profit</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="redirect-message">
+        <h1>Redirecting...</h1>
+        <p>If you are not redirected automatically, please <a href="blackjack-game.html">click here</a>.</p>
     </div>
-
-    <!-- Modals -->
-    <div class="modal" id="loginModal">
-        <div class="modal-content glow-box">
-            <span class="close">&times;</span>
-            <h2>Login</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginUsername">Username</label>
-                    <input type="text" id="loginUsername" required>
-                </div>
-                <div class="form-group">
-                    <label for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" required>
-                </div>
-                <button type="submit" class="submit-btn glow-button">Login</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal" id="signupModal">
-        <div class="modal-content glow-box">
-            <span class="close">&times;</span>
-            <h2>Sign Up</h2>
-            <form id="signupForm">
-                <div class="form-group">
-                    <label for="signupUsername">Username</label>
-                    <input type="text" id="signupUsername" required>
-                </div>
-                <div class="form-group">
-                    <label for="signupPassword">Password</label>
-                    <input type="password" id="signupPassword" required>
-                </div>
-                <div class="form-group">
-                    <label for="signupConfirmPassword">Confirm Password</label>
-                    <input type="password" id="signupConfirmPassword" required>
-                </div>
-                <button type="submit" class="submit-btn glow-button">Sign Up</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal" id="redeemModal">
-        <div class="modal-content glow-box">
-            <span class="close">&times;</span>
-            <h2>Redeem Code</h2>
-            <form id="redeemForm">
-                <div class="form-group">
-                    <label for="redeemCode">Enter Code</label>
-                    <input type="text" id="redeemCode" required>
-                </div>
-                <button type="submit" class="submit-btn glow-button">Redeem</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <script src="../js/supabase-config.js"></script>
-    <script src="../js/auth.js"></script>
-    <script src="../js/main.js"></script>
-    <script src="../js/admin.js"></script>
-    <script src="../js/sidebar-update.js"></script>
-    <script src="js/blackjack.js"></script>
-    <script src="blackjack-override.js"></script>
+    <script>
+        window.location.href = 'blackjack-game.html';
+    </script>
 </body>
 </html> 

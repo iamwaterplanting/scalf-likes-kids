@@ -10,102 +10,241 @@
     <link rel="stylesheet" href="css/blackjack.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Inline critical CSS in case external CSS doesn't load */
+        /* Improved UI styles */
         .blackjack-table {
-            background: transparent;
+            background: radial-gradient(circle at center, rgba(31, 53, 89, 0.8), rgba(12, 14, 26, 0.9));
             border-radius: 15px;
             padding: 30px;
             position: relative;
             overflow: hidden;
             margin-bottom: 20px;
-            box-shadow: 0 0 15px rgba(24, 231, 124, 0.3);
+            box-shadow: 0 0 25px rgba(24, 231, 124, 0.4);
             min-height: 500px;
             border: 2px solid rgba(24, 231, 124, 0.6);
+            transition: all 0.5s ease;
+        }
+        
+        .blackjack-table::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('assets/blackjack-pattern.svg');
+            opacity: 0.03;
+            pointer-events: none;
         }
         
         .dealer-area, .player-area {
             position: relative;
             min-height: 200px;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
             border: 1px solid rgba(24, 231, 124, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .dealer-area:hover, .player-area:hover {
+            box-shadow: 0 0 15px rgba(24, 231, 124, 0.2);
         }
         
         .dealer-area {
-            background-color: rgba(0, 0, 0, 0.1);
+            background-color: rgba(0, 0, 0, 0.2);
         }
         
         .player-area {
             background-color: rgba(255, 255, 255, 0.05);
         }
         
+        .area-label {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background-color: rgba(24, 231, 124, 0.9);
+            color: #0c0e1a;
+            padding: 3px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(24, 231, 124, 0.5);
+            z-index: 1;
+        }
+        
+        .score-display {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1;
+        }
+        
+        .score-display.show {
+            opacity: 1;
+        }
+        
         .hand {
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 140px;
+            min-height: 160px;
             position: relative;
-            margin-top: 20px;
+            margin-top: 25px;
+            perspective: 1000px;
         }
         
         .card {
-            width: 100px;
-            height: 150px;
+            width: 110px;
+            height: 160px;
             background-color: white;
-            border-radius: 8px;
-            margin: 0 5px;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin: 0 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
             position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
-            transform: translateY(20px);
+            transform: translateY(30px);
             opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            overflow: hidden;
         }
 
         .card.dealt {
             transform: translateY(0);
             opacity: 1;
-            animation: card-deal 0.5s ease-out;
-        }
-
-        @keyframes card-deal {
-            0% { transform: translateY(-100px) rotate(-5deg); opacity: 0; }
-            100% { transform: translateY(0) rotate(0); opacity: 1; }
-        }
-
-        .card-flip {
-            animation: card-flip 0.6s ease-out;
-        }
-
-        @keyframes card-flip {
-            0% { transform: rotateY(0deg); }
-            50% { transform: rotateY(90deg); }
-            100% { transform: rotateY(0deg); }
-        }
-
-        .result-animation {
-            animation: result-animation 0.7s ease-out;
-        }
-
-        @keyframes result-animation {
-            0% { transform: scale(0.7); opacity: 0; }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .win-animation {
-            animation: win-animation 0.8s ease-out;
-        }
-
-        @keyframes win-animation {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); filter: brightness(1.5); }
-            100% { transform: scale(1); }
+            animation: card-deal 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         
+        .bet-chips {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            gap: 15px;
+        }
+        
+        .chip {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            border: 3px dashed rgba(255, 255, 255, 0.5);
+            font-size: 16px;
+        }
+        
+        .chip::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            height: 85%;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            pointer-events: none;
+        }
+        
+        .chip::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .chip:hover {
+            transform: translateY(-10px) scale(1.1);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.5);
+        }
+        
+        .chip:hover::before {
+            opacity: 1;
+        }
+        
+        .chip-clicked {
+            animation: chip-bounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .custom-bet {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 15px 0;
+            gap: 10px;
+        }
+        
+        .custom-bet input {
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(24, 231, 124, 0.6);
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            width: 150px;
+            text-align: center;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .custom-bet input:focus {
+            border-color: #11ff66;
+            box-shadow: 0 0 20px rgba(17, 255, 102, 0.4);
+            outline: none;
+        }
+        
+        .custom-bet button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            background: linear-gradient(to bottom, #11ff66, #00cc44);
+            border: none;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .custom-bet button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(17, 255, 102, 0.7);
+        }
+        
+        .same-bet-btn {
+            background: linear-gradient(135deg, #ff9800, #e65100) !important;
+            margin: 15px auto !important;
+            display: block;
+            padding: 12px 25px !important;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .same-bet-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
         .game-title {
             text-align: center;
             font-size: 3.5rem;
@@ -206,11 +345,11 @@
             100% { transform: scale(1); }
         }
 
-        .chip-10 { background: linear-gradient(to bottom, #ff5e5e, #ff0000); }
-        .chip-25 { background: linear-gradient(to bottom, #5e5eff, #0000ff); }
-        .chip-50 { background: linear-gradient(to bottom, #5eff5e, #00ff00); }
-        .chip-100 { background: linear-gradient(to bottom, #ffff5e, #ffff00); }
-        .chip-500 { background: linear-gradient(to bottom, #ff5eff, #ff00ff); }
+        .chip-10 { background: linear-gradient(145deg, #ff5e5e, #cc0000); }
+        .chip-25 { background: linear-gradient(145deg, #5e5eff, #0000cc); }
+        .chip-50 { background: linear-gradient(145deg, #5eff5e, #00cc00); }
+        .chip-100 { background: linear-gradient(145deg, #ffff5e, #cccc00); }
+        .chip-500 { background: linear-gradient(145deg, #ff5eff, #cc00cc); }
 
         .custom-bet {
             display: flex;

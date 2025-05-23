@@ -681,6 +681,9 @@ function resetGame() {
     gameInProgress = false;
     playerStood = false;
     doubleDown = false;
+    
+    // Store the current bet for the next hand
+    const savedBet = currentBet;
     currentBet = 0;
     
     // Clear hands
@@ -706,6 +709,42 @@ function resetGame() {
     // Create a new deck if needed
     if (deck.length < 15) {
         createDeck();
+    }
+    
+    // Allow user to place the same bet again with one click
+    const placeSameBetButton = document.createElement('button');
+    placeSameBetButton.innerText = `Place Same Bet (${savedBet})`;
+    placeSameBetButton.className = 'action-btn same-bet-btn';
+    placeSameBetButton.style.background = 'linear-gradient(135deg, #ff9800, #e65100)';
+    placeSameBetButton.style.color = 'white';
+    placeSameBetButton.style.padding = '10px 20px';
+    placeSameBetButton.style.borderRadius = '5px';
+    placeSameBetButton.style.margin = '10px auto';
+    placeSameBetButton.style.display = 'block';
+    placeSameBetButton.style.cursor = 'pointer';
+    
+    if (savedBet > 0) {
+        // Only show the button if there was a previous bet
+        document.querySelector('.current-bet').appendChild(placeSameBetButton);
+        
+        placeSameBetButton.addEventListener('click', function() {
+            // Check if the user has enough balance
+            const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
+            if (currentBalance >= savedBet) {
+                addToBet(savedBet);
+                chipSound.play();
+                this.remove(); // Remove the button after it's clicked
+            } else {
+                showMessage('Not enough balance!', 'error');
+            }
+        });
+        
+        // Remove the button after 10 seconds
+        setTimeout(() => {
+            if (placeSameBetButton.parentNode) {
+                placeSameBetButton.remove();
+            }
+        }, 10000);
     }
 }
 
