@@ -7,8 +7,8 @@ let spinning = false;
 let autoSpinActive = false;
 let winAmount = 0;
 let betAmount = 100;
-let lineCount = 5;
-let totalBet = betAmount * lineCount;
+let lineCount = 1; // Default to 1 line instead of 5 to match other games
+let totalBet = betAmount; // Default to just betAmount
 let spinResults = [];
 let payTable = {
     '🍒': { 3: 3, 4: 6, 5: 15 },
@@ -53,6 +53,9 @@ const paylines = [
     [1, 2, 1, 2, 1]  // Zigzag bottom
 ];
 
+// Cache of random weighted symbols to improve performance
+let cachedWeightedSymbols = null;
+
 // DOM elements
 const reelElements = [];
 const reelWrappers = [];
@@ -72,7 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
     createReelSymbols();
     setupEventListeners();
     
-    // Force a bet display update to ensure correct total bet
+    // Set initial values
+    lineCount = 1; // Set default to 1 payline
     updateBetDisplay();
 });
 
@@ -100,13 +104,8 @@ function initializeGame() {
 
 // Create symbols for the reels
 function createReelSymbols() {
-    // Create a weighted array of symbols
-    let weightedSymbols = [];
-    for (const symbol in symbolWeights) {
-        for (let i = 0; i < symbolWeights[symbol]; i++) {
-            weightedSymbols.push(symbol);
-        }
-    }
+    // Prepare the weighted symbols array once
+    prepareWeightedSymbols();
     
     // Generate random symbols for each reel
     for (let i = 0; i < reels.length; i++) {
@@ -114,8 +113,7 @@ function createReelSymbols() {
         
         // Generate 20 random symbols for each reel (more than what's visible)
         for (let j = 0; j < 20; j++) {
-            const randomIndex = Math.floor(Math.random() * weightedSymbols.length);
-            reelSymbols.push(weightedSymbols[randomIndex]);
+            reelSymbols.push(getRandomWeightedSymbol());
         }
         
         // Set the symbols for this reel
@@ -186,13 +184,19 @@ function updateBetDisplay() {
     betAmount = parseInt(betAmount) || 10;
     lineCount = parseInt(lineCount) || 1;
     
-    // Calculate total bet
-    totalBet = betAmount * lineCount;
+    // For simplicity, use just the bet amount as the total bet
+    // This matches other games like Blackjack
+    totalBet = betAmount;
     
     // Update displays
     betAmountDisplay.textContent = betAmount;
     lineCountDisplay.textContent = lineCount;
     totalBetDisplay.textContent = totalBet;
+    
+    // Update the spin button text to reflect the current bet
+    if (spinButton) {
+        spinButton.textContent = `BET ${betAmount} & SPIN`;
+    }
     
     // Debug
     console.log('Updated bet: amount=' + betAmount + ', lines=' + lineCount + ', total=' + totalBet);
@@ -205,6 +209,18 @@ function updateBalanceDisplay() {
     if (balanceElement) {
         // Make sure we don't display NaN
         balanceElement.textContent = isNaN(parseInt(balanceElement.textContent)) ? 0 : balanceElement.textContent;
+    }
+}
+
+// Prepare the weighted symbols array ahead of time
+function prepareWeightedSymbols() {
+    if (cachedWeightedSymbols === null) {
+        cachedWeightedSymbols = [];
+        for (const symbol in symbolWeights) {
+            for (let i = 0; i < symbolWeights[symbol]; i++) {
+                cachedWeightedSymbols.push(symbol);
+            }
+        }
     }
 }
 
@@ -304,125 +320,183 @@ function spinReel(reelIndex, callback) {
     // Create a random result for this reel (3 visible symbols)
     const reelResult = [];
     for (let i = 0; i < 3; i++) {
-        const randomIndex = Math.floor(Math.random() * allSymbols.length);
-        const symbolWithWeight = getRandomWeightedSymbol();
-        reelResult.push(symbolWithWeight);
+        reelResult.push(getRandomWeightedSymbol());
     }
     spinResults.push(reelResult);
     
+    // Store a reference to the wrapper element
+    const reelWrapper = reelWrappers[reelIndex];
+    if (!reelWrapper) {
+        console.error('Reel wrapper not found for index:', reelIndex);
+        callback();
+        return;
+    }
+    
     // Save the original symbols in case we need to restore them
-    const originalSymbols = Array.from(reelWrappers[reelIndex].children);
-    const originalSymbolTexts = originalSymbols.map(s => s.textContent);
+    const originalSymbols = Array.from(reelWrapper.children);
     
     // Determine the random stop position
     const stopPosition = -((Math.floor(Math.random() * 10) + 10) * 120);
     
-    // Update the reel wrapper with new random symbols
-    reelWrappers[reelIndex].innerHTML = '';
-    
-    // Add symbols before the visible ones (for animation)
-    for (let i = 0; i < 10; i++) {
-        const symbolElement = document.createElement('div');
-        symbolElement.className = 'symbol';
-        symbolElement.style.top = ((i - 10) * 120) + 'px';
-        symbolElement.textContent = getRandomWeightedSymbol();
-        reelWrappers[reelIndex].appendChild(symbolElement);
-    }
-    
-    // Add the actual result symbols
-    for (let i = 0; i < reelResult.length; i++) {
-        const symbolElement = document.createElement('div');
-        symbolElement.className = 'symbol';
-        symbolElement.style.top = (i * 120) + 'px';
-        symbolElement.textContent = reelResult[i];
-        reelWrappers[reelIndex].appendChild(symbolElement);
-    }
-    
-    // Add symbols after the visible ones (for animation)
-    for (let i = 0; i < 10; i++) {
-        const symbolElement = document.createElement('div');
-        symbolElement.className = 'symbol';
-        symbolElement.style.top = ((i + reelResult.length) * 120) + 'px';
-        symbolElement.textContent = getRandomWeightedSymbol();
-        reelWrappers[reelIndex].appendChild(symbolElement);
-    }
-    
-    // Animate the spin
-    reelWrappers[reelIndex].style.transition = 'none';
-    reelWrappers[reelIndex].style.transform = 'translateY(0)';
-    
-    // Force reflow
-    void reelWrappers[reelIndex].offsetHeight;
-    
-    // Start the spinning animation
-    reelWrappers[reelIndex].style.transition = 'transform 3s cubic-bezier(0.17, 0.84, 0.44, 1)';
-    reelWrappers[reelIndex].style.transform = `translateY(${stopPosition}px)`;
-    
-    // Wait for animation to complete
-    setTimeout(() => {
-        try {
-            // Position the reel at the final position with the result symbols
-            reelWrappers[reelIndex].style.transition = 'none';
-            reelWrappers[reelIndex].style.transform = 'translateY(-1200px)';
+    try {
+        // Update the reel wrapper with new random symbols
+        reelWrapper.innerHTML = '';
+        
+        // Add symbols before the visible ones (for animation)
+        for (let i = 0; i < 10; i++) {
+            const symbolElement = document.createElement('div');
+            symbolElement.className = 'symbol';
+            symbolElement.style.top = ((i - 10) * 120) + 'px';
+            symbolElement.textContent = getRandomWeightedSymbol();
+            reelWrapper.appendChild(symbolElement);
+        }
+        
+        // Add the actual result symbols
+        for (let i = 0; i < reelResult.length; i++) {
+            const symbolElement = document.createElement('div');
+            symbolElement.className = 'symbol';
+            symbolElement.style.top = (i * 120) + 'px';
+            symbolElement.textContent = reelResult[i];
+            reelWrapper.appendChild(symbolElement);
+        }
+        
+        // Add symbols after the visible ones (for animation)
+        for (let i = 0; i < 10; i++) {
+            const symbolElement = document.createElement('div');
+            symbolElement.className = 'symbol';
+            symbolElement.style.top = ((i + reelResult.length) * 120) + 'px';
+            symbolElement.textContent = getRandomWeightedSymbol();
+            reelWrapper.appendChild(symbolElement);
+        }
+        
+        // Animate the spin
+        reelWrapper.style.transition = 'none';
+        reelWrapper.style.transform = 'translateY(0)';
+        
+        // Force reflow
+        void reelWrapper.offsetHeight;
+        
+        // Start the spinning animation
+        reelWrapper.style.transition = 'transform 3s cubic-bezier(0.17, 0.84, 0.44, 1)';
+        reelWrapper.style.transform = `translateY(${stopPosition}px)`;
+        
+        // Wait for animation to complete
+        setTimeout(() => {
+            // Keep reference to the original elements
+            const finalSymbols = Array.from(reelResult);
             
-            // Clear and re-add only the result symbols
-            reelWrappers[reelIndex].innerHTML = '';
-            
-            // Add the result symbols with proper positioning
-            for (let i = 0; i < reelResult.length; i++) {
-                const symbolElement = document.createElement('div');
-                symbolElement.className = 'symbol';
-                symbolElement.style.top = (i * 120) + 'px';
-                symbolElement.textContent = reelResult[i];
-                reelWrappers[reelIndex].appendChild(symbolElement);
-            }
-            
-            // Error handling - if symbols disappeared, restore them
-            if (reelWrappers[reelIndex].children.length === 0) {
-                console.error('Symbols disappeared, restoring...');
-                for (let i = 0; i < Math.min(reelResult.length, 3); i++) {
+            try {
+                // Position the reel at the final position
+                reelWrapper.style.transition = 'none';
+                reelWrapper.style.transform = 'translateY(0)';
+                
+                // Instead of clearing all symbols, just update the existing ones
+                // This way we don't risk them disappearing
+                const allSymbolElements = reelWrapper.querySelectorAll('.symbol');
+                
+                // If we have no symbols, recreate them
+                if (allSymbolElements.length === 0) {
+                    console.log('No symbols found, recreating...');
+                    
+                    // Add the final result symbols
+                    for (let i = 0; i < finalSymbols.length; i++) {
+                        const symbolElement = document.createElement('div');
+                        symbolElement.className = 'symbol';
+                        symbolElement.style.top = (i * 120) + 'px';
+                        symbolElement.textContent = finalSymbols[i];
+                        reelWrapper.appendChild(symbolElement);
+                    }
+                } else {
+                    // Just keep the 3 visible final result symbols
+                    for (let i = allSymbolElements.length - 1; i >= 0; i--) {
+                        if (i < finalSymbols.length) {
+                            // Keep and update the position of the first 3 elements
+                            allSymbolElements[i].style.top = (i * 120) + 'px';
+                            allSymbolElements[i].textContent = finalSymbols[i];
+                        } else {
+                            // Remove extra elements
+                            allSymbolElements[i].remove();
+                        }
+                    }
+                    
+                    // Make sure we have exactly 3 symbols
+                    for (let i = allSymbolElements.length; i < finalSymbols.length; i++) {
+                        const symbolElement = document.createElement('div');
+                        symbolElement.className = 'symbol';
+                        symbolElement.style.top = (i * 120) + 'px';
+                        symbolElement.textContent = finalSymbols[i];
+                        reelWrapper.appendChild(symbolElement);
+                    }
+                }
+                
+                // Verify we have all required symbols
+                const finalElements = reelWrapper.querySelectorAll('.symbol');
+                if (finalElements.length !== finalSymbols.length) {
+                    console.error('Symbol count mismatch, fixing...');
+                    
+                    // Clear and recreate all symbols
+                    reelWrapper.innerHTML = '';
+                    for (let i = 0; i < finalSymbols.length; i++) {
+                        const symbolElement = document.createElement('div');
+                        symbolElement.className = 'symbol';
+                        symbolElement.style.top = (i * 120) + 'px';
+                        symbolElement.textContent = finalSymbols[i];
+                        reelWrapper.appendChild(symbolElement);
+                    }
+                }
+            } catch (error) {
+                console.error('Error finalizing reel animation:', error);
+                
+                // Failsafe: Ensure we have the correct symbols
+                reelWrapper.innerHTML = '';
+                for (let i = 0; i < finalSymbols.length; i++) {
                     const symbolElement = document.createElement('div');
                     symbolElement.className = 'symbol';
                     symbolElement.style.top = (i * 120) + 'px';
-                    symbolElement.textContent = reelResult[i] || getRandomWeightedSymbol();
-                    reelWrappers[reelIndex].appendChild(symbolElement);
+                    symbolElement.textContent = finalSymbols[i];
+                    reelWrapper.appendChild(symbolElement);
                 }
             }
-        } catch (error) {
-            console.error('Error in spinReel:', error);
-            // If there's an error, ensure we have symbols
-            for (let i = 0; i < 3; i++) {
-                const symbolElement = document.createElement('div');
-                symbolElement.className = 'symbol';
-                symbolElement.style.top = (i * 120) + 'px';
-                symbolElement.textContent = getRandomWeightedSymbol();
-                reelWrappers[reelIndex].appendChild(symbolElement);
-            }
+            
+            // Animation complete callback
+            callback();
+        }, 3000);
+    } catch (error) {
+        console.error('Error in spinReel:', error);
+        
+        // Ensure we have the correct result symbols even if there was an error
+        reelWrapper.innerHTML = '';
+        for (let i = 0; i < reelResult.length; i++) {
+            const symbolElement = document.createElement('div');
+            symbolElement.className = 'symbol';
+            symbolElement.style.top = (i * 120) + 'px';
+            symbolElement.textContent = reelResult[i];
+            reelWrapper.appendChild(symbolElement);
         }
         
-        // Animation complete callback
+        // Call the callback to ensure the game continues
         callback();
-    }, 3000);
+    }
 }
 
 // Helper function to get a random symbol based on weights
 function getRandomWeightedSymbol() {
-    // Create a weighted array of symbols
-    let weightedSymbols = [];
-    for (const symbol in symbolWeights) {
-        for (let i = 0; i < symbolWeights[symbol]; i++) {
-            weightedSymbols.push(symbol);
-        }
+    // Use cached weighted symbols if available
+    if (!cachedWeightedSymbols) {
+        prepareWeightedSymbols();
     }
     
-    const randomIndex = Math.floor(Math.random() * weightedSymbols.length);
-    return weightedSymbols[randomIndex];
+    const randomIndex = Math.floor(Math.random() * cachedWeightedSymbols.length);
+    return cachedWeightedSymbols[randomIndex];
 }
 
 // Check for winning combinations
 async function checkWins() {
     let totalWin = 0;
     let winLines = [];
+    
+    // Log the active paylines for debugging
+    console.log(`Checking ${lineCount} active paylines`);
     
     // Check each active payline
     for (let i = 0; i < lineCount; i++) {
@@ -431,8 +505,17 @@ async function checkWins() {
         // Get symbols on this payline
         const lineSymbols = [];
         for (let j = 0; j < spinResults.length; j++) {
-            lineSymbols.push(spinResults[j][payline[j]]);
+            if (j < payline.length && payline[j] < spinResults[j].length) {
+                lineSymbols.push(spinResults[j][payline[j]]);
+            } else {
+                console.warn(`Invalid payline index at position ${j}: ${payline[j]}`);
+                // Use middle row as fallback
+                lineSymbols.push(spinResults[j][1]);
+            }
         }
+        
+        // Log the symbols on this payline
+        console.log(`Payline ${i+1} symbols:`, lineSymbols.join(' '));
         
         // Count consecutive symbols from left to right
         let currentSymbol = lineSymbols[0];
@@ -449,6 +532,7 @@ async function checkWins() {
         // Check for wins (need at least 3 matching)
         if (count >= 3 && payTable[currentSymbol] && payTable[currentSymbol][count]) {
             const multiplier = payTable[currentSymbol][count];
+            // Use betAmount directly (not total bet)
             const win = betAmount * multiplier;
             totalWin += win;
             winLines.push({
@@ -458,7 +542,7 @@ async function checkWins() {
                 win: win
             });
             
-            console.log(`Win on line ${i+1}: ${count}x ${currentSymbol} = ${win} coins`);
+            console.log(`Win on payline ${i+1}: ${count}x ${currentSymbol} = ${win} coins (${multiplier}x multiplier on ${betAmount} bet)`);
         }
     }
     
