@@ -67,9 +67,13 @@ let winText;
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Initializing slots game...');
     initializeGame();
     createReelSymbols();
     setupEventListeners();
+    
+    // Force a bet display update to ensure correct total bet
+    updateBetDisplay();
 });
 
 // Initialize game elements
@@ -178,10 +182,20 @@ function setupEventListeners() {
 
 // Update bet displays
 function updateBetDisplay() {
+    // Ensure betAmount and lineCount are valid numbers
+    betAmount = parseInt(betAmount) || 10;
+    lineCount = parseInt(lineCount) || 1;
+    
+    // Calculate total bet
+    totalBet = betAmount * lineCount;
+    
+    // Update displays
     betAmountDisplay.textContent = betAmount;
     lineCountDisplay.textContent = lineCount;
-    totalBet = betAmount * lineCount;
     totalBetDisplay.textContent = totalBet;
+    
+    // Debug
+    console.log('Updated bet: amount=' + betAmount + ', lines=' + lineCount + ', total=' + totalBet);
 }
 
 // Update balance display
@@ -203,71 +217,86 @@ async function spin() {
         return;
     }
     
-    const currentBalance = parseInt(balanceElement.textContent);
+    // Parse the balance, removing any commas or formatting
+    const balanceText = balanceElement.textContent.replace(/,/g, '');
+    const currentBalance = parseInt(balanceText);
+    
+    console.log('Current balance:', currentBalance, 'Total bet:', totalBet);
     
     // Check if we have enough balance
     if (currentBalance < totalBet) {
-        alert('Not enough balance to place this bet!');
+        alert('Not enough balance to place this bet! You have ' + currentBalance + ' coins but need ' + totalBet);
         return;
     }
     
-    // Deduct the bet amount from balance using the auth.js updateBalance function
-    if (window.updateBalance) {
-        const success = await window.updateBalance(-totalBet, 'slots-bet');
-        if (!success) {
-            alert('Failed to place bet. Please try again.');
-            return;
+    try {
+        // Deduct the bet amount from balance using the auth.js updateBalance function
+        if (typeof window.updateBalance === 'function') {
+            console.log('Using updateBalance function to bet', totalBet);
+            const success = await window.updateBalance(-totalBet, 'slots-bet');
+            if (success === false) {  // Explicitly check for false
+                console.error('updateBalance returned false');
+                alert('Failed to place bet. Please try again.');
+                return;
+            }
+        } else {
+            console.log('updateBalance function not found, using fallback');
+            // Fallback if updateBalance function is not available
+            balanceElement.textContent = currentBalance - totalBet;
         }
-    } else {
-        // Fallback if updateBalance function is not available
-        balanceElement.textContent = currentBalance - totalBet;
-    }
-    
-    // Reset previous wins
-    winAmount = 0;
-    winAmountDisplay.textContent = winAmount;
-    winLine.classList.remove('active');
-    
-    // Set spinning state
-    spinning = true;
-    spinButton.disabled = true;
-    
-    // Generate new random positions for each reel
-    spinResults = [];
-    const reelPromises = [];
-    
-    // Stagger the reel spins
-    for (let i = 0; i < reels.length; i++) {
-        const promise = new Promise(resolve => {
-            setTimeout(() => {
-                spinReel(i, resolve);
-            }, i * 400); // Stagger by 400ms per reel
+        
+        // Reset previous wins
+        winAmount = 0;
+        winAmountDisplay.textContent = winAmount;
+        winLine.classList.remove('active');
+        
+        // Set spinning state
+        spinning = true;
+        spinButton.disabled = true;
+        
+        // Generate new random positions for each reel
+        spinResults = [];
+        const reelPromises = [];
+        
+        // Stagger the reel spins
+        for (let i = 0; i < reels.length; i++) {
+            const promise = new Promise(resolve => {
+                setTimeout(() => {
+                    spinReel(i, resolve);
+                }, i * 400); // Stagger by 400ms per reel
+            });
+            reelPromises.push(promise);
+        }
+        
+        // When all reels have stopped
+        Promise.all(reelPromises).then(async () => {
+            spinning = false;
+            spinButton.disabled = false;
+            
+            // Check for wins
+            checkWins();
+            
+            // Continue auto spin if active
+            if (autoSpinActive) {
+                setTimeout(() => {
+                    const updatedBalance = parseInt(document.querySelector('.balance-amount').textContent.replace(/,/g, ''));
+                    if (updatedBalance >= totalBet) {
+                        spin();
+                    } else {
+                        // Disable auto spin if not enough balance
+                        document.getElementById('autoSpinToggle').checked = false;
+                        autoSpinActive = false;
+                        alert('Auto spin stopped: insufficient balance.');
+                    }
+                }, 2000);
+            }
         });
-        reelPromises.push(promise);
-    }
-    
-    // When all reels have stopped
-    Promise.all(reelPromises).then(async () => {
+    } catch (error) {
+        console.error('Error in spin function:', error);
+        alert('An error occurred. Please try again.');
         spinning = false;
         spinButton.disabled = false;
-        
-        // Check for wins
-        checkWins();
-        
-        // Continue auto spin if active
-        if (autoSpinActive) {
-            setTimeout(() => {
-                const updatedBalance = parseInt(document.querySelector('.balance-amount').textContent);
-                if (updatedBalance >= totalBet) {
-                    spin();
-                } else {
-                    // Disable auto spin if not enough balance
-                    document.getElementById('autoSpinToggle').checked = false;
-                    autoSpinActive = false;
-                }
-            }, 2000);
-        }
-    });
+    }
 }
 
 // Spin a single reel
@@ -428,6 +457,8 @@ async function checkWins() {
                 symbol: currentSymbol,
                 win: win
             });
+            
+            console.log(`Win on line ${i+1}: ${count}x ${currentSymbol} = ${win} coins`);
         }
     }
     
@@ -437,23 +468,34 @@ async function checkWins() {
     
     // Add winnings to balance
     if (winAmount > 0) {
-        // Use auth.js updateBalance function to add winnings
-        if (window.updateBalance) {
-            await window.updateBalance(winAmount, 'slots-win');
-        } else {
-            // Fallback if updateBalance function is not available
-            const balanceElement = document.querySelector('.balance-amount');
-            if (balanceElement) {
-                const currentBalance = parseInt(balanceElement.textContent);
-                balanceElement.textContent = currentBalance + winAmount;
+        try {
+            console.log(`Adding ${winAmount} coins to balance for win`);
+            
+            // Use auth.js updateBalance function to add winnings
+            if (typeof window.updateBalance === 'function') {
+                const success = await window.updateBalance(winAmount, 'slots-win');
+                if (success === false) {
+                    console.error('Failed to update balance with winnings');
+                }
+            } else {
+                // Fallback if updateBalance function is not available
+                const balanceElement = document.querySelector('.balance-amount');
+                if (balanceElement) {
+                    const currentBalance = parseInt(balanceElement.textContent.replace(/,/g, ''));
+                    balanceElement.textContent = currentBalance + winAmount;
+                }
             }
+            
+            // Show win animations
+            showWinAnimation(winAmount);
+            
+            // Highlight win line
+            winLine.classList.add('active');
+        } catch (error) {
+            console.error('Error updating balance with winnings:', error);
         }
-        
-        // Show win animations
-        showWinAnimation(winAmount);
-        
-        // Highlight win line
-        winLine.classList.add('active');
+    } else {
+        console.log('No wins on this spin');
     }
     
     // Record game in history
