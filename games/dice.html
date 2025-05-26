@@ -8,6 +8,7 @@
     <link rel="icon" href="../assets/favicon.ico.svg" type="image/x-icon">
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/page-loader.css">
+    <link rel="stylesheet" href="css/dice.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -67,6 +68,9 @@
                 <div class="dice-game">
                     <div class="result-display">
                         <div class="result-value" id="diceResult">0.00</div>
+                        <div class="result-animation" id="resultAnimation">
+                            <!-- Will be populated by JS -->
+                        </div>
                     </div>
                     
                     <div class="betting-container">
@@ -92,7 +96,9 @@
                         
                         <div class="slider-container">
                             <label for="targetNumber">Target Number: <span id="targetNumberDisplay">50</span></label>
+                            <div class="slider-track" id="sliderTrack"></div>
                             <input type="range" id="targetNumber" min="1" max="99" value="50" class="dice-slider">
+                            <div class="dice-result-pointer" id="resultPointer"></div>
                             <div class="slider-labels">
                                 <span>1</span>
                                 <span>25</span>
@@ -105,7 +111,7 @@
                         <div class="stats-display">
                             <div class="stat-item">
                                 <span>Multiplier</span>
-                                <span id="multiplier">2.00x</span>
+                                <span id="multiplier">1.90x</span>
                             </div>
                             <div class="stat-item">
                                 <span>Win Chance</span>
@@ -113,7 +119,7 @@
                             </div>
                             <div class="stat-item">
                                 <span>Potential Win</span>
-                                <span id="potentialWin">200</span>
+                                <span id="potentialWin">+19</span>
                             </div>
                         </div>
                         
@@ -241,8 +247,8 @@
     <script src="../js/supabase-config.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/main.js"></script>
+    <script src="../js/page-loader.js"></script>
     <script src="../js/dice-game.js"></script>
-    <script src="../dice.js"></script>
     <script src="../js/chat.js"></script>
     <script src="../js/admin.js"></script>
     <script src="../js/sidebar-update.js"></script>

@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const potentialWin = document.getElementById('potentialWin');
     const betShortcuts = document.querySelectorAll('.bet-shortcut');
     const gameHistoryBody = document.getElementById('gameHistoryBody');
+    const resultPointer = document.getElementById('resultPointer');
+    const sliderTrack = document.getElementById('sliderTrack');
     
     // Game state
     let isRolling = false;
@@ -30,6 +32,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function init() {
         // Set default dice display
         updateDiceDisplay('0.00');
+        
+        // Position the result pointer to the start
+        if (resultPointer) {
+            positionResultPointer(0);
+        }
         
         // Update potential win and odds
         updatePotentialWinAndOdds();
@@ -51,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             targetNumberSlider.addEventListener('input', () => {
                 targetNumberDisplay.textContent = targetNumberSlider.value;
                 updatePotentialWinAndOdds();
+                updateSliderColors();
             });
         }
         
@@ -60,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 rollOverButton.classList.remove('active');
                 currentBetType = 'under';
                 updatePotentialWinAndOdds();
+                updateSliderColors();
             });
         }
         
@@ -69,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 rollUnderButton.classList.remove('active');
                 currentBetType = 'over';
                 updatePotentialWinAndOdds();
+                updateSliderColors();
             });
         }
         
@@ -92,6 +102,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         
+        // Initial slider color update
+        updateSliderColors();
+        
         // Load game history
         loadGameHistory();
     }
@@ -100,6 +113,52 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateDiceDisplay(number) {
         if (!diceResult) return;
         diceResult.textContent = number;
+    }
+    
+    // Position the result pointer
+    function positionResultPointer(value) {
+        if (!resultPointer) return;
+        
+        // Calculate percentage along the slider (0-100)
+        const percent = (value / 100) * 100;
+        
+        // Calculate position considering slider width
+        const sliderWidth = targetNumberSlider.offsetWidth;
+        const pointerPosition = (percent / 100) * sliderWidth;
+        
+        // Set the position
+        resultPointer.style.left = `${pointerPosition}px`;
+        
+        // If previous position was not set, no animation
+        if (!resultPointer.dataset.positioned) {
+            resultPointer.style.transition = 'none';
+            resultPointer.dataset.positioned = 'true';
+        } else {
+            resultPointer.style.transition = 'left 1.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        }
+    }
+    
+    // Update slider color gradient based on bet type
+    function updateSliderColors() {
+        if (!sliderTrack) return;
+        
+        const targetNumber = parseInt(targetNumberSlider.value);
+        
+        if (currentBetType === 'under') {
+            // For roll under: Green to the left of target, red to the right
+            sliderTrack.style.background = `linear-gradient(to right, 
+                var(--dice-gradient-end) 0%, 
+                var(--dice-gradient-end) ${targetNumber}%, 
+                var(--dice-gradient-start) ${targetNumber}%, 
+                var(--dice-gradient-start) 100%)`;
+        } else {
+            // For roll over: Red to the left of target, green to the right
+            sliderTrack.style.background = `linear-gradient(to right, 
+                var(--dice-gradient-start) 0%, 
+                var(--dice-gradient-start) ${targetNumber}%, 
+                var(--dice-gradient-end) ${targetNumber}%, 
+                var(--dice-gradient-end) 100%)`;
+        }
     }
     
     // Update potential win and odds display
@@ -169,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Calculate potential win
         const potentialWinAmount = Math.floor(betAmount * multiplierValue);
-        potentialWin.textContent = formatCurrency(potentialWinAmount);
+        potentialWin.textContent = '+' + formatCurrency(potentialWinAmount);
     }
     
     // Handle the roll button click
@@ -216,6 +275,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const rollInterval = 50; // Change number every 50ms
         let rollTime = 0;
         
+        // Animate the pointer during rolling
+        animatePointerDuringRoll(rollDuration);
+        
         const rollAnimation = setInterval(() => {
             // Random number between 0.00 and 99.99
             const randomNumber = (Math.random() * 100).toFixed(2);
@@ -230,6 +292,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }, rollInterval);
     }
     
+    // Animate the pointer during the roll
+    function animatePointerDuringRoll(duration) {
+        if (!resultPointer) return;
+        
+        // Make sure the pointer is visible
+        resultPointer.style.display = 'block';
+        
+        // Set up fast random pointer movement
+        const moveInterval = 100; // Move every 100ms
+        const moveSteps = duration / moveInterval;
+        let step = 0;
+        
+        const moveAnimation = setInterval(() => {
+            // Random position along the slider
+            const randomPosition = Math.random() * 100;
+            positionResultPointer(randomPosition);
+            
+            step++;
+            if (step >= moveSteps) {
+                clearInterval(moveAnimation);
+            }
+        }, moveInterval);
+    }
+    
     // Finish the roll and determine result
     function finishRoll(betAmount, targetNumber) {
         // Generate the final result (0.00-99.99)
@@ -239,8 +325,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update dice display with result
         updateDiceDisplay(result);
         
+        // Animate pointer to final position with bouncy effect
+        animatePointerToFinalPosition(resultValue);
+        
         // Remove rolling class
         diceResult.classList.remove('rolling');
+        
+        // Add animation class to result for reveal effect
+        diceResult.classList.add('result-reveal');
+        setTimeout(() => {
+            diceResult.classList.remove('result-reveal');
+        }, 1000);
         
         // Determine if won based on bet type
         let won = false;
@@ -328,6 +423,71 @@ document.addEventListener('DOMContentLoaded', () => {
         rollButton.disabled = false;
     }
     
+    // Animate the pointer to the final position with a bouncy effect
+    function animatePointerToFinalPosition(finalValue) {
+        if (!resultPointer) return;
+        
+        // First, stop any ongoing animations
+        resultPointer.style.transition = 'none';
+        
+        // Calculate slider width
+        const sliderWidth = targetNumberSlider.offsetWidth;
+        
+        // Create bouncy animation sequence
+        const animationSteps = [
+            { value: finalValue - 15, duration: 300, easing: 'ease-out' },
+            { value: finalValue + 10, duration: 200, easing: 'ease-in-out' },
+            { value: finalValue - 5, duration: 150, easing: 'ease-in-out' },
+            { value: finalValue + 2, duration: 100, easing: 'ease-in-out' },
+            { value: finalValue, duration: 100, easing: 'ease-out' }
+        ];
+        
+        // Apply each animation step in sequence
+        let totalDelay = 0;
+        
+        animationSteps.forEach((step, index) => {
+            setTimeout(() => {
+                // Calculate position
+                const percent = (step.value / 100) * 100;
+                const pointerPosition = (percent / 100) * sliderWidth;
+                
+                // Apply transition for current step
+                resultPointer.style.transition = `left ${step.duration}ms ${step.easing}`;
+                resultPointer.style.left = `${pointerPosition}px`;
+                
+                // Add highlight effect for final position
+                if (index === animationSteps.length - 1) {
+                    resultPointer.classList.add('highlight');
+                    setTimeout(() => {
+                        resultPointer.classList.remove('highlight');
+                    }, 1000);
+                }
+            }, totalDelay);
+            
+            totalDelay += step.duration;
+        });
+        
+        // Highlight the result
+        setTimeout(() => {
+            // Add winning or losing color to the pointer
+            const targetNumber = parseInt(targetNumberSlider.value);
+            const won = currentBetType === 'under' ? 
+                finalValue < targetNumber : 
+                finalValue > targetNumber;
+                
+            resultPointer.style.backgroundColor = won ? '#44ff44' : '#ff4444';
+            resultPointer.style.boxShadow = won ? 
+                '0 0 10px rgba(68, 255, 68, 0.8)' : 
+                '0 0 10px rgba(255, 68, 68, 0.8)';
+            
+            // Reset to white after delay
+            setTimeout(() => {
+                resultPointer.style.backgroundColor = '#ffffff';
+                resultPointer.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.5)';
+            }, 3000);
+        }, totalDelay);
+    }
+    
     // Reset the game for a new roll
     function resetGame() {
         if (resultSection) {
@@ -336,6 +496,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (diceResult) {
             updateDiceDisplay('0.00');
+            diceResult.style.color = '#ffffff'; // Reset color
+            diceResult.style.textShadow = 'none'; // Reset shadow
+        }
+        
+        // Reset pointer position
+        if (resultPointer) {
+            positionResultPointer(0);
         }
     }
     
@@ -372,13 +539,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const betCell = document.createElement('td');
             betCell.textContent = formatNumber(game.bet);
             
-            // Type and target cell
-            const typeCell = document.createElement('td');
-            typeCell.textContent = game.type;
-            
             // Target cell
             const targetCell = document.createElement('td');
-            targetCell.textContent = game.target;
+            targetCell.textContent = `${game.type} ${game.target}`;
             
             // Result cell
             const resultCell = document.createElement('td');
@@ -400,14 +563,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Append cells to row
             row.appendChild(userCell);
             row.appendChild(betCell);
-            row.appendChild(typeCell);
             row.appendChild(targetCell);
             row.appendChild(resultCell);
             row.appendChild(multiplierCell);
             row.appendChild(outcomeCell);
             row.appendChild(timeCell);
             
-            // Add animation class
+            // Add fade-in animation
             row.classList.add('fade-in');
             
             // Append row to table
@@ -415,124 +577,134 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Load initial game history with random data
-    function loadGameHistory() {
-        // Add some random games to history
-        const betTypes = ['Roll Under', 'Roll Over'];
-        const usernames = ['Player123', 'LuckyGuy', 'BigWinner', 'CasinoKing', 'RollTheDice', 'BetaPlayer'];
-        
-        // Get current user if available
-        const currentUser = window.BetaAuth?.getCurrentUser();
-        if (currentUser) {
-            usernames.push(currentUser.username);
-        }
-        
-        for (let i = 0; i < 10; i++) {
-            const username = usernames[Math.floor(Math.random() * usernames.length)];
-            const bet = Math.floor(Math.random() * 1000) + 100;
-            const betType = betTypes[Math.floor(Math.random() * betTypes.length)];
+    // Load game history from Supabase
+    async function loadGameHistory() {
+        try {
+            // Check if Supabase is available
+            if (!window.SupabaseDB) {
+                console.log('Supabase not available, using mock data for game history');
+                loadMockGameHistory();
+                return;
+            }
             
-            // Generate more realistic target values that avoid extremes
-            let targetNumber;
-            if (betType === 'Roll Under') {
-                // For Roll Under, avoid very high targets (which would be exploitable)
-                targetNumber = Math.floor(Math.random() * 75) + 10; // 10-85
+            // Fetch history from Supabase
+            const { data: history, error } = await window.SupabaseDB
+                .from('game_history')
+                .select('*')
+                .eq('game', 'Dice')
+                .order('time', { ascending: false })
+                .limit(20);
+            
+            if (error) {
+                console.error('Error loading game history:', error);
+                // Fall back to mock data
+                loadMockGameHistory();
+                return;
+            }
+            
+            if (history && history.length > 0) {
+                // Format the history data
+                gameHistory = history.map(item => ({
+                    user: item.username || 'Guest',
+                    bet: item.bet_amount || 0,
+                    type: item.bet_type || 'Roll Under',
+                    target: item.target || 50,
+                    result: item.result || '0.00',
+                    multiplier: item.multiplier || '2.00x',
+                    outcome: item.outcome || 0,
+                    time: new Date(item.time) || new Date()
+                }));
+                
+                // Update the UI
+                updateGameHistoryTable();
             } else {
-                // For Roll Over, avoid very low targets (which would be exploitable)
-                targetNumber = Math.floor(Math.random() * 75) + 15; // 15-90
+                // No history data, use mock data
+                loadMockGameHistory();
             }
-            
+        } catch (error) {
+            console.error('Error in loadGameHistory:', error);
+            loadMockGameHistory();
+        }
+    }
+    
+    // Load mock game history for new users
+    function loadMockGameHistory() {
+        // Create mock data
+        const mockUsers = ['Player1', 'CryptoPro', 'LuckyWin', 'DiamondHands', 'MoonShot'];
+        const mockHistory = [];
+        
+        // Generate random history entries
+        for (let i = 0; i < 10; i++) {
+            const user = mockUsers[Math.floor(Math.random() * mockUsers.length)];
+            const bet = [10, 25, 50, 100, 200, 500][Math.floor(Math.random() * 6)];
+            const betType = Math.random() > 0.5 ? 'Roll Under' : 'Roll Over';
+            const target = betType === 'Roll Under' ? 
+                Math.floor(Math.random() * 50) + 25 : 
+                Math.floor(Math.random() * 50) + 25;
             const result = (Math.random() * 100).toFixed(2);
-            const resultValue = parseFloat(result);
+            const won = betType === 'Roll Under' ? 
+                parseFloat(result) < target : 
+                parseFloat(result) > target;
             
-            // Determine if won based on bet type
-            let won = false;
-            if (betType === 'Roll Under') {
-                won = (resultValue < targetNumber);
-            } else { // Roll Over
-                won = (resultValue > targetNumber);
-            }
-            
-            // Calculate win chance
-            let winChanceValue = 0;
-            if (betType === 'Roll Under') {
-                winChanceValue = targetNumber;
-            } else { // Roll Over
-                winChanceValue = 100 - targetNumber;
-            }
-            
-            // Calculate multiplier with adaptive house edge
-            const distanceFrom50 = Math.abs(50 - winChanceValue);
-            let additionalEdge = 0;
-            
-            if (distanceFrom50 > 30) {
-                additionalEdge = 0.2 + (distanceFrom50 - 30) * 0.015;
-            } else if (distanceFrom50 > 20) {
-                additionalEdge = 0.1 + (distanceFrom50 - 20) * 0.01;
-            } else if (distanceFrom50 > 10) {
-                additionalEdge = 0.05 + (distanceFrom50 - 10) * 0.005;
-            }
-            
-            additionalEdge = Math.min(additionalEdge, 0.4);
-            const totalEdge = 0.05 + additionalEdge;
-            const multiplierValue = (100 / winChanceValue) * (1 - totalEdge);
+            // Calculate multiplier
+            const winChance = betType === 'Roll Under' ? target : (100 - target);
+            const multiplierValue = (100 / winChance) * 0.95;
+            const multiplier = multiplierValue.toFixed(2) + 'x';
             
             // Calculate outcome
             const outcome = won ? Math.floor(bet * multiplierValue) : -bet;
             
-            // Add to history
-            gameHistory.push({
-                user: username,
-                bet: bet,
+            // Create time (random time in the last 24 hours)
+            const time = new Date(Date.now() - Math.floor(Math.random() * 24 * 60 * 60 * 1000));
+            
+            mockHistory.push({
+                user,
+                bet,
                 type: betType,
-                target: targetNumber,
-                result: result,
-                multiplier: multiplierValue.toFixed(2) + 'x',
-                outcome: outcome,
-                time: new Date(Date.now() - Math.floor(Math.random() * 3600000)) // Within the last hour
+                target,
+                result,
+                multiplier,
+                outcome,
+                time
             });
         }
         
-        // Sort by time (most recent first)
-        gameHistory.sort((a, b) => b.time - a.time);
+        // Sort by time (newest first)
+        mockHistory.sort((a, b) => b.time - a.time);
         
-        // Update UI
+        // Set game history and update UI
+        gameHistory = mockHistory;
         updateGameHistoryTable();
     }
     
-    // Format currency helper
+    // Format currency values
     function formatCurrency(amount) {
-        if (window.BetaGames?.formatCurrency) {
-            return window.BetaGames.formatCurrency(amount);
-        }
-        
-        const formatted = new Intl.NumberFormat().format(Math.abs(Math.round(amount)));
-        return amount >= 0 ? `+${formatted}` : `-${formatted}`;
+        const absAmount = Math.abs(amount);
+        return absAmount.toLocaleString();
     }
     
-    // Format number helper
+    // Format number values
     function formatNumber(number) {
-        return new Intl.NumberFormat().format(number);
+        return number.toLocaleString();
     }
     
-    // Format time helper
+    // Format time values
     function formatTime(date) {
-        if (window.BetaGames?.formatTime) {
-            return window.BetaGames.formatTime(date);
-        }
-        
         const now = new Date();
         const diffMs = now - date;
         const diffSec = Math.floor(diffMs / 1000);
         const diffMin = Math.floor(diffSec / 60);
         const diffHour = Math.floor(diffMin / 60);
+        const diffDay = Math.floor(diffHour / 24);
         
         if (diffSec < 60) {
             return 'just now';
         } else if (diffMin < 60) {
             return `${diffMin}m ago`;
-        } else {
+        } else if (diffHour < 24) {
             return `${diffHour}h ago`;
+        } else {
+            return `${diffDay}d ago`;
         }
     }
 });
