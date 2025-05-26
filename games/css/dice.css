@@ -53,6 +53,9 @@
     justify-content: center;
     align-items: center;
     margin-bottom: 30px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .result-value {
@@ -81,21 +84,22 @@
 .slider-container {
     margin: 40px 0;
     position: relative;
-    padding: 30px 0;
+    padding: 40px 0 20px;
 }
 
 .slider-container label {
     display: block;
-    margin-bottom: 15px;
-    font-size: 1.2rem;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
     color: var(--dice-text);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
 .dice-slider {
     -webkit-appearance: none;
     width: 100%;
-    height: 14px;
-    border-radius: 7px;
+    height: 16px;
+    border-radius: 8px;
     background: linear-gradient(to right, 
         var(--dice-gradient-start), 
         var(--dice-gradient-mid), 
@@ -135,10 +139,12 @@
     display: flex;
     justify-content: space-between;
     padding: 0 10px;
-    margin-top: 10px;
+    margin-top: 15px;
     color: var(--dice-text);
     position: relative;
     z-index: 1;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(0, 255, 76, 0.5);
 }
 
 /* Remove slider track - using dice-slider background instead */
@@ -149,37 +155,37 @@
 /* Enhanced pointer */
 .dice-result-pointer {
     position: absolute;
-    width: 4px;
-    height: 30px;
+    width: 12px;
+    height: 12px;
     background-color: #ffffff;
-    top: 65px;
+    top: 73px;
     transition: left 0.2s ease-out;
     z-index: 10;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    transform: translateX(-6px);
 }
 
-/* Add mini hexagon indicator */
-.dice-result-pointer::after {
-    content: attr(data-value);
+/* Separate hexagon indicator */
+.dice-value-indicator {
     position: absolute;
-    top: -58px;
+    top: 10px;
     left: 50%;
     transform: translateX(-50%);
     background-color: white;
     color: #1a3851;
     font-weight: bold;
-    font-size: 0.9rem;
-    width: 45px;
-    height: 45px;
+    font-size: 1.1rem;
+    width: 60px;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    z-index: 10;
 }
 
 .dice-result-pointer.highlight {
-    width: 6px;
     background-color: #00ff4c;
     box-shadow: 0 0 15px rgba(0, 255, 76, 0.9);
 }
@@ -226,11 +232,12 @@
 
 /* Betting Inputs */
 .betting-container {
-    margin: 20px 0;
-    padding: 20px;
+    margin: 25px 0;
+    padding: 25px;
     background: var(--dice-box-background);
-    border-radius: 10px;
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 255, 76, 0.2);
+    border: 1px solid rgba(0, 255, 76, 0.1);
 }
 
 .bet-row {

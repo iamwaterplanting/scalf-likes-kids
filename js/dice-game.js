@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const betShortcuts = document.querySelectorAll('.bet-shortcut');
     const gameHistoryBody = document.getElementById('gameHistoryBody');
     const resultPointer = document.getElementById('resultPointer');
+    const valueIndicator = document.getElementById('valueIndicator');
     const sliderTrack = document.getElementById('sliderTrack');
     
     // Game state
@@ -129,15 +130,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set the position
         resultPointer.style.left = `${pointerPosition}px`;
         
-        // Update the data-value attribute for the mini hexagon
-        resultPointer.setAttribute('data-value', value.toFixed(2));
-        
         // If previous position was not set, no animation
         if (!resultPointer.dataset.positioned) {
             resultPointer.style.transition = 'none';
             resultPointer.dataset.positioned = 'true';
         } else {
             resultPointer.style.transition = 'left 0.2s ease-out';
+        }
+        
+        // Update the value indicator
+        if (valueIndicator) {
+            valueIndicator.textContent = value.toFixed(2);
         }
     }
     
@@ -148,15 +151,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const targetNumber = parseInt(targetNumberSlider.value);
         
-        // Update the mini hexagon indicator
-        if (resultPointer) {
-            resultPointer.setAttribute('data-value', targetNumberDisplay.textContent);
-            
-            // Position the pointer at the target number for visual feedback
-            const percent = (targetNumber / 100) * 100;
-            const sliderWidth = targetNumberSlider.offsetWidth;
-            const pointerPosition = (percent / 100) * sliderWidth;
-            resultPointer.style.left = `${pointerPosition}px`;
+        // Position the pointer at the target number for visual feedback
+        const percent = (targetNumber / 100) * 100;
+        const sliderWidth = targetNumberSlider.offsetWidth;
+        const pointerPosition = (percent / 100) * sliderWidth;
+        resultPointer.style.left = `${pointerPosition}px`;
+        
+        // Update the value indicator
+        if (valueIndicator) {
+            valueIndicator.textContent = targetNumber;
         }
     }
     
@@ -284,9 +287,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const randomNumber = (Math.random() * 100).toFixed(2);
             updateDiceDisplay(randomNumber);
             
-            // Also update the data-value attribute during rolling
-            if (resultPointer) {
-                resultPointer.setAttribute('data-value', randomNumber);
+            // Update the value indicator during rolling
+            if (valueIndicator) {
+                valueIndicator.textContent = randomNumber;
             }
             
             rollTime += rollInterval;
@@ -299,6 +302,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Position pointer directly to the final position
                 positionResultPointer(resultValue);
+                
+                // Update the value indicator with final result
+                if (valueIndicator) {
+                    valueIndicator.textContent = resultValue.toFixed(2);
+                }
                 
                 // Finish the game
                 setTimeout(() => {
