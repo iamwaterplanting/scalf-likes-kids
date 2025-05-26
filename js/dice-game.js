@@ -36,6 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set default dice display
         updateDiceDisplay('0.00');
         
+        // Initialize slider indicator first to prevent middle positioning
+        initSliderIndicator();
+        
         // Make slider draggable
         makePointerDraggable();
         

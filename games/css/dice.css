@@ -164,8 +164,8 @@
     margin: 20px 0;
     position: relative;
     z-index: 5;
-    border: none;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), inset 0 0 3px rgba(0, 0, 0, 0.8);
+    border: 3px solid #111921; /* Heavy dark outline */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), inset 0 0 3px rgba(0, 0, 0, 0.8), 0 0 0 1px #090e15;
     cursor: pointer;
     overflow: hidden; /* For inner gradients */
 }
