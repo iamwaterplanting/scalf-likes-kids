@@ -24,8 +24,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let minePositions = [];
     let revealedCells = [];
     
+    // Debug mode - set to true for console logging
+    const DEBUG = true;
+    
     // Initialize UI
     initUI();
+    
+    function debug(message) {
+        if (DEBUG) {
+            console.log(`[MINES DEBUG] ${message}`);
+        }
+    }
     
     function initUI() {
         // Initialize game grid
@@ -39,6 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update stats from localStorage if available
         updateGameStats();
+        
+        debug("Game initialized");
     }
     
     function createMinesGrid() {
@@ -54,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add click event
             cell.addEventListener('click', () => {
                 if (gameStarted && !gameEnded && !revealedCells.includes(i)) {
+                    debug(`Clicked cell ${i}`);
                     revealCell(i);
                 } else if (!gameStarted) {
                     // Animate the bet button to indicate user should start game
@@ -68,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             minesGrid.appendChild(cell);
         }
+        debug("Grid created with 25 cells");
     }
     
     function setupEventListeners() {
@@ -108,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const minesCount = document.getElementById('minesCount');
                 if (minesCount) {
                     minesCount.value = btn.dataset.mines;
-                    console.log(`Selected mines count: ${btn.dataset.mines}`);
+                    debug(`Selected mines count: ${btn.dataset.mines}`);
                 }
             });
         });
@@ -129,6 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+        
+        debug("Event listeners set up");
     }
     
     function startGame() {
@@ -154,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Make sure mines count is correctly set from the UI
         const minesCount = document.getElementById('minesCount').value;
-        console.log(`Starting game with ${minesCount} mines`);
+        debug(`Starting game with ${minesCount} mines`);
         
         // Deduct bet from balance
         updateBalance(-betAmount);
@@ -211,6 +226,9 @@ document.addEventListener('DOMContentLoaded', () => {
         gameStarted = false;
         gameEnded = false;
         revealedCells = [];
+        minePositions = []; // Clear mine positions
+        
+        debug("Game reset, mine positions cleared");
         
         // Update UI
         minesContainer.classList.add('game-not-started');
@@ -252,6 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Check if cell is a mine or gem
         const isMine = checkIfMine(index);
+        debug(`Cell ${index} is mine: ${isMine}`);
         
         const cell = document.querySelector(`.mines-grid-cell[data-index="${index}"]`);
         
@@ -347,11 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateMultipliers();
     }
     
-    function calculateNextPayout(betAmount) {
-        // Simple calculation - can be made more sophisticated
-        return betAmount * 1.2;
-    }
-    
     function calculateCurrentWin() {
         // Calculate current win based on multiplier and bet amount
         const betAmount = getBetAmount();
@@ -428,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function playSound(soundType) {
         // Play sound effect (placeholder)
-        console.log(`Playing ${soundType} sound`);
+        debug(`Playing ${soundType} sound`);
     }
     
     function generateMinePositions() {
@@ -440,45 +454,66 @@ document.addEventListener('DOMContentLoaded', () => {
         minesCount = Math.max(1, Math.min(24, minesCount));
         
         // Log the selected mines count for debugging
-        console.log(`Generating mines: ${minesCount} mines`);
+        debug(`Generating ${minesCount} mines`);
         
+        // Clear previous mine positions
         minePositions = [];
         
-        // Make 100 attempts to generate unique positions
-        let attempts = 0;
-        while (minePositions.length < minesCount && attempts < 100) {
-            const pos = Math.floor(Math.random() * 25);
-            if (!minePositions.includes(pos)) {
-                minePositions.push(pos);
-            }
-            attempts++;
+        // Use a direct approach to generate unique positions
+        const allPositions = Array.from({ length: 25 }, (_, i) => i);
+        
+        // Shuffle the array using Fisher-Yates algorithm
+        for (let i = allPositions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
         }
         
-        // If we couldn't generate enough unique positions, fill with sequential numbers
-        if (minePositions.length < minesCount) {
-            for (let i = 0; minePositions.length < minesCount; i++) {
-                if (!minePositions.includes(i)) {
-                    minePositions.push(i);
+        // Take the first N positions as mines
+        minePositions = allPositions.slice(0, minesCount);
+        
+        debug(`Mine positions: ${minePositions.join(', ')}`);
+        
+        // Double-check
+        if (minePositions.length !== minesCount) {
+            debug(`ERROR: Generated ${minePositions.length} mines instead of ${minesCount}`);
+            
+            // Fix by adding or removing mines
+            if (minePositions.length < minesCount) {
+                // Add more mines from unused positions
+                const unusedPositions = allPositions.filter(p => !minePositions.includes(p));
+                while (minePositions.length < minesCount && unusedPositions.length > 0) {
+                    const pos = unusedPositions.pop();
+                    minePositions.push(pos);
                 }
+            } else {
+                // Remove excess mines
+                minePositions = minePositions.slice(0, minesCount);
             }
+            
+            debug(`Corrected mine positions: ${minePositions.join(', ')}`);
         }
-        
-        console.log('Mine positions:', minePositions);
     }
     
     function checkIfMine(index) {
         // Check if the index is in minePositions
-        return minePositions.includes(index);
+        const result = minePositions.includes(Number(index));
+        debug(`Checking if ${index} is a mine: ${result}`);
+        return result;
     }
     
     function revealAllMines() {
         // Reveal all mines except the one that was clicked (already revealed)
+        debug(`Revealing all mines: ${minePositions.join(', ')}`);
+        
         minePositions.forEach(pos => {
             if (!revealedCells.includes(pos)) {
                 const cell = document.querySelector(`.mines-grid-cell[data-index="${pos}"]`);
                 if (cell) {
                     cell.classList.add('revealed-mine');
                     cell.innerHTML = '<i class="fas fa-bomb"></i>';
+                    debug(`Revealed mine at position ${pos}`);
+                } else {
+                    debug(`ERROR: Could not find cell for mine at position ${pos}`);
                 }
             }
         });
@@ -500,6 +535,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate current revealed gems (excluding mines)
         const revealedGems = revealedCells.filter(cell => !minePositions.includes(cell)).length;
         
+        debug(`Updating multipliers: ${revealedGems} gems revealed, ${minesCount} mines`);
+        
         // Update multiplier displays
         const multiplierItems = document.querySelectorAll('.multiplier-item');
         
@@ -511,6 +548,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Set active class only on current multiplier
             multiplierItems.forEach(item => item.classList.remove('active'));
             multiplierItems[0].classList.add('active');
+            
+            debug(`Current multiplier: ${currentMultiplier.toFixed(2)}`);
         }
         
         // Next tile multiplier
@@ -569,7 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update the selected mines button based on the current value
     function updateSelectedMinesButton() {
         const minesCount = document.getElementById('minesCount').value || '3';
-        console.log(`Setting active button for mines count: ${minesCount}`);
+        debug(`Setting active button for mines count: ${minesCount}`);
         
         // Remove active class from all buttons
         const mineButtons = document.querySelectorAll('.mines-btn');
@@ -577,7 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.remove('active');
             if (btn.dataset.mines === minesCount) {
                 btn.classList.add('active');
-                console.log(`Activated button for ${minesCount} mines`);
+                debug(`Activated button for ${minesCount} mines`);
             }
         });
     }

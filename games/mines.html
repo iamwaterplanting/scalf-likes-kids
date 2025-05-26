@@ -108,12 +108,12 @@
                             <div class="mines-count-section">
                                 <label>Mines</label>
                                 <div class="mines-selector-buttons">
-                                    <button class="mines-btn" data-mines="1" onclick="document.getElementById('minesCount').value='1'">1</button>
-                                    <button class="mines-btn active" data-mines="3" onclick="document.getElementById('minesCount').value='3'">3</button>
-                                    <button class="mines-btn" data-mines="5" onclick="document.getElementById('minesCount').value='5'">5</button>
-                                    <button class="mines-btn" data-mines="24" onclick="document.getElementById('minesCount').value='24'">24</button>
+                                    <button class="mines-btn" data-mines="1" onclick="document.getElementById('minesCount').value='1';console.log('Mine count set to 1')">1</button>
+                                    <button class="mines-btn active" data-mines="3" onclick="document.getElementById('minesCount').value='3';console.log('Mine count set to 3')">3</button>
+                                    <button class="mines-btn" data-mines="5" onclick="document.getElementById('minesCount').value='5';console.log('Mine count set to 5')">5</button>
+                                    <button class="mines-btn" data-mines="24" onclick="document.getElementById('minesCount').value='24';console.log('Mine count set to 24')">24</button>
                                 </div>
-                                <input type="hidden" id="minesCount" value="3">
+                                <input type="text" id="minesCount" value="3" style="display:none;">
                             </div>
                             
                             <button id="betButton" class="play-button">PLAY</button>
