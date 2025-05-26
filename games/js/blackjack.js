@@ -172,6 +172,13 @@ function setupEventListeners() {
 
 // Add to current bet
 function addToBet(amount) {
+    // Check if user is logged in
+    const currentUser = window.BetaAuth?.getCurrentUser();
+    if (!currentUser) {
+        showMessage('Please login to play!', 'error');
+        return;
+    }
+    
     // Make sure we have a valid balance amount
     const balanceElement = document.querySelector('.balance-amount');
     if (!balanceElement) {
@@ -192,9 +199,8 @@ function addToBet(amount) {
         currentBet += amount;
         betAmountElement.textContent = currentBet;
         
-        // Update balance with proper formatting
-        const newBalance = currentBalance - amount;
-        balanceElement.textContent = newBalance.toLocaleString();
+        // Update balance in UI and Supabase
+        window.BetaAuth.updateBalance(-amount, 'Blackjack Bet');
         
         // Add animation to chip
         chipSound.play();
@@ -540,6 +546,8 @@ function playerBust() {
     // Show result message
     setTimeout(() => {
         showResult('Bust! You lose.');
+        // Also show in game message
+        showMessage('You busted! Better luck next time.', 'error');
     }, 800);
     
     // Update stats
@@ -559,7 +567,7 @@ function dealerPlay() {
     // If player busted, dealer automatically wins
     if (playerScore > 21) {
         setTimeout(() => {
-            showResult('Bust! You lose.');
+            showResult('Dealer busts! You lose.');
         }, 500);
         
         // Show new hand button
@@ -676,11 +684,20 @@ function checkWinner() {
 // Show result message
 function showResult(message, type = 'lose') {
     resultMessageElement.textContent = message;
-    resultMessageElement.className = 'result-message show';
+    resultMessageElement.className = 'result-message show result-animation';
     
     if (type === 'win') {
         resultMessageElement.classList.add('result-win');
         winSound.play();
+        
+        // Add win animation to balance
+        const balanceElement = document.querySelector('.balance-amount');
+        if (balanceElement) {
+            balanceElement.classList.add('win-animation');
+            setTimeout(() => {
+                balanceElement.classList.remove('win-animation');
+            }, 1000);
+        }
     } else if (type === 'lose') {
         resultMessageElement.classList.add('result-lose');
         loseSound.play();
@@ -695,32 +712,22 @@ function showResult(message, type = 'lose') {
 function payoutWin() {
     const winAmount = currentBet * 2; // Return bet + win same amount
     
-    // Get balance element
-    const balanceElement = document.querySelector('.balance-amount');
-    if (!balanceElement) {
-        console.error('Balance element not found');
+    // Get current user
+    const currentUser = window.BetaAuth?.getCurrentUser();
+    if (!currentUser) {
+        console.error('User not logged in');
         return;
     }
     
-    // Parse current balance and handle formatting
-    let currentBalance = parseInt(balanceElement.textContent.replace(/,/g, ''));
-    if (isNaN(currentBalance)) {
-        console.error('Invalid balance value:', balanceElement.textContent);
-        currentBalance = winAmount; // Set the win amount as the balance
-    } else {
-        currentBalance += winAmount;
-    }
-    
-    // Update balance with proper formatting
-    balanceElement.textContent = currentBalance.toLocaleString();
-    balanceElement.classList.add('win-animation');
-    setTimeout(() => {
-        balanceElement.classList.remove('win-animation');
-    }, 1000);
+    // Update balance in UI and Supabase
+    window.BetaAuth.updateBalance(winAmount, 'Blackjack Win');
     
     // Update total profit
     totalProfit += currentBet;
     totalProfitElement.textContent = totalProfit.toLocaleString();
+    
+    // Show success message
+    showMessage(`You won ${winAmount} coins!`, 'success');
     
     // Animate chips
     animateWinningChips();
@@ -731,32 +738,22 @@ function payoutBlackjack() {
     const blackjackPayout = Math.floor(currentBet * 1.5); // Blackjack pays 3:2
     const totalReturn = currentBet + blackjackPayout; // Return original bet + blackjack payout
     
-    // Get balance element
-    const balanceElement = document.querySelector('.balance-amount');
-    if (!balanceElement) {
-        console.error('Balance element not found');
+    // Get current user
+    const currentUser = window.BetaAuth?.getCurrentUser();
+    if (!currentUser) {
+        console.error('User not logged in');
         return;
     }
     
-    // Parse current balance and handle formatting
-    let currentBalance = parseInt(balanceElement.textContent.replace(/,/g, ''));
-    if (isNaN(currentBalance)) {
-        console.error('Invalid balance value:', balanceElement.textContent);
-        currentBalance = totalReturn; // Set the win amount as the balance
-    } else {
-        currentBalance += totalReturn;
-    }
-    
-    // Update balance with proper formatting
-    balanceElement.textContent = currentBalance.toLocaleString();
-    balanceElement.classList.add('win-animation');
-    setTimeout(() => {
-        balanceElement.classList.remove('win-animation');
-    }, 1000);
+    // Update balance in UI and Supabase
+    window.BetaAuth.updateBalance(totalReturn, 'Blackjack Payout');
     
     // Update total profit
     totalProfit += blackjackPayout;
     totalProfitElement.textContent = totalProfit.toLocaleString();
+    
+    // Show success message
+    showMessage(`Blackjack! You won ${totalReturn} coins!`, 'success');
     
     // Animate chips
     animateWinningChips();
@@ -764,24 +761,18 @@ function payoutBlackjack() {
 
 // Return bet on push
 function returnBet() {
-    // Get balance element
-    const balanceElement = document.querySelector('.balance-amount');
-    if (!balanceElement) {
-        console.error('Balance element not found');
+    // Get current user
+    const currentUser = window.BetaAuth?.getCurrentUser();
+    if (!currentUser) {
+        console.error('User not logged in');
         return;
     }
     
-    // Parse current balance and handle formatting
-    let currentBalance = parseInt(balanceElement.textContent.replace(/,/g, ''));
-    if (isNaN(currentBalance)) {
-        console.error('Invalid balance value:', balanceElement.textContent);
-        currentBalance = currentBet; // Return the bet as the balance
-    } else {
-        currentBalance += currentBet;
-    }
+    // Update balance in UI and Supabase
+    window.BetaAuth.updateBalance(currentBet, 'Blackjack Push');
     
-    // Update balance with proper formatting
-    balanceElement.textContent = currentBalance.toLocaleString();
+    // Show message
+    showMessage(`Push! ${currentBet} coins returned.`, 'info');
 }
 
 // Reset game for next hand

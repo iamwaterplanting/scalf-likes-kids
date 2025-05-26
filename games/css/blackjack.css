@@ -1,6 +1,6 @@
 /* Blackjack Game CSS */
 .blackjack-table {
-    background: transparent;
+    background: radial-gradient(circle at center, rgba(31, 53, 89, 0.8), rgba(12, 14, 26, 0.9));
     border-radius: 15px;
     padding: 30px;
     position: relative;
@@ -428,6 +428,47 @@
 @keyframes fade-in-scale {
     0% { opacity: 0; transform: scale(0.8); }
     100% { opacity: 1; transform: scale(1); }
+}
+
+/* Game messages */
+.game-message {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.9);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+}
+
+.game-message.show {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+}
+
+.game-message.error {
+    background-color: rgba(220, 53, 69, 0.8);
+    border-color: rgba(220, 53, 69, 0.5);
+}
+
+.game-message.success {
+    background-color: rgba(40, 167, 69, 0.8);
+    border-color: rgba(40, 167, 69, 0.5);
+}
+
+.game-message.info {
+    background-color: rgba(23, 162, 184, 0.8);
+    border-color: rgba(23, 162, 184, 0.5);
 }
 
 /* Responsive Adjustments */
