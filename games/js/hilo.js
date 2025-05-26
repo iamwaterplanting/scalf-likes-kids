@@ -10,7 +10,9 @@ let gameInProgress = false;
 let predictionMade = false;
 let currentStreak = 0;
 let currentMultiplier = 1.0;
-let multiplierStep = 0.2; // Amount to increase multiplier on each correct guess
+let multiplierStep = 0.5; // Increased multiplier step for faster growth
+let cardHistory = []; // Array to track card history
+let maxHistoryCards = 8; // Maximum number of history cards to show
 
 // Game stats
 let gamesPlayed = 0;
@@ -106,6 +108,24 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize potential win amount
     updatePotentialWin();
+    
+    // Create card history row if it doesn't exist
+    if (!document.getElementById('cardHistoryRow')) {
+        const cardHistoryContainer = document.createElement('div');
+        cardHistoryContainer.className = 'card-history-container';
+        
+        const historyRow = document.createElement('div');
+        historyRow.id = 'cardHistoryRow';
+        historyRow.className = 'card-history-row';
+        
+        cardHistoryContainer.appendChild(historyRow);
+        
+        // Insert after the main card container
+        const cardContainer = document.querySelector('.card-container');
+        if (cardContainer && cardContainer.parentNode) {
+            cardContainer.parentNode.insertBefore(cardHistoryContainer, cardContainer.nextSibling);
+        }
+    }
     
     console.log('Hi-Lo game initialized');
 });
@@ -282,6 +302,10 @@ function startGame() {
     currentMultiplier = 1.0;
     currentMultiplierElement.textContent = currentMultiplier.toFixed(2) + 'x';
     
+    // Clear card history
+    cardHistory = [];
+    document.getElementById('cardHistoryRow').innerHTML = '';
+    
     // Hide new game button and show prediction buttons
     newGameButton.style.display = 'none';
     startButton.disabled = true;
@@ -304,6 +328,9 @@ function startGame() {
     // Deal current card
     currentCard = deck.pop();
     displayCard(currentCardElement, currentCard);
+    
+    // Add to history as start card
+    addCardToHistory(currentCard, 'start');
     
     // Clear any previous animations
     currentCardElement.classList.remove('card-reveal', 'card-win', 'card-lose');
@@ -391,6 +418,10 @@ function makeHigherPrediction() {
     predictionMade = true;
     higherButton.disabled = true;
     lowerButton.disabled = true;
+    cashoutButton.disabled = true;
+    
+    // Store prediction choice for history
+    let predictionChoice = 'higher';
     
     // Reveal next card with animation
     setTimeout(() => {
@@ -402,13 +433,13 @@ function makeHigherPrediction() {
         
         if (nextValue > currentValue) {
             // Correct prediction
-            correctPrediction();
+            correctPrediction(predictionChoice);
         } else if (nextValue === currentValue) {
             // Push (tie) - don't lose or win
-            tiePrediction();
+            tiePrediction(predictionChoice);
         } else {
             // Wrong prediction
-            wrongPrediction();
+            wrongPrediction(predictionChoice);
         }
     }, 1000);
 }
@@ -418,6 +449,10 @@ function makeLowerPrediction() {
     predictionMade = true;
     higherButton.disabled = true;
     lowerButton.disabled = true;
+    cashoutButton.disabled = true;
+    
+    // Store prediction choice for history
+    let predictionChoice = 'lower';
     
     // Reveal next card with animation
     setTimeout(() => {
@@ -429,13 +464,13 @@ function makeLowerPrediction() {
         
         if (nextValue < currentValue) {
             // Correct prediction
-            correctPrediction();
+            correctPrediction(predictionChoice);
         } else if (nextValue === currentValue) {
             // Push (tie) - don't lose or win
-            tiePrediction();
+            tiePrediction(predictionChoice);
         } else {
             // Wrong prediction
-            wrongPrediction();
+            wrongPrediction(predictionChoice);
         }
     }, 1000);
 }
@@ -455,7 +490,7 @@ function revealNextCard() {
 }
 
 // Handle correct prediction
-function correctPrediction() {
+function correctPrediction(predictionChoice) {
     // Update streak
     currentStreak++;
     currentStreakElement.textContent = currentStreak;
@@ -489,18 +524,24 @@ function correctPrediction() {
         
         // Prepare for next prediction
         setTimeout(() => {
+            // Add card to history before continuing
+            addCardToHistory(nextCard, predictionChoice);
+            
             continueGame();
         }, 1000);
     }, 600);
 }
 
 // Handle tie prediction (same card value)
-function tiePrediction() {
+function tiePrediction(predictionChoice) {
     // Add animation after card is revealed
     setTimeout(() => {
         // Show result message
         predictionResultElement.textContent = 'Push! Same Value';
         predictionResultElement.className = 'prediction-result show';
+        
+        // Add card to history with tie indicator
+        addCardToHistory(nextCard, 'tie');
         
         // Prepare for next prediction
         setTimeout(() => {
@@ -510,7 +551,7 @@ function tiePrediction() {
 }
 
 // Handle wrong prediction
-function wrongPrediction() {
+function wrongPrediction(predictionChoice) {
     // Add lose animation after card is revealed
     setTimeout(() => {
         nextCardElement.classList.add('card-lose');
@@ -521,6 +562,9 @@ function wrongPrediction() {
             predictionResultElement.className = 'prediction-result show result-lose';
             loseSound.play();
         }, 300);
+        
+        // Add card to history with the choice that lost
+        addCardToHistory(nextCard, predictionChoice);
         
         // Reset streak
         currentStreak = 0;
@@ -631,6 +675,10 @@ function resetGame() {
     currentBet = 0;
     currentMultiplier = 1.0;
     currentMultiplierElement.textContent = currentMultiplier.toFixed(2) + 'x';
+    
+    // Reset card history
+    cardHistory = [];
+    document.getElementById('cardHistoryRow').innerHTML = '';
     
     // Reset UI
     currentCardElement.innerHTML = '<div class="card-inner"></div>';
@@ -787,5 +835,87 @@ function loadGameStats() {
         gamesWonElement.textContent = gamesWon;
         bestStreakElement.textContent = bestStreak;
         totalProfitElement.textContent = totalProfit.toLocaleString();
+    }
+}
+
+// Add card to history row
+function addCardToHistory(card, choice) {
+    const historyRow = document.getElementById('cardHistoryRow');
+    if (!historyRow) return;
+    
+    // Create history card element
+    const historyCard = document.createElement('div');
+    historyCard.className = 'history-card';
+    
+    // Create card content
+    const cardContent = document.createElement('div');
+    cardContent.className = 'history-card-content';
+    
+    // Card value and suit
+    const cardValueEl = document.createElement('div');
+    cardValueEl.className = `history-card-value ${card.suit}`;
+    cardValueEl.textContent = card.value;
+    
+    const cardSuitEl = document.createElement('div');
+    cardSuitEl.className = `history-card-suit ${card.suit}`;
+    cardSuitEl.textContent = suitSymbols[card.suit];
+    
+    // Prediction indicator
+    let choiceIndicator = '';
+    let choiceClass = '';
+    
+    if (choice === 'higher') {
+        choiceIndicator = '<span class="up-arrow">▲</span>';
+        choiceClass = 'higher-choice';
+    } else if (choice === 'lower') {
+        choiceIndicator = '<span class="down-arrow">▼</span>';
+        choiceClass = 'lower-choice';
+    } else if (choice === 'tie') {
+        choiceIndicator = '<span class="tie-symbol">=</span>';
+        choiceClass = 'tie-choice';
+    }
+    
+    // Multiplier value
+    const multiplierEl = document.createElement('div');
+    multiplierEl.className = 'history-multiplier';
+    
+    if (choice === 'start') {
+        multiplierEl.innerHTML = 'Start Card';
+    } else {
+        multiplierEl.innerHTML = `${currentMultiplier.toFixed(2)}x`;
+    }
+    
+    // Add indicator if not start card
+    if (choice !== 'start') {
+        const indicatorEl = document.createElement('div');
+        indicatorEl.className = `choice-indicator ${choiceClass}`;
+        indicatorEl.innerHTML = choiceIndicator;
+        cardContent.appendChild(indicatorEl);
+    }
+    
+    // Add elements to card
+    cardContent.appendChild(cardValueEl);
+    cardContent.appendChild(cardSuitEl);
+    cardContent.appendChild(multiplierEl);
+    historyCard.appendChild(cardContent);
+    
+    // Add to history row
+    historyRow.appendChild(historyCard);
+    
+    // Store card in history array
+    cardHistory.push({
+        card: card,
+        choice: choice,
+        multiplier: currentMultiplier
+    });
+    
+    // Limit history length
+    if (cardHistory.length > maxHistoryCards) {
+        // Remove oldest card from DOM
+        if (historyRow.children.length > maxHistoryCards) {
+            historyRow.removeChild(historyRow.children[0]);
+        }
+        // Remove oldest card from array
+        cardHistory.shift();
     }
 } 
