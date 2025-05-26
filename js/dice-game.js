@@ -756,11 +756,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize slider indicator position
     function initSliderIndicator() {
         if (sliderIndicator && targetNumberSlider) {
+            // Get current value directly from the slider
             const value = parseInt(targetNumberSlider.value);
             const percent = value / 100;
             const width = targetNumberSlider.offsetWidth;
             const position = percent * width;
+            
+            // Position without animation (set transition to none)
+            sliderIndicator.style.transition = 'none';
             updateSliderIndicator(position);
+            
+            // Force a reflow to ensure the no-transition style is applied
+            void sliderIndicator.offsetWidth;
+            
+            // Restore transition after a short delay
+            setTimeout(() => {
+                sliderIndicator.style.transition = 'left 0.3s ease';
+            }, 50);
         }
     }
     

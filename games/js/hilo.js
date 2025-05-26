@@ -182,7 +182,10 @@ function setupEventListeners() {
             if (gameInProgress) return;
             
             const chipValue = parseInt(chip.getAttribute('data-value'));
-            const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
+            
+            // Get balance from BetaAuth instead of DOM
+            const currentUser = window.BetaAuth?.getCurrentUser();
+            const currentBalance = currentUser ? currentUser.balance : 0;
             
             if (currentBalance >= chipValue) {
                 addToBet(chipValue);
@@ -201,7 +204,10 @@ function setupEventListeners() {
         placeBetButton.addEventListener('click', () => {
             const betValue = parseInt(customBetInput.value);
             if (!isNaN(betValue) && betValue > 0) {
-                const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
+                // Get balance from BetaAuth instead of DOM
+                const currentUser = window.BetaAuth?.getCurrentUser();
+                const currentBalance = currentUser ? currentUser.balance : 0;
+                
                 if (currentBalance >= betValue) {
                     addToBet(betValue);
                     customBetInput.value = '';
@@ -216,7 +222,10 @@ function setupEventListeners() {
             if (e.key === 'Enter') {
                 const betValue = parseInt(customBetInput.value);
                 if (!isNaN(betValue) && betValue > 0) {
-                    const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
+                    // Get balance from BetaAuth instead of DOM
+                    const currentUser = window.BetaAuth?.getCurrentUser();
+                    const currentBalance = currentUser ? currentUser.balance : 0;
+                    
                     if (currentBalance >= betValue) {
                         addToBet(betValue);
                         customBetInput.value = '';
@@ -279,20 +288,8 @@ function addToBet(amount) {
         return;
     }
     
-    // Make sure we have a valid balance amount
-    const balanceElement = document.querySelector('.balance-amount');
-    if (!balanceElement) {
-        console.error('Balance element not found');
-        return;
-    }
-    
-    // Parse as integer and handle NaN
-    let currentBalance = parseInt(balanceElement.textContent.replace(/,/g, ''));
-    if (isNaN(currentBalance)) {
-        console.error('Invalid balance value:', balanceElement.textContent);
-        currentBalance = 1000; // Set a default balance
-        balanceElement.textContent = currentBalance;
-    }
+    // Get balance directly from BetaAuth
+    const currentBalance = currentUser.balance;
     
     if (currentBalance >= amount) {
         // Update bet amount
