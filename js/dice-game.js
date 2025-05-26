@@ -37,10 +37,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Position the result pointer to the start
         if (resultPointer) {
-            positionResultPointer(0);
+            positionPointer(50); // Default to middle
             
             // Add drag functionality
             makePointerDraggable();
+        }
+        
+        // Hide value indicator initially
+        if (valueIndicator) {
+            valueIndicator.classList.remove('show');
         }
         
         // Update potential win and odds
@@ -115,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function makePointerDraggable() {
-        if (!resultPointer || !targetNumberSlider || !valueIndicator) return;
+        if (!resultPointer || !targetNumberSlider) return;
         
         // Mouse down event starts the drag
         resultPointer.addEventListener('mousedown', startDrag);
@@ -148,14 +153,19 @@ document.addEventListener('DOMContentLoaded', () => {
             position = Math.max(0, Math.min(position, sliderRect.width));
             
             // Calculate value based on position (0-100)
-            const value = (position / sliderRect.width) * 100;
+            const value = Math.round((position / sliderRect.width) * 100);
             
             // Update the target number slider and display
-            targetNumberSlider.value = Math.round(value);
-            targetNumberDisplay.textContent = targetNumberSlider.value;
+            targetNumberSlider.value = value;
+            targetNumberDisplay.textContent = value;
             
-            // Position pointer and hexagon
-            positionPointerAndHexagon(position);
+            // Only position the pointer, not the hexagon
+            positionPointer(position);
+            
+            // Hide value indicator while dragging
+            if (valueIndicator) {
+                valueIndicator.classList.remove('show');
+            }
             
             // Update game calculations
             updatePotentialWinAndOdds();
@@ -166,40 +176,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    function positionPointerAndHexagon(position) {
-        // Set the position of the pointer
+    // Position only the pointer square
+    function positionPointer(position) {
+        if (!resultPointer) return;
         resultPointer.style.left = `${position}px`;
-        
-        // Position the hexagon at the same horizontal position
-        valueIndicator.style.left = `${position}px`;
     }
     
-    // Position the result pointer
-    function positionResultPointer(value) {
-        if (!resultPointer || !valueIndicator) return;
+    // Show the hexagon indicator at a specific position with a value
+    function showResultIndicator(position, value) {
+        if (!valueIndicator) return;
         
-        // Calculate percentage along the slider (0-100)
-        const percent = (value / 100) * 100;
+        // Position the hexagon
+        valueIndicator.style.left = `${position}px`;
         
-        // Calculate position considering slider width
-        const sliderWidth = targetNumberSlider.offsetWidth;
-        const pointerPosition = (percent / 100) * sliderWidth;
+        // Set the value
+        valueIndicator.textContent = value;
         
-        // Position both elements
-        positionPointerAndHexagon(pointerPosition);
-        
-        // Update the value indicator
-        valueIndicator.textContent = value.toFixed(2);
-        
-        // If previous position was not set, no animation
-        if (!resultPointer.dataset.positioned) {
-            resultPointer.style.transition = 'none';
-            valueIndicator.style.transition = 'none';
-            resultPointer.dataset.positioned = 'true';
-        } else {
-            resultPointer.style.transition = 'left 0.2s ease-out';
-            valueIndicator.style.transition = 'left 0.2s ease-out';
-        }
+        // Make it visible
+        valueIndicator.classList.add('show');
     }
     
     // Update slider color gradient based on bet type
@@ -209,17 +203,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const targetNumber = parseInt(targetNumberSlider.value);
         
-        // Position the pointer at the target number for visual feedback
+        // Position just the pointer at the target number
         const percent = (targetNumber / 100) * 100;
         const sliderWidth = targetNumberSlider.offsetWidth;
         const pointerPosition = (percent / 100) * sliderWidth;
         
-        // Position both elements
-        positionPointerAndHexagon(pointerPosition);
+        positionPointer(pointerPosition);
         
-        // Update the value indicator
+        // Hide the value indicator when just adjusting the slider
         if (valueIndicator) {
-            valueIndicator.textContent = targetNumber;
+            valueIndicator.classList.remove('show');
         }
     }
     
@@ -339,6 +332,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hide result section if visible
         resultSection.style.display = 'none';
         
+        // Hide value indicator during rolling
+        if (valueIndicator) {
+            valueIndicator.classList.remove('show');
+        }
+        
         // Generate the final result now (0.00-99.99)
         const result = (Math.random() * 100).toFixed(2);
         const resultValue = parseFloat(result);
@@ -353,15 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const randomNumber = (Math.random() * 100).toFixed(2);
             updateDiceDisplay(randomNumber);
             
-            // Also animate the hexagon position during rolling
-            const randomPosition = Math.random() * targetNumberSlider.offsetWidth;
-            positionPointerAndHexagon(randomPosition);
-            
-            // Update the value indicator with the random number
-            if (valueIndicator) {
-                valueIndicator.textContent = randomNumber;
-            }
-            
             rollTime += rollInterval;
             
             if (rollTime >= rollDuration) {
@@ -370,20 +359,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Show final result
                 updateDiceDisplay(result);
                 
-                // Position pointer and hexagon to the final result position
-                const finalPosition = (resultValue / 100) * targetNumberSlider.offsetWidth;
-                positionPointerAndHexagon(finalPosition);
+                // Calculate the result position
+                const resultPercent = (resultValue / 100);
+                const sliderWidth = targetNumberSlider.offsetWidth;
+                const resultPosition = resultPercent * sliderWidth;
                 
-                // Update the value indicator with final result
-                if (valueIndicator) {
-                    valueIndicator.textContent = resultValue.toFixed(2);
-                    
-                    // Add a quick animation for the hexagon jumping to result
-                    valueIndicator.classList.add('result-jump');
-                    setTimeout(() => {
-                        valueIndicator.classList.remove('result-jump');
-                    }, 300);
-                }
+                // Show the hexagon with the result value at that position
+                showResultIndicator(resultPosition, resultValue.toFixed(2));
                 
                 // Finish the game
                 setTimeout(() => {
@@ -391,6 +373,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 100);
             }
         }, rollInterval);
+    }
+    
+    // Reset the game for a new roll
+    function resetGame() {
+        if (resultSection) {
+            resultSection.style.display = 'none';
+        }
+        
+        if (diceResult) {
+            updateDiceDisplay('0.00');
+            diceResult.style.color = '#00ff4c'; // Reset color to green
+            diceResult.style.textShadow = '0 0 20px rgba(0, 255, 76, 0.7)'; // Reset shadow
+        }
+        
+        // Hide the hexagon
+        if (valueIndicator) {
+            valueIndicator.classList.remove('show');
+        }
+        
+        // Reset pointer position to middle
+        if (resultPointer) {
+            positionPointer(targetNumberSlider.offsetWidth / 2);
+        }
     }
     
     // Finish the roll and determine result
@@ -510,25 +515,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset game state
         isRolling = false;
         rollButton.disabled = false;
-    }
-    
-    // Reset the game for a new roll
-    function resetGame() {
-        if (resultSection) {
-            resultSection.style.display = 'none';
-        }
-        
-        if (diceResult) {
-            updateDiceDisplay('0.00');
-            diceResult.style.color = '#00ff4c'; // Reset color to green
-            diceResult.style.textShadow = '0 0 20px rgba(0, 255, 76, 0.7)'; // Reset shadow
-        }
-        
-        // Reset pointer position
-        if (resultPointer) {
-            positionResultPointer(0);
-            resultPointer.setAttribute('data-value', '0.00');
-        }
     }
     
     // Add a game to history

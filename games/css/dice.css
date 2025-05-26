@@ -152,7 +152,7 @@
     display: none;
 }
 
-/* Enhanced square pointer (draggable) */
+/* Draggable square pointer */
 .dice-result-pointer {
     position: absolute;
     width: 18px;
@@ -170,11 +170,10 @@
     cursor: grabbing;
 }
 
-/* Hexagon indicator that follows pointer */
+/* Result hexagon indicator */
 .dice-value-indicator {
     position: absolute;
-    top: 5px;
-    transition: left 0.2s ease-out;
+    top: -60px;
     background-color: white;
     color: #1a3851;
     font-weight: bold;
@@ -186,8 +185,14 @@
     justify-content: center;
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-    z-index: 12;
+    z-index: 20;
     transform: translateX(-30px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.dice-value-indicator.show {
+    opacity: 1;
 }
 
 /* Animation for result jump */
