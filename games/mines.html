@@ -108,10 +108,10 @@
                             <div class="mines-count-section">
                                 <label>Mines</label>
                                 <div class="mines-selector-buttons">
-                                    <button class="mines-btn" data-mines="1">1</button>
-                                    <button class="mines-btn active" data-mines="3">3</button>
-                                    <button class="mines-btn" data-mines="5">5</button>
-                                    <button class="mines-btn" data-mines="24">24</button>
+                                    <button class="mines-btn" data-mines="1" onclick="document.getElementById('minesCount').value='1'">1</button>
+                                    <button class="mines-btn active" data-mines="3" onclick="document.getElementById('minesCount').value='3'">3</button>
+                                    <button class="mines-btn" data-mines="5" onclick="document.getElementById('minesCount').value='5'">5</button>
+                                    <button class="mines-btn" data-mines="24" onclick="document.getElementById('minesCount').value='24'">24</button>
                                 </div>
                                 <input type="hidden" id="minesCount" value="3">
                             </div>

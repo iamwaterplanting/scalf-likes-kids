@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set up event listeners
         setupEventListeners();
         
+        // Update selected mines button
+        updateSelectedMinesButton();
+        
         // Update stats from localStorage if available
         updateGameStats();
     }
@@ -105,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const minesCount = document.getElementById('minesCount');
                 if (minesCount) {
                     minesCount.value = btn.dataset.mines;
+                    console.log(`Selected mines count: ${btn.dataset.mines}`);
                 }
             });
         });
@@ -147,6 +151,10 @@ document.addEventListener('DOMContentLoaded', () => {
         gameStarted = true;
         gameEnded = false;
         revealedCells = [];
+        
+        // Make sure mines count is correctly set from the UI
+        const minesCount = document.getElementById('minesCount').value;
+        console.log(`Starting game with ${minesCount} mines`);
         
         // Deduct bet from balance
         updateBalance(-betAmount);
@@ -425,13 +433,33 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function generateMinePositions() {
         // Generate random mine positions based on selected mines count
-        const minesCount = parseInt(document.getElementById('minesCount').value) || 3;
+        const minesCountElement = document.getElementById('minesCount');
+        let minesCount = parseInt(minesCountElement.value) || 3;
+        
+        // Force at least 1 mine and at most 24 mines
+        minesCount = Math.max(1, Math.min(24, minesCount));
+        
+        // Log the selected mines count for debugging
+        console.log(`Generating mines: ${minesCount} mines`);
+        
         minePositions = [];
         
-        while (minePositions.length < minesCount) {
+        // Make 100 attempts to generate unique positions
+        let attempts = 0;
+        while (minePositions.length < minesCount && attempts < 100) {
             const pos = Math.floor(Math.random() * 25);
             if (!minePositions.includes(pos)) {
                 minePositions.push(pos);
+            }
+            attempts++;
+        }
+        
+        // If we couldn't generate enough unique positions, fill with sequential numbers
+        if (minePositions.length < minesCount) {
+            for (let i = 0; minePositions.length < minesCount; i++) {
+                if (!minePositions.includes(i)) {
+                    minePositions.push(i);
+                }
             }
         }
         
@@ -526,12 +554,31 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (revealedGems <= 0) return 1.0;
         
-        // Formula: (totalCells / (totalCells - revealedGems)) * (1 - houseEdge)
-        let multiplier = (totalCells / (totalCells - revealedGems)) * (1 - houseEdge);
+        // Formula: (totalCells / (totalCells - revealedGems)) * (1 - houseEdge) * minesDifficulty
+        // Higher mine count = higher difficulty factor = higher multiplier
+        let minesDifficulty = 1.0 + (minesCount / 10); // More mines = higher multiplier growth
+        
+        let multiplier = (totalCells / (totalCells - revealedGems)) * (1 - houseEdge) * minesDifficulty;
         
         // Cap multiplier for very high values
-        multiplier = Math.min(multiplier, 100);
+        multiplier = Math.min(multiplier, 250);
         
         return multiplier;
+    }
+    
+    // Update the selected mines button based on the current value
+    function updateSelectedMinesButton() {
+        const minesCount = document.getElementById('minesCount').value || '3';
+        console.log(`Setting active button for mines count: ${minesCount}`);
+        
+        // Remove active class from all buttons
+        const mineButtons = document.querySelectorAll('.mines-btn');
+        mineButtons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.mines === minesCount) {
+                btn.classList.add('active');
+                console.log(`Activated button for ${minesCount} mines`);
+            }
+        });
     }
 }); 
