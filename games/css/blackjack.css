@@ -264,12 +264,13 @@
     letter-spacing: 2px;
 }
 
-/* Enhanced title styling for blackjack */
+/* Corrected blackjack title styling */
 .blackjack-title {
-    position: relative;
+    text-align: center;
     font-size: 4.5rem;
     font-weight: 800;
     text-transform: uppercase;
+    color: #ffda6a;
     background: linear-gradient(135deg, #ffda6a, #e2a500, #ffda6a);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -277,6 +278,9 @@
     margin-bottom: 35px;
     text-shadow: 0 0 30px rgba(255, 215, 0, 0.7);
     animation: title-glow 3s ease-in-out infinite alternate;
+    position: relative;
+    display: inline-block;
+    margin: 0 auto 30px;
 }
 
 .blackjack-title::before {

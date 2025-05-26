@@ -679,6 +679,33 @@
             width: 100%;
             overflow: hidden;
         }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+        }
+        
+        /* Ensure title is centered and properly styled */
+        .blackjack-title {
+            display: block;
+            margin: 0 auto 30px;
+            padding-top: 0;
+            width: auto;
+        }
+        
+        /* Proper wrapper styling to eliminate the green line */
+        .blackjack-table-wrapper {
+            position: relative;
+            margin-top: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            padding-top: 0;
+            border: none;
+            width: 100%;
+            max-width: 1200px;
+        }
     </style>
 </head>
 <body>
@@ -733,7 +760,7 @@
 
             <!-- Game Container -->
             <div class="game-container">
-                <h1 class="game-title blackjack-title">BLACKJACK</h1>
+                <h1 class="blackjack-title">BLACKJACK</h1>
                 
                 <div class="blackjack-table-wrapper">
                     <div class="blackjack-table">
@@ -880,75 +907,167 @@
     <script src="js/blackjack.js"></script>
 
     <script>
-    // Update player label with the user's username from BetaAuth
-    function updatePlayerLabel() {
-        try {
-            if (window.BetaAuth && window.BetaAuth.user && window.BetaAuth.user.username) {
-                document.getElementById('playerLabel').textContent = window.BetaAuth.user.username;
+    // Wait for all scripts to load
+    window.addEventListener('load', function() {
+        console.log("Initializing blackjack game and applying fixes...");
+        
+        // Update player label with the user's username from BetaAuth
+        function updatePlayerLabel() {
+            try {
+                if (window.BetaAuth && window.BetaAuth.user && window.BetaAuth.user.username) {
+                    document.getElementById('playerLabel').textContent = window.BetaAuth.user.username;
+                }
+            } catch (error) {
+                console.error("Error updating player label:", error);
             }
-        } catch (error) {
-            console.error("Error updating player label:", error);
         }
-    }
-
-    // Run this after DOM content loaded and after BetaAuth is initialized
-    document.addEventListener('DOMContentLoaded', function() {
-        // Wait a short time to ensure BetaAuth is loaded
         setTimeout(updatePlayerLabel, 500);
-    });
-
-    // When a new hand starts
-    function startNewHand() {
-        // ... existing code ...
         
-        // Update player label with username
-        updatePlayerLabel();
-        
-        // ... existing code ...
-    }
-
-    // ... existing code ...
-
-    // Fix card positioning and ensure proper hand display
-    function updateCardLayout() {
-        const dealerHand = document.getElementById('dealerHand');
-        const playerHand = document.getElementById('playerHand');
-        
-        if (dealerHand && playerHand) {
-            const dealerCards = dealerHand.querySelectorAll('.card');
-            const playerCards = playerHand.querySelectorAll('.card');
+        // Fix card positioning and ensure proper hand display
+        function updateCardLayout() {
+            const dealerHand = document.getElementById('dealerHand');
+            const playerHand = document.getElementById('playerHand');
             
-            // Adjust card positioning based on number of cards
-            const adjustCardSpacing = (cards, container) => {
-                if (cards.length <= 1) return;
+            if (dealerHand && playerHand) {
+                const dealerCards = dealerHand.querySelectorAll('.card');
+                const playerCards = playerHand.querySelectorAll('.card');
                 
-                const containerWidth = container.offsetWidth;
-                const cardWidth = 110; // Card width from CSS
-                const maxOverlap = Math.min(30, (cardWidth * cards.length - containerWidth + 100) / (cards.length - 1));
+                // Adjust card positioning based on number of cards
+                const adjustCardSpacing = (cards, container) => {
+                    if (cards.length <= 1) return;
+                    
+                    const containerWidth = container.offsetWidth;
+                    const cardWidth = 110; // Card width from CSS
+                    const maxOverlap = Math.min(30, (cardWidth * cards.length - containerWidth + 100) / (cards.length - 1));
+                    
+                    cards.forEach((card, i) => {
+                        if (i > 0) {
+                            card.style.marginLeft = `-${maxOverlap}px`;
+                        } else {
+                            card.style.marginLeft = '0';
+                        }
+                    });
+                };
                 
-                cards.forEach((card, i) => {
-                    if (i > 0) {
-                        card.style.marginLeft = `-${maxOverlap}px`;
+                adjustCardSpacing(dealerCards, dealerHand);
+                adjustCardSpacing(playerCards, playerHand);
+            }
+        }
+        
+        // Reinitialize all game buttons
+        function reinitializeGameButtons() {
+            // Deal button
+            const dealButton = document.getElementById('dealButton');
+            if (dealButton) {
+                console.log("Reinitializing deal button");
+                dealButton.addEventListener('click', function() {
+                    if (typeof dealCards === 'function') {
+                        dealCards();
                     } else {
-                        card.style.marginLeft = '0';
+                        console.error("dealCards function not found");
                     }
                 });
-            };
+            }
             
-            adjustCardSpacing(dealerCards, dealerHand);
-            adjustCardSpacing(playerCards, playerHand);
+            // Hit button
+            const hitButton = document.getElementById('hitButton');
+            if (hitButton) {
+                hitButton.addEventListener('click', function() {
+                    if (typeof hit === 'function') {
+                        hit();
+                        setTimeout(updateCardLayout, 100);
+                    }
+                });
+            }
+            
+            // Stand button
+            const standButton = document.getElementById('standButton');
+            if (standButton) {
+                standButton.addEventListener('click', function() {
+                    if (typeof stand === 'function') {
+                        stand();
+                        setTimeout(updateCardLayout, 100);
+                    }
+                });
+            }
+            
+            // Double button
+            const doubleButton = document.getElementById('doubleButton');
+            if (doubleButton) {
+                doubleButton.addEventListener('click', function() {
+                    if (typeof doubleBet === 'function') {
+                        doubleBet();
+                        setTimeout(updateCardLayout, 100);
+                    }
+                });
+            }
+            
+            // New hand button
+            const newHandButton = document.getElementById('newHandButton');
+            if (newHandButton) {
+                newHandButton.addEventListener('click', function() {
+                    if (typeof resetGame === 'function') {
+                        resetGame();
+                    }
+                });
+            }
+            
+            // Bet chips
+            const chips = document.querySelectorAll('.chip');
+            chips.forEach(chip => {
+                chip.addEventListener('click', function() {
+                    const value = parseInt(this.getAttribute('data-value'));
+                    if (!isNaN(value) && typeof addToBet === 'function') {
+                        addToBet(value);
+                        this.classList.add('chip-clicked');
+                        setTimeout(() => this.classList.remove('chip-clicked'), 300);
+                    }
+                });
+            });
+            
+            // Custom bet
+            const customBetInput = document.getElementById('customBetInput');
+            const placeBetButton = document.getElementById('placeBetButton');
+            
+            if (customBetInput && placeBetButton) {
+                placeBetButton.addEventListener('click', function() {
+                    const betAmount = parseInt(customBetInput.value);
+                    if (!isNaN(betAmount) && betAmount > 0 && typeof addToBet === 'function') {
+                        addToBet(betAmount);
+                        customBetInput.value = '';
+                    }
+                });
+                
+                // Also allow Enter key to submit bet
+                customBetInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const betAmount = parseInt(customBetInput.value);
+                        if (!isNaN(betAmount) && betAmount > 0 && typeof addToBet === 'function') {
+                            addToBet(betAmount);
+                            customBetInput.value = '';
+                        }
+                        e.preventDefault();
+                    }
+                });
+            }
         }
-    }
-
-    // Update card layout whenever cards are dealt
-    const originalCreateCard = createCard;
-    createCard = function(value, suit, isHidden = false) {
-        const card = originalCreateCard(value, suit, isHidden);
-        setTimeout(updateCardLayout, 100);
-        return card;
-    };
-
-    // ... existing code ...
+        
+        // Fix the createCard function to update the layout
+        if (typeof createCard === 'function') {
+            window.originalCreateCard = createCard;
+            window.createCard = function(value, suit, isHidden = false) {
+                console.log("Using modified createCard function");
+                const card = window.originalCreateCard(value, suit, isHidden);
+                setTimeout(updateCardLayout, 100);
+                return card;
+            };
+        } else {
+            console.error("createCard function not found");
+        }
+        
+        // Initialize all button event listeners
+        setTimeout(reinitializeGameButtons, 300);
+    });
     </script>
 
     </body>
