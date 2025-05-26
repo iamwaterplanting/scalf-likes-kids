@@ -184,11 +184,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function showResultIndicator(position, value) {
         if (!valueIndicator) return;
         
-        // Position the hexagon directly
+        // Position the hexagon directly first
         positionHexagon(position, value);
         
-        // Make it visible
-        valueIndicator.classList.add('show');
+        // A small delay to ensure it's positioned before showing
+        requestAnimationFrame(() => {
+            // Make it visible
+            valueIndicator.classList.add('show');
+        });
     }
     
     // Update slider color gradient based on bet type
@@ -327,9 +330,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hide result section if visible
         resultSection.style.display = 'none';
         
-        // Hide value indicator during rolling
+        // Hide value indicator during rolling but keep its position
         if (valueIndicator) {
             valueIndicator.classList.remove('show');
+            
+            // Pre-position at the current value to avoid jumps
+            const currentValue = parseInt(targetNumberSlider.value);
+            const sliderWidth = targetNumberSlider.offsetWidth;
+            const currentPosition = (currentValue / 100) * sliderWidth;
+            positionHexagon(currentPosition);
         }
         
         // Generate the final result now (0.00-99.99)
@@ -354,15 +363,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Show final result
                 updateDiceDisplay(result);
                 
+                // Add special class for result animation
+                diceResult.classList.add('result-reveal');
+                setTimeout(() => {
+                    diceResult.classList.remove('result-reveal');
+                }, 800);
+                
                 // Calculate the result position
                 const resultPercent = (resultValue / 100);
                 const sliderWidth = targetNumberSlider.offsetWidth;
                 const resultPosition = resultPercent * sliderWidth;
                 
                 // Show the hexagon with the result value at that position
-                setTimeout(() => {
-                    showResultIndicator(resultPosition, resultValue.toFixed(2));
-                }, 100);
+                showResultIndicator(resultPosition, resultValue.toFixed(2));
                 
                 // Finish the game
                 setTimeout(() => {
