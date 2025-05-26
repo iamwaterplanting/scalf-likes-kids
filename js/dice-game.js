@@ -186,19 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showResultIndicator(position, value) {
         if (!valueIndicator) return;
         
-        // First set its initial position if not visible
-        if (!valueIndicator.classList.contains('show')) {
-            // Set initial position off-screen to animate in
-            const currentPosition = parseInt(targetNumberSlider.value);
-            const sliderWidth = targetNumberSlider.offsetWidth;
-            const initialPosition = (currentPosition / 100) * sliderWidth;
-            valueIndicator.style.left = `${initialPosition}px`;
-            
-            // Force a reflow before changing position
-            void valueIndicator.offsetWidth;
-        }
-        
-        // Position the hexagon with smooth animation
+        // Position the hexagon directly
         valueIndicator.style.left = `${position}px`;
         
         // Set the value
@@ -349,11 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
             valueIndicator.classList.remove('show');
         }
         
-        // Add pulse animation to the square during rolling
-        if (resultPointer) {
-            resultPointer.classList.add('rolling-pulse');
-        }
-        
         // Generate the final result now (0.00-99.99)
         const result = (Math.random() * 100).toFixed(2);
         const resultValue = parseFloat(result);
@@ -368,12 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const randomNumber = (Math.random() * 100).toFixed(2);
             updateDiceDisplay(randomNumber);
             
-            // Animate the square during rolling
-            if (resultPointer && rollTime % 100 === 0) {
-                const randomPosition = Math.random() * targetNumberSlider.offsetWidth;
-                positionPointer(randomPosition);
-            }
-            
             rollTime += rollInterval;
             
             if (rollTime >= rollDuration) {
@@ -382,17 +359,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Show final result
                 updateDiceDisplay(result);
                 
-                // Remove pulse animation
-                if (resultPointer) {
-                    resultPointer.classList.remove('rolling-pulse');
-                }
-                
                 // Calculate the result position
                 const resultPercent = (resultValue / 100);
                 const sliderWidth = targetNumberSlider.offsetWidth;
                 const resultPosition = resultPercent * sliderWidth;
                 
-                // Move the square to result position with animation
+                // Move the pointer to result position
                 positionPointer(resultPosition);
                 
                 // Show the hexagon with the result value at that position
