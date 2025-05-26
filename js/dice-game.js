@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isRolling = false;
     let gameHistory = [];
     let currentBetType = 'under'; // 'under' or 'over'
+    let isDragging = false;
     
     // Initialize the game
     init();
@@ -37,6 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Position the result pointer to the start
         if (resultPointer) {
             positionResultPointer(0);
+            
+            // Add drag functionality
+            makePointerDraggable();
         }
         
         // Update potential win and odds
@@ -110,15 +114,69 @@ document.addEventListener('DOMContentLoaded', () => {
         loadGameHistory();
     }
     
-    // Update the dice display
-    function updateDiceDisplay(number) {
-        if (!diceResult) return;
-        diceResult.textContent = number;
+    function makePointerDraggable() {
+        if (!resultPointer || !targetNumberSlider || !valueIndicator) return;
+        
+        // Mouse down event starts the drag
+        resultPointer.addEventListener('mousedown', startDrag);
+        resultPointer.addEventListener('touchstart', startDrag);
+        
+        // Mouse move events handle the dragging
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag);
+        
+        // Mouse up event ends the drag
+        document.addEventListener('mouseup', endDrag);
+        document.addEventListener('touchend', endDrag);
+        
+        function startDrag(e) {
+            e.preventDefault();
+            isDragging = true;
+        }
+        
+        function drag(e) {
+            if (!isDragging || isRolling) return;
+            
+            // Get mouse/touch position
+            const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            
+            // Get slider bounds
+            const sliderRect = targetNumberSlider.getBoundingClientRect();
+            
+            // Calculate position within slider bounds
+            let position = clientX - sliderRect.left;
+            position = Math.max(0, Math.min(position, sliderRect.width));
+            
+            // Calculate value based on position (0-100)
+            const value = (position / sliderRect.width) * 100;
+            
+            // Update the target number slider and display
+            targetNumberSlider.value = Math.round(value);
+            targetNumberDisplay.textContent = targetNumberSlider.value;
+            
+            // Position pointer and hexagon
+            positionPointerAndHexagon(position);
+            
+            // Update game calculations
+            updatePotentialWinAndOdds();
+        }
+        
+        function endDrag() {
+            isDragging = false;
+        }
+    }
+    
+    function positionPointerAndHexagon(position) {
+        // Set the position of the pointer
+        resultPointer.style.left = `${position}px`;
+        
+        // Position the hexagon at the same horizontal position
+        valueIndicator.style.left = `${position}px`;
     }
     
     // Position the result pointer
     function positionResultPointer(value) {
-        if (!resultPointer) return;
+        if (!resultPointer || !valueIndicator) return;
         
         // Calculate percentage along the slider (0-100)
         const percent = (value / 100) * 100;
@@ -127,20 +185,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const sliderWidth = targetNumberSlider.offsetWidth;
         const pointerPosition = (percent / 100) * sliderWidth;
         
-        // Set the position
-        resultPointer.style.left = `${pointerPosition}px`;
+        // Position both elements
+        positionPointerAndHexagon(pointerPosition);
+        
+        // Update the value indicator
+        valueIndicator.textContent = value.toFixed(2);
         
         // If previous position was not set, no animation
         if (!resultPointer.dataset.positioned) {
             resultPointer.style.transition = 'none';
+            valueIndicator.style.transition = 'none';
             resultPointer.dataset.positioned = 'true';
         } else {
             resultPointer.style.transition = 'left 0.2s ease-out';
-        }
-        
-        // Update the value indicator
-        if (valueIndicator) {
-            valueIndicator.textContent = value.toFixed(2);
+            valueIndicator.style.transition = 'left 0.2s ease-out';
         }
     }
     
@@ -155,12 +213,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const percent = (targetNumber / 100) * 100;
         const sliderWidth = targetNumberSlider.offsetWidth;
         const pointerPosition = (percent / 100) * sliderWidth;
-        resultPointer.style.left = `${pointerPosition}px`;
+        
+        // Position both elements
+        positionPointerAndHexagon(pointerPosition);
         
         // Update the value indicator
         if (valueIndicator) {
             valueIndicator.textContent = targetNumber;
         }
+    }
+    
+    // Update the dice display
+    function updateDiceDisplay(number) {
+        if (!diceResult) return;
+        diceResult.textContent = number;
     }
     
     // Update potential win and odds display
@@ -287,7 +353,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const randomNumber = (Math.random() * 100).toFixed(2);
             updateDiceDisplay(randomNumber);
             
-            // Update the value indicator during rolling
+            // Also animate the hexagon position during rolling
+            const randomPosition = Math.random() * targetNumberSlider.offsetWidth;
+            positionPointerAndHexagon(randomPosition);
+            
+            // Update the value indicator with the random number
             if (valueIndicator) {
                 valueIndicator.textContent = randomNumber;
             }
@@ -300,12 +370,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Show final result
                 updateDiceDisplay(result);
                 
-                // Position pointer directly to the final position
-                positionResultPointer(resultValue);
+                // Position pointer and hexagon to the final result position
+                const finalPosition = (resultValue / 100) * targetNumberSlider.offsetWidth;
+                positionPointerAndHexagon(finalPosition);
                 
                 // Update the value indicator with final result
                 if (valueIndicator) {
                     valueIndicator.textContent = resultValue.toFixed(2);
+                    
+                    // Add a quick animation for the hexagon jumping to result
+                    valueIndicator.classList.add('result-jump');
+                    setTimeout(() => {
+                        valueIndicator.classList.remove('result-jump');
+                    }, 300);
                 }
                 
                 // Finish the game
