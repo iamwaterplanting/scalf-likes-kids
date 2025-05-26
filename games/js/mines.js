@@ -264,9 +264,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // End game with loss
             gameEnded = true;
             
-            // Show game over popup after a short delay
+            // Show game over popup briefly and auto-hide
+            gameOverPopup.classList.add('show');
+            
+            // Auto-hide popup after 1 second
             setTimeout(() => {
-                gameOverPopup.classList.add('show');
+                hidePopups();
+                resetGame();
             }, 1000);
         } else {
             // Found a gem!
@@ -331,17 +335,8 @@ document.addEventListener('DOMContentLoaded', () => {
             betDisplay.textContent = betAmount;
         }
         
-        // Reset next gem and current payout displays
-        const nextGemDisplay = document.getElementById('nextGemAmount');
-        if (nextGemDisplay) {
-            const nextAmount = calculateNextPayout(betAmount);
-            nextGemDisplay.textContent = nextAmount.toFixed(2);
-        }
-        
-        const currentPayoutDisplay = document.getElementById('currentPayout');
-        if (currentPayoutDisplay) {
-            currentPayoutDisplay.textContent = '0.00';
-        }
+        // Reset multipliers based on 0 revealed gems
+        updateMultipliers();
     }
     
     function calculateNextPayout(betAmount) {
@@ -350,8 +345,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function calculateCurrentWin() {
-        // Simple calculation for demo purposes
-        return getBetAmount() * 1.5; // 50% profit for demo
+        // Calculate current win based on multiplier and bet amount
+        const betAmount = getBetAmount();
+        const minesCount = parseInt(document.getElementById('minesCount').value) || 3;
+        const totalCells = 25;
+        
+        // Calculate revealed gems (excluding mines)
+        const revealedGems = revealedCells.filter(cell => !minePositions.includes(cell)).length;
+        
+        // Get current multiplier
+        const currentMultiplier = calculateMultiplier(revealedGems, minesCount, totalCells);
+        
+        return betAmount * currentMultiplier;
     }
     
     function updateGameStats() {
@@ -453,10 +458,80 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function updateAfterGemFound() {
         // Update multipliers and potential payout
+        updateMultipliers();
+    }
+    
+    // Helper function to update multipliers based on revealed gems
+    function updateMultipliers() {
+        // Get current bet and mines count
+        const betAmount = getBetAmount();
+        const minesCount = parseInt(document.getElementById('minesCount').value) || 3;
+        const totalCells = 25;
+        const gemCount = totalCells - minesCount;
+        
+        // Calculate current revealed gems (excluding mines)
+        const revealedGems = revealedCells.filter(cell => !minePositions.includes(cell)).length;
+        
+        // Update multiplier displays
+        const multiplierItems = document.querySelectorAll('.multiplier-item');
+        
+        // Current multiplier
+        if (multiplierItems[0]) {
+            const currentMultiplier = calculateMultiplier(revealedGems, minesCount, totalCells);
+            multiplierItems[0].querySelector('span').textContent = `× ${currentMultiplier.toFixed(2)}`;
+            
+            // Set active class only on current multiplier
+            multiplierItems.forEach(item => item.classList.remove('active'));
+            multiplierItems[0].classList.add('active');
+        }
+        
+        // Next tile multiplier
+        if (multiplierItems[1]) {
+            const nextMultiplier = calculateMultiplier(revealedGems + 1, minesCount, totalCells);
+            multiplierItems[1].querySelector('span').textContent = `× ${nextMultiplier.toFixed(2)}`;
+        }
+        
+        // Tile 8 multiplier
+        if (multiplierItems[2] && revealedGems < 8) {
+            const tile8Multiplier = calculateMultiplier(8, minesCount, totalCells);
+            multiplierItems[2].querySelector('span').textContent = `× ${tile8Multiplier.toFixed(2)}`;
+        }
+        
+        // Tile 9 multiplier
+        if (multiplierItems[3] && revealedGems < 9) {
+            const tile9Multiplier = calculateMultiplier(9, minesCount, totalCells);
+            multiplierItems[3].querySelector('span').textContent = `× ${tile9Multiplier.toFixed(2)}`;
+        }
+        
+        // Update current payout based on current multiplier
         const currentPayoutDisplay = document.getElementById('currentPayout');
         if (currentPayoutDisplay) {
-            const currentWin = calculateCurrentWin();
+            const currentWin = betAmount * currentMultiplier;
             currentPayoutDisplay.textContent = currentWin.toFixed(2);
         }
+        
+        // Update next gem amount
+        const nextGemDisplay = document.getElementById('nextGemAmount');
+        if (nextGemDisplay) {
+            const nextAmount = betAmount * calculateMultiplier(revealedGems + 1, minesCount, totalCells);
+            nextGemDisplay.textContent = nextAmount.toFixed(2);
+        }
+    }
+    
+    // Calculate multiplier based on gems revealed and mines count
+    function calculateMultiplier(revealedGems, minesCount, totalCells) {
+        // Base multiplier calculation using house edge
+        const houseEdge = 0.05; // 5% house edge
+        const gemCount = totalCells - minesCount;
+        
+        if (revealedGems <= 0) return 1.0;
+        
+        // Formula: (totalCells / (totalCells - revealedGems)) * (1 - houseEdge)
+        let multiplier = (totalCells / (totalCells - revealedGems)) * (1 - houseEdge);
+        
+        // Cap multiplier for very high values
+        multiplier = Math.min(multiplier, 100);
+        
+        return multiplier;
     }
 }); 

@@ -427,7 +427,7 @@
 .game-setup-content {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 15px;
 }
 
 /* Make sure setup elements are properly displayed after reset */
@@ -450,18 +450,18 @@
 
 .bet-amount-section, .mines-count-section {
     background: rgba(20, 30, 50, 0.5);
-    padding: 15px;
-    border-radius: 10px;
+    padding: 12px;
+    border-radius: 8px;
     border: 1px solid rgba(100, 200, 255, 0.2);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    margin-bottom: 10px;
 }
 
 .mines-btn, .bet-btn {
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 8px 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .mines-btn:hover, .bet-btn:hover {
@@ -477,7 +477,13 @@
 }
 
 .game-stats-section {
-    margin-top: 20px;
+    margin-top: 15px;
+    padding: 12px;
+}
+
+.game-stats-section .stats-item {
+    margin-bottom: 5px;
+    padding: 8px 10px;
 }
 
 /* Custom Game Over and Win Popups */
@@ -487,12 +493,12 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
     display: none;
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    backdrop-filter: blur(5px);
     animation: fadeIn 0.3s ease-in-out;
     border-radius: 10px;
 }
@@ -503,12 +509,12 @@
 
 .popup-content {
     background: linear-gradient(135deg, #141b2d, #1c2639);
-    padding: 30px;
+    padding: 20px;
     border-radius: 15px;
     text-align: center;
     border: 1px solid rgba(100, 200, 255, 0.3);
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-    max-width: 400px;
+    max-width: 320px;
     width: 80%;
     animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -522,8 +528,8 @@
 }
 
 .popup-icon {
-    font-size: 4rem;
-    margin-bottom: 20px;
+    font-size: 3rem;
+    margin-bottom: 10px;
     animation: pulse 2s infinite;
 }
 
@@ -536,8 +542,8 @@
 }
 
 .popup-content h2 {
-    font-size: 2.5rem;
-    margin-bottom: 15px;
+    font-size: 1.8rem;
+    margin-bottom: 10px;
     text-transform: uppercase;
     font-weight: bold;
     letter-spacing: 2px;
@@ -552,14 +558,15 @@
 }
 
 .popup-content p {
-    font-size: 1.2rem;
-    margin-bottom: 25px;
+    font-size: 1rem;
+    margin-bottom: 15px;
     color: rgba(255, 255, 255, 0.9);
 }
 
 .popup-content .play-button {
-    margin-top: 20px;
-    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    font-size: 1.1rem;
 }
 
 @keyframes fadeIn {
