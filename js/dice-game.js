@@ -35,13 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set default dice display
         updateDiceDisplay('0.00');
         
-        // Position the result pointer to the start
-        if (resultPointer) {
-            positionPointer(50); // Default to middle
-            
-            // Add drag functionality
-            makePointerDraggable();
-        }
+        // Make slider draggable
+        makePointerDraggable();
         
         // Hide value indicator initially
         if (valueIndicator) {

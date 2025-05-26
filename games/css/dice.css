@@ -98,8 +98,8 @@
 .dice-slider {
     -webkit-appearance: none;
     width: 100%;
-    height: 16px;
-    border-radius: 8px;
+    height: 24px;
+    border-radius: 12px;
     background: linear-gradient(to right, 
         var(--dice-gradient-start), 
         var(--dice-gradient-mid), 
@@ -109,30 +109,35 @@
     margin: 20px 0;
     position: relative;
     z-index: 5;
-    border: 3px solid #1a1d2e;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), inset 0 0 3px rgba(0, 0, 0, 0.5);
+    border: 4px solid #1a1d2e;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.8), inset 0 0 5px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
 }
 
 .dice-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 30px;
-    height: 30px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.8);
     cursor: pointer;
     position: relative;
     z-index: 10;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+    border: 2px solid #1a1d2e;
 }
 
 .dice-slider::-moz-range-thumb {
-    width: 30px;
-    height: 30px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.8);
     cursor: pointer;
     position: relative;
     z-index: 10;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+    border: 2px solid #1a1d2e;
 }
 
 .slider-labels {
