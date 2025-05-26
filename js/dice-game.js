@@ -129,6 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set the position
         resultPointer.style.left = `${pointerPosition}px`;
         
+        // Update the data-value attribute for the mini hexagon
+        resultPointer.setAttribute('data-value', value.toFixed(2));
+        
         // If previous position was not set, no animation
         if (!resultPointer.dataset.positioned) {
             resultPointer.style.transition = 'none';
@@ -140,24 +143,20 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Update slider color gradient based on bet type
     function updateSliderColors() {
-        if (!sliderTrack) return;
+        // We're using CSS variables that are already set correctly
+        // This function will be called when the slider value changes to update target display
         
         const targetNumber = parseInt(targetNumberSlider.value);
         
-        if (currentBetType === 'under') {
-            // For roll under: Green to the left of target, red to the right
-            sliderTrack.style.background = `linear-gradient(to right, 
-                var(--dice-gradient-end) 0%, 
-                var(--dice-gradient-end) ${targetNumber}%, 
-                var(--dice-gradient-start) ${targetNumber}%, 
-                var(--dice-gradient-start) 100%)`;
-        } else {
-            // For roll over: Red to the left of target, green to the right
-            sliderTrack.style.background = `linear-gradient(to right, 
-                var(--dice-gradient-start) 0%, 
-                var(--dice-gradient-start) ${targetNumber}%, 
-                var(--dice-gradient-end) ${targetNumber}%, 
-                var(--dice-gradient-end) 100%)`;
+        // Update the mini hexagon indicator
+        if (resultPointer) {
+            resultPointer.setAttribute('data-value', targetNumberDisplay.textContent);
+            
+            // Position the pointer at the target number for visual feedback
+            const percent = (targetNumber / 100) * 100;
+            const sliderWidth = targetNumberSlider.offsetWidth;
+            const pointerPosition = (percent / 100) * sliderWidth;
+            resultPointer.style.left = `${pointerPosition}px`;
         }
     }
     
@@ -285,6 +284,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const randomNumber = (Math.random() * 100).toFixed(2);
             updateDiceDisplay(randomNumber);
             
+            // Also update the data-value attribute during rolling
+            if (resultPointer) {
+                resultPointer.setAttribute('data-value', randomNumber);
+            }
+            
             rollTime += rollInterval;
             
             if (rollTime >= rollDuration) {
@@ -367,20 +371,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Apply win/loss color to main result display
-        diceResult.style.color = won ? '#44ff44' : '#ff4444';
+        const winColor = '#00ff4c'; // Bright green
+        const loseColor = '#ff4444'; // Red
+        
+        diceResult.style.color = won ? winColor : loseColor;
         diceResult.style.textShadow = won ? 
-            '0 0 10px rgba(68, 255, 68, 0.5)' : 
-            '0 0 10px rgba(255, 68, 68, 0.5)';
+            '0 0 20px rgba(0, 255, 76, 0.7)' : 
+            '0 0 20px rgba(255, 68, 68, 0.7)';
         
         // Apply color to result pointer
         if (resultPointer) {
-            resultPointer.style.backgroundColor = won ? '#44ff44' : '#ff4444';
+            resultPointer.style.backgroundColor = won ? winColor : loseColor;
             resultPointer.style.boxShadow = won ? 
-                '0 0 10px rgba(68, 255, 68, 0.8)' : 
-                '0 0 10px rgba(255, 68, 68, 0.8)';
+                '0 0 15px rgba(0, 255, 76, 0.8)' : 
+                '0 0 15px rgba(255, 68, 68, 0.8)';
+            
+            // Add highlight effect
+            resultPointer.classList.add('highlight');
                 
             // Reset to white after delay
             setTimeout(() => {
+                resultPointer.classList.remove('highlight');
                 resultPointer.style.backgroundColor = '#ffffff';
                 resultPointer.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.5)';
             }, 2000);
@@ -389,9 +400,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show result
         resultNumber.textContent = resultValue.toFixed(2);
         resultText.textContent = won ? 'You Won!' : 'You Lost!';
-        resultText.style.color = won ? '#44ff44' : '#ff4444';
+        resultText.style.color = won ? winColor : loseColor;
         resultAmount.textContent = formatCurrency(outcomeAmount);
-        resultAmount.style.color = won ? '#44ff44' : '#ff4444';
+        resultAmount.style.color = won ? winColor : loseColor;
         resultSection.style.display = 'block';
         
         // Add to game history
@@ -424,13 +435,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (diceResult) {
             updateDiceDisplay('0.00');
-            diceResult.style.color = '#ffffff'; // Reset color
-            diceResult.style.textShadow = 'none'; // Reset shadow
+            diceResult.style.color = '#00ff4c'; // Reset color to green
+            diceResult.style.textShadow = '0 0 20px rgba(0, 255, 76, 0.7)'; // Reset shadow
         }
         
         // Reset pointer position
         if (resultPointer) {
             positionResultPointer(0);
+            resultPointer.setAttribute('data-value', '0.00');
         }
     }
     

@@ -68,9 +68,6 @@
                 <div class="dice-game">
                     <div class="result-display">
                         <div class="result-value" id="diceResult">0.00</div>
-                        <div class="result-animation" id="resultAnimation">
-                            <!-- Will be populated by JS -->
-                        </div>
                     </div>
                     
                     <div class="betting-container">
@@ -96,9 +93,8 @@
                         
                         <div class="slider-container">
                             <label for="targetNumber">Target Number: <span id="targetNumberDisplay">50</span></label>
-                            <div class="slider-track" id="sliderTrack"></div>
                             <input type="range" id="targetNumber" min="1" max="99" value="50" class="dice-slider">
-                            <div class="dice-result-pointer" id="resultPointer"></div>
+                            <div class="dice-result-pointer" id="resultPointer" data-value="0.00"></div>
                             <div class="slider-labels">
                                 <span>1</span>
                                 <span>25</span>
