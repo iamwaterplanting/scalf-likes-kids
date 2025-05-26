@@ -961,10 +961,11 @@
             if (dealButton) {
                 console.log("Reinitializing deal button");
                 dealButton.addEventListener('click', function() {
-                    if (typeof dealCards === 'function') {
-                        dealCards();
+                    if (typeof startNewHand === 'function') {
+                        console.log("Deal button clicked, calling startNewHand");
+                        startNewHand();
                     } else {
-                        console.error("dealCards function not found");
+                        console.error("startNewHand function not found");
                     }
                 });
             }
@@ -973,8 +974,8 @@
             const hitButton = document.getElementById('hitButton');
             if (hitButton) {
                 hitButton.addEventListener('click', function() {
-                    if (typeof hit === 'function') {
-                        hit();
+                    if (typeof playerHit === 'function') {
+                        playerHit();
                         setTimeout(updateCardLayout, 100);
                     }
                 });
@@ -984,8 +985,8 @@
             const standButton = document.getElementById('standButton');
             if (standButton) {
                 standButton.addEventListener('click', function() {
-                    if (typeof stand === 'function') {
-                        stand();
+                    if (typeof playerStand === 'function') {
+                        playerStand();
                         setTimeout(updateCardLayout, 100);
                     }
                 });
@@ -995,8 +996,8 @@
             const doubleButton = document.getElementById('doubleButton');
             if (doubleButton) {
                 doubleButton.addEventListener('click', function() {
-                    if (typeof doubleBet === 'function') {
-                        doubleBet();
+                    if (typeof playerDoubleDown === 'function') {
+                        playerDoubleDown();
                         setTimeout(updateCardLayout, 100);
                     }
                 });
