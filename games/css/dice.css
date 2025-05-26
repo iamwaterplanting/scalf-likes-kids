@@ -112,27 +112,23 @@
 .dice-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 0;
-    background: #ffffff;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: transparent;
     cursor: pointer;
     position: relative;
     z-index: 10;
-    border: 2px solid #1a1d2e;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
 .dice-slider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 0;
-    background: #ffffff;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: transparent;
     cursor: pointer;
     position: relative;
     z-index: 10;
-    border: 2px solid #1a1d2e;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
 .slider-labels {
@@ -162,24 +158,24 @@
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
 }
 
-/* Result hexagon indicator (separated from pointer) */
-.result-hexagon {
+/* Add mini hexagon indicator */
+.dice-result-pointer::after {
+    content: attr(data-value);
     position: absolute;
-    top: 15px;
+    top: -58px;
     left: 50%;
     transform: translateX(-50%);
     background-color: white;
     color: #1a3851;
     font-weight: bold;
-    font-size: 1.2rem;
-    width: 60px;
-    height: 52px;
+    font-size: 0.9rem;
+    width: 45px;
+    height: 45px;
     display: flex;
     align-items: center;
     justify-content: center;
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-    z-index: 20;
 }
 
 .dice-result-pointer.highlight {
