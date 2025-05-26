@@ -26,6 +26,9 @@ const suitSymbols = {
     'spades': '♠'
 };
 
+// Starting chip values - reduced to more reasonable amounts
+const chipValues = [5, 10, 25, 50, 100];
+
 // Sound effects
 const dealSound = new Audio('../assets/sounds/card-deal.mp3');
 const winSound = new Audio('../assets/sounds/win.mp3');
@@ -51,6 +54,7 @@ let handsPlayedElement;
 let handsWonElement;
 let blackjacksElement;
 let totalProfitElement;
+let playerLabelElement;
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', () => {
@@ -73,6 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
     handsWonElement = document.getElementById('handsWon');
     blackjacksElement = document.getElementById('blackjacks');
     totalProfitElement = document.getElementById('totalProfit');
+    playerLabelElement = document.getElementById('playerLabel');
+    
+    // Update player label with the user's username
+    updatePlayerName();
+    
+    // Update the chip values to be more reasonable
+    updateChipValues();
     
     // Create a fresh deck
     createDeck();
@@ -85,6 +96,54 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log('Blackjack game initialized');
 });
+
+// Update the player's name from Supabase authentication
+function updatePlayerName() {
+    if (playerLabelElement) {
+        // Try to get the current user from BetaAuth
+        const currentUser = window.BetaAuth?.getCurrentUser();
+        if (currentUser && currentUser.username) {
+            // Use the username from Supabase
+            playerLabelElement.textContent = currentUser.username;
+            console.log('Updated player name to:', currentUser.username);
+        } else {
+            // Default to "Player" if no username is found
+            playerLabelElement.textContent = "Player";
+            
+            // Set a listener to try again when auth state changes
+            if (window.BetaAuth) {
+                window.BetaAuth.onAuthStateChange((user) => {
+                    if (user && user.username) {
+                        playerLabelElement.textContent = user.username;
+                        console.log('Auth state changed - Updated player name to:', user.username);
+                    }
+                });
+            }
+            
+            // Try again after a short delay (in case auth loads after this script)
+            setTimeout(() => {
+                const retryUser = window.BetaAuth?.getCurrentUser();
+                if (retryUser && retryUser.username && playerLabelElement) {
+                    playerLabelElement.textContent = retryUser.username;
+                    console.log('Delayed update - Updated player name to:', retryUser.username);
+                }
+            }, 1000);
+        }
+    }
+}
+
+// Update the chip values to be more reasonable
+function updateChipValues() {
+    const chipElements = document.querySelectorAll('.chip');
+    if (chipElements.length === 5) {
+        // Update the chip values and text content
+        for (let i = 0; i < chipElements.length; i++) {
+            chipElements[i].setAttribute('data-value', chipValues[i]);
+            chipElements[i].textContent = chipValues[i];
+        }
+        console.log('Updated chip values to more reasonable amounts');
+    }
+}
 
 // Create and shuffle a new deck
 function createDeck() {
@@ -234,6 +293,9 @@ function startNewHand() {
     resultMessageElement.textContent = '';
     resultMessageElement.className = 'result-message';
     
+    // Update player name again in case the user just logged in
+    updatePlayerName();
+    
     // Ensure score displays are visible
     playerScoreElement.classList.add('show');
     dealerScoreElement.classList.add('show');
@@ -248,50 +310,64 @@ function startNewHand() {
     const balanceElement = document.querySelector('.balance-amount');
     if (balanceElement) {
         const currentBalance = parseInt(balanceElement.textContent.replace(/,/g, ''));
-        doubleButton.disabled = isNaN(currentBalance) || currentBalance < currentBet;
+        doubleButton.disabled = !(gameInProgress && currentBalance >= currentBet);
     } else {
         doubleButton.disabled = true;
     }
     
-    // Create a new deck if needed
-    if (deck.length < 15) {
-        console.log('Deck running low, creating a new one');
-        createDeck();
-    }
-    
-    // Deal initial cards with delay
+    // Deal initial cards
     setTimeout(() => {
-        dealCard(playerHand, playerHandElement, true);
-        updatePlayerScore();
+        dealCard(playerHand, playerHandElement);
     }, 300);
     
     setTimeout(() => {
-        dealCard(dealerHand, dealerHandElement, false); // First dealer card face down
-        updateDealerScore();
+        dealCard(dealerHand, dealerHandElement);
     }, 600);
     
     setTimeout(() => {
-        dealCard(playerHand, playerHandElement, true);
-        updatePlayerScore();
-        
-        // Check for player blackjack
-        const playerScore = calculateHandValue(playerHand);
-        if (playerScore === 21) {
-            playerScoreElement.classList.add('pulse-once');
-            
-            // Wait a moment then stand
-            setTimeout(() => {
-                playerStand();
-            }, 1000);
-        }
+        dealCard(playerHand, playerHandElement);
     }, 900);
     
     setTimeout(() => {
-        dealCard(dealerHand, dealerHandElement, true); // Second dealer card face up
-        updateDealerScore();
+        dealCard(dealerHand, dealerHandElement, false); // Dealer's second card face down
     }, 1200);
     
-    // Update stats
+    // Update scores
+    setTimeout(() => {
+        updatePlayerScore();
+        updateDealerScore();
+        
+        // Check for blackjack
+        if (calculateHandValue(playerHand) === 21) {
+            dealerScoreElement.classList.add('show');
+            flipCard(dealerHandElement.lastChild, dealerHand[1]);
+            dealerScoreElement.textContent = calculateHandValue(dealerHand);
+            
+            if (calculateHandValue(dealerHand) === 21) {
+                showResult('Push! Both have Blackjack', 'push');
+                returnBet();
+            } else {
+                showResult('Blackjack! You Win!', 'win');
+                payoutBlackjack();
+                handsWon++;
+                blackjacks++;
+            }
+            
+            handsPlayed++;
+            handsPlayedElement.textContent = handsPlayed;
+            handsWonElement.textContent = handsWon;
+            blackjacksElement.textContent = blackjacks;
+            
+            saveGameStats();
+            
+            // Show new hand button
+            newHandButton.style.display = 'inline-block';
+            hitButton.disabled = true;
+            standButton.disabled = true;
+            doubleButton.disabled = true;
+        }
+    }, 1500);
+    
     handsPlayed++;
     handsPlayedElement.textContent = handsPlayed;
     saveGameStats();
