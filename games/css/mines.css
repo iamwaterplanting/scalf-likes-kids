@@ -430,6 +430,15 @@
     gap: 25px;
 }
 
+/* Make sure setup elements are properly displayed after reset */
+.game-not-started .game-setup-content {
+    display: flex !important;
+}
+
+.game-started .game-setup-content {
+    display: none !important;
+}
+
 .game-setup-content label {
     color: #4facfe;
     font-size: 1.2rem;
@@ -469,4 +478,102 @@
 
 .game-stats-section {
     margin-top: 20px;
+}
+
+/* Custom Game Over and Win Popups */
+.game-over-popup, .win-popup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease-in-out;
+    border-radius: 10px;
+}
+
+.game-over-popup.show, .win-popup.show {
+    display: flex;
+}
+
+.popup-content {
+    background: linear-gradient(135deg, #141b2d, #1c2639);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    border: 1px solid rgba(100, 200, 255, 0.3);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    max-width: 400px;
+    width: 80%;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.game-over-popup .popup-content {
+    border: 1px solid rgba(255, 100, 100, 0.4);
+}
+
+.win-popup .popup-content {
+    border: 1px solid rgba(100, 255, 100, 0.4);
+}
+
+.popup-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    animation: pulse 2s infinite;
+}
+
+.game-over-popup .popup-icon {
+    color: #ff4444;
+}
+
+.win-popup .popup-icon {
+    color: #44ff88;
+}
+
+.popup-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.game-over-popup h2 {
+    color: #ff4444;
+}
+
+.win-popup h2 {
+    color: #44ff88;
+}
+
+.popup-content p {
+    font-size: 1.2rem;
+    margin-bottom: 25px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.popup-content .play-button {
+    margin-top: 20px;
+    width: 100%;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
 } 

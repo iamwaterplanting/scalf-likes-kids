@@ -6,6 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const betButton = document.getElementById('betButton');
     const cashoutBtn = document.getElementById('cashoutBtn');
     const minesGrid = document.getElementById('minesGrid');
+    const gameOverPopup = document.getElementById('gameOverPopup');
+    const winPopup = document.getElementById('winPopup');
+    const newGameBtn = document.getElementById('newGameBtn');
+    const newGameWinBtn = document.getElementById('newGameWinBtn');
+    const gameOverMessage = document.getElementById('gameOverMessage');
+    const winMessage = document.getElementById('winMessage');
+    const winAmount = document.getElementById('winAmount');
     
     // Game elements
     const gamePlayingElements = document.querySelectorAll('.game-playing-content');
@@ -52,8 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         betButton.classList.remove('pulse-animation');
                     }, 1000);
                 } else if (gameEnded) {
-                    // Show message when clicking after game ended
-                    showMessage('Game has ended. Start a new game to play again!');
+                    // Do nothing if game has ended - popup is already showing
                 }
             });
             
@@ -67,7 +73,22 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Cashout button ends the game
         if (cashoutBtn) {
-            cashoutBtn.addEventListener('click', endGame);
+            cashoutBtn.addEventListener('click', () => endGame(true));
+        }
+        
+        // New game buttons in popups
+        if (newGameBtn) {
+            newGameBtn.addEventListener('click', () => {
+                hidePopups();
+                resetGame();
+            });
+        }
+        
+        if (newGameWinBtn) {
+            newGameWinBtn.addEventListener('click', () => {
+                hidePopups();
+                resetGame();
+            });
         }
         
         // Mine count selection
@@ -119,6 +140,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        // Hide any visible popups
+        hidePopups();
+        
         // Reset game state
         gameStarted = true;
         gameEnded = false;
@@ -151,7 +175,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function endGame(isWin = true) {
-        // Handle game end (cashout)
+        if (gameEnded) return; // Prevent multiple calls
+        
+        // Set game ended flag
+        gameEnded = true;
+        
+        // Handle game end based on win/loss
         if (isWin) {
             const currentWinAmount = calculateCurrentWin();
             
@@ -159,21 +188,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Add win amount to balance
                 updateBalance(currentWinAmount);
                 
-                // Show win message
-                showMessage(`You won ${currentWinAmount} coins!`);
+                // Show win popup
+                winAmount.textContent = currentWinAmount;
+                winPopup.classList.add('show');
                 
                 // Update game stats
                 updateStats(true, currentWinAmount - getBetAmount());
             }
         }
-        
-        // Set game ended flag
-        gameEnded = true;
-        
-        // Reset game state after delay
-        setTimeout(() => {
-            resetGame();
-        }, 1000);
     }
     
     function resetGame() {
@@ -192,8 +214,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         gameSetupElements.forEach(el => {
-            el.style.display = 'block';
+            el.style.display = 'flex';
         });
+        
+        // Make sure the bet button is visible
+        if (betButton) {
+            betButton.style.display = 'block';
+        }
         
         // Remove "started" class from grid
         minesGrid.classList.remove('game-active');
@@ -203,6 +230,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update stats display
         updateGameStats();
+    }
+    
+    function hidePopups() {
+        // Hide any visible popups
+        gameOverPopup.classList.remove('show');
+        winPopup.classList.remove('show');
     }
     
     function revealCell(index) {
@@ -231,10 +264,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // End game with loss
             gameEnded = true;
             
+            // Show game over popup after a short delay
             setTimeout(() => {
-                showMessage('Game Over! You hit a mine!');
-                resetGame();
-            }, 1500);
+                gameOverPopup.classList.add('show');
+            }, 1000);
         } else {
             // Found a gem!
             cell.classList.add('revealed-gem');
@@ -376,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function showMessage(message) {
-        // Simple alert for now, can be replaced with custom modal
+        // For non-game-over messages, still use alert for now
         alert(message);
     }
     
