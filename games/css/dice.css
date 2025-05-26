@@ -35,13 +35,15 @@
 
 .game-title {
     text-align: center;
-    font-size: 3.5rem;
-    margin-bottom: 10px;
+    font-size: 4.5rem;
+    margin-bottom: 15px;
     background: linear-gradient(to right, #11ff66, #00cc44);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 20px rgba(17, 255, 102, 0.7);
-    letter-spacing: 2px;
+    text-shadow: 0 0 25px rgba(17, 255, 102, 0.8);
+    letter-spacing: 3px;
+    font-weight: 900;
+    text-transform: uppercase;
 }
 
 /* Result Display Styling */
@@ -160,19 +162,9 @@
     z-index: 1;
 }
 
+/* Remove slider track - using dice-slider background instead */
 .slider-track {
-    position: absolute;
-    top: 65px;
-    left: 0;
-    right: 0;
-    height: 10px;
-    border-radius: 5px;
-    background: linear-gradient(to right, 
-        var(--dice-gradient-start), 
-        var(--dice-gradient-mid), 
-        var(--dice-gradient-end)
-    );
-    z-index: 1;
+    display: none;
 }
 
 /* Bet Type Selection */
@@ -328,6 +320,11 @@
 .roll-button:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+}
+
+.roll-button.loading {
+    opacity: 0.6;
+    pointer-events: none;
 }
 
 /* Result Section */
