@@ -56,10 +56,12 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 140px;
+    min-height: 160px;
     position: relative;
     margin-top: 20px;
     flex-wrap: wrap;
+    gap: 5px;
+    perspective: 1000px;
 }
 
 .score-display {
@@ -85,7 +87,7 @@
     height: 150px;
     background-color: white;
     border-radius: 8px;
-    margin: 0 5px;
+    margin: 0;
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
     position: relative;
     transform: translateY(20px);
