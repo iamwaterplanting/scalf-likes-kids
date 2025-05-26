@@ -14,6 +14,7 @@ let multiplierStep = 0.5; // Increased multiplier step for faster growth
 let cardHistory = []; // Array to track card history
 let maxHistoryCards = 8; // Maximum number of history cards to show
 let specialAnimationThreshold = 8; // Threshold for special animation
+let pageLoaded = false; // Track if page is fully loaded
 
 // Game stats
 let gamesPlayed = 0;
@@ -79,6 +80,40 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Initializing Hi-Lo game');
     
     // Initialize DOM elements
+    initializeElements();
+    
+    // Create a fresh deck
+    createDeck();
+    
+    // Set up event listeners
+    setupEventListeners();
+    
+    // Load game stats from local storage
+    loadGameStats();
+    
+    // Initialize potential win amount
+    updatePotentialWin();
+    
+    // Create card history row if it doesn't exist
+    createHistoryRowIfNeeded();
+});
+
+// Function to start animations after page load
+function startHiLoAnimations() {
+    console.log('Starting Hi-Lo animations');
+    pageLoaded = true;
+    
+    // Add any specific animations here that should only run after loading
+    setTimeout(() => {
+        // Only run the card flip animation if we're not in a game
+        if (!gameInProgress && currentCardElement) {
+            currentCardElement.classList.add('card-reveal');
+        }
+    }, 100);
+}
+
+// Initialize DOM elements
+function initializeElements() {
     currentCardElement = document.getElementById('currentCard');
     nextCardElement = document.getElementById('nextCard');
     predictionResultElement = document.getElementById('predictionResult');
@@ -97,20 +132,10 @@ document.addEventListener('DOMContentLoaded', () => {
     gamesWonElement = document.getElementById('gamesWon');
     bestStreakElement = document.getElementById('bestStreak');
     totalProfitElement = document.getElementById('totalProfit');
-    
-    // Create a fresh deck
-    createDeck();
-    
-    // Set up event listeners
-    setupEventListeners();
-    
-    // Load game stats from local storage
-    loadGameStats();
-    
-    // Initialize potential win amount
-    updatePotentialWin();
-    
-    // Create card history row if it doesn't exist
+}
+
+// Create card history row if it doesn't exist
+function createHistoryRowIfNeeded() {
     if (!document.getElementById('cardHistoryRow')) {
         const cardHistoryContainer = document.createElement('div');
         cardHistoryContainer.className = 'card-history-container';
@@ -127,9 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cardContainer.parentNode.insertBefore(cardHistoryContainer, cardContainer.nextSibling);
         }
     }
-    
-    console.log('Hi-Lo game initialized');
-});
+}
 
 // Create and shuffle a new deck
 function createDeck() {
@@ -336,10 +359,12 @@ function startGame() {
     // Clear any previous animations
     currentCardElement.classList.remove('card-reveal', 'card-win', 'card-lose');
     
-    // Add reveal animation to current card
-    setTimeout(() => {
-        currentCardElement.classList.add('card-reveal');
-    }, 100);
+    // Add reveal animation to current card (only if page is loaded)
+    if (pageLoaded) {
+        setTimeout(() => {
+            currentCardElement.classList.add('card-reveal');
+        }, 100);
+    }
     
     // Prepare next card (hidden)
     nextCard = deck.pop();
@@ -542,6 +567,12 @@ function correctPrediction(predictionChoice) {
 // Trigger special animation for reaching 8+ cards
 function triggerSpecialAnimation() {
     console.log("Triggering special animation for 8+ streak!");
+    
+    // If we're still loading, briefly delay the special animation
+    if (!pageLoaded) {
+        setTimeout(() => triggerSpecialAnimation(), 100);
+        return;
+    }
     
     // Create the special win overlay
     const specialWinOverlay = document.createElement('div');
@@ -1063,4 +1094,7 @@ function addCardToHistory(card, choice) {
         // Remove oldest card from array
         cardHistory.shift();
     }
-} 
+}
+
+// Make the startHiLoAnimations function globally available
+window.startHiLoAnimations = startHiLoAnimations; 
