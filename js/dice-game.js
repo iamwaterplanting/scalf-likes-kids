@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const betShortcuts = document.querySelectorAll('.bet-shortcut');
     const gameHistoryBody = document.getElementById('gameHistoryBody');
     const resultPointer = document.getElementById('resultPointer');
-    const sliderTrack = document.getElementById('sliderTrack');
+    const resultHexagon = document.getElementById('resultHexagon');
     
     // Game state
     let isRolling = false;
@@ -109,12 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadGameHistory();
     }
     
-    // Update the dice display
-    function updateDiceDisplay(number) {
-        if (!diceResult) return;
-        diceResult.textContent = number;
-    }
-    
     // Position the result pointer
     function positionResultPointer(value) {
         if (!resultPointer) return;
@@ -129,9 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set the position
         resultPointer.style.left = `${pointerPosition}px`;
         
-        // Update the data-value attribute for the mini hexagon
-        resultPointer.setAttribute('data-value', value.toFixed(2));
-        
         // If previous position was not set, no animation
         if (!resultPointer.dataset.positioned) {
             resultPointer.style.transition = 'none';
@@ -141,6 +132,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // Update the hexagon display
+    function updateResultHexagon(value) {
+        if (resultHexagon) {
+            resultHexagon.textContent = parseFloat(value).toFixed(2);
+        }
+    }
+    
+    // Update the dice display
+    function updateDiceDisplay(number) {
+        if (!diceResult) return;
+        diceResult.textContent = number;
+        
+        // Also update hexagon
+        updateResultHexagon(number);
+    }
+    
     // Update slider color gradient based on bet type
     function updateSliderColors() {
         // We're using CSS variables that are already set correctly
@@ -148,11 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const targetNumber = parseInt(targetNumberSlider.value);
         
-        // Update the mini hexagon indicator
+        // Position the pointer at the target number for visual feedback
         if (resultPointer) {
-            resultPointer.setAttribute('data-value', targetNumberDisplay.textContent);
-            
-            // Position the pointer at the target number for visual feedback
             const percent = (targetNumber / 100) * 100;
             const sliderWidth = targetNumberSlider.offsetWidth;
             const pointerPosition = (percent / 100) * sliderWidth;
@@ -283,11 +287,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Random number between 0.00 and 99.99 during rolling
             const randomNumber = (Math.random() * 100).toFixed(2);
             updateDiceDisplay(randomNumber);
-            
-            // Also update the data-value attribute during rolling
-            if (resultPointer) {
-                resultPointer.setAttribute('data-value', randomNumber);
-            }
             
             rollTime += rollInterval;
             
@@ -442,7 +441,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset pointer position
         if (resultPointer) {
             positionResultPointer(0);
-            resultPointer.setAttribute('data-value', '0.00');
+        }
+        
+        // Reset hexagon
+        if (resultHexagon) {
+            resultHexagon.textContent = '0.00';
         }
     }
     
