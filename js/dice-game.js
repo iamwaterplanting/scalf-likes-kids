@@ -120,11 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function makePointerDraggable() {
-        if (!resultPointer || !targetNumberSlider) return;
+        if (!targetNumberSlider) return;
         
-        // Mouse down event starts the drag
-        resultPointer.addEventListener('mousedown', startDrag);
-        resultPointer.addEventListener('touchstart', startDrag);
+        // Since the circle is hidden, make the slider area itself draggable
+        const sliderContainer = targetNumberSlider.parentElement;
+        
+        // Add event listeners to the slider container
+        sliderContainer.addEventListener('mousedown', startDrag);
+        sliderContainer.addEventListener('touchstart', startDrag);
         
         // Mouse move events handle the dragging
         document.addEventListener('mousemove', drag);
@@ -135,8 +138,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('touchend', endDrag);
         
         function startDrag(e) {
-            e.preventDefault();
+            // Only start dragging if not rolling
+            if (isRolling) return;
+            
             isDragging = true;
+            
+            // Handle drag start position
+            drag(e);
         }
         
         function drag(e) {
@@ -159,14 +167,6 @@ document.addEventListener('DOMContentLoaded', () => {
             targetNumberSlider.value = value;
             targetNumberDisplay.textContent = value;
             
-            // Only position the pointer, not the hexagon
-            positionPointer(position);
-            
-            // Hide value indicator while dragging
-            if (valueIndicator) {
-                valueIndicator.classList.remove('show');
-            }
-            
             // Update game calculations
             updatePotentialWinAndOdds();
         }
@@ -176,21 +176,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Position only the pointer square
-    function positionPointer(position) {
-        if (!resultPointer) return;
-        resultPointer.style.left = `${position}px`;
+    // Position the hexagon at a specific position
+    function positionHexagon(position, value) {
+        if (!valueIndicator) return;
+        valueIndicator.style.left = `${position}px`;
+        if (value) {
+            valueIndicator.textContent = value;
+        }
     }
-    
-    // Show the hexagon indicator at a specific position with a value
+
+    // Show the hexagon indicator with a value
     function showResultIndicator(position, value) {
         if (!valueIndicator) return;
         
         // Position the hexagon directly
-        valueIndicator.style.left = `${position}px`;
-        
-        // Set the value
-        valueIndicator.textContent = value;
+        positionHexagon(position, value);
         
         // Make it visible
         valueIndicator.classList.add('show');
@@ -364,18 +364,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sliderWidth = targetNumberSlider.offsetWidth;
                 const resultPosition = resultPercent * sliderWidth;
                 
-                // Move the pointer to result position
-                positionPointer(resultPosition);
-                
                 // Show the hexagon with the result value at that position
                 setTimeout(() => {
                     showResultIndicator(resultPosition, resultValue.toFixed(2));
-                }, 300);
+                }, 100);
                 
                 // Finish the game
                 setTimeout(() => {
                     finishRoll(betAmount, targetNumber, resultValue);
-                }, 500);
+                }, 400);
             }
         }, rollInterval);
     }
@@ -395,11 +392,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hide the hexagon
         if (valueIndicator) {
             valueIndicator.classList.remove('show');
-        }
-        
-        // Reset pointer position to middle
-        if (resultPointer) {
-            positionPointer(targetNumberSlider.offsetWidth / 2);
         }
     }
     
@@ -520,6 +512,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset game state
         isRolling = false;
         rollButton.disabled = false;
+        
+        // Apply color to result hexagon
+        if (valueIndicator) {
+            valueIndicator.style.backgroundColor = won ? winColor : loseColor;
+            valueIndicator.style.boxShadow = won ? 
+                '0 0 15px rgba(0, 255, 76, 0.8)' : 
+                '0 0 15px rgba(255, 68, 68, 0.8)';
+                
+            // Reset to white after delay
+            setTimeout(() => {
+                valueIndicator.style.backgroundColor = '#ffffff';
+                valueIndicator.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.5)';
+            }, 2000);
+        }
     }
     
     // Add a game to history
