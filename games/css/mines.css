@@ -194,7 +194,7 @@
 }
 
 .play-button {
-    padding: 12px;
+    padding: 15px;
     background: linear-gradient(to right, #2979ff, #00b0ff);
     color: #fff;
     font-weight: bold;
@@ -202,12 +202,17 @@
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 1.1rem;
+    font-size: 1.6rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 25px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .play-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(41, 121, 255, 0.4);
 }
 
 /* Game statistics display */
@@ -313,6 +318,17 @@
 .mines-grid-cell.revealed-mine {
     background: linear-gradient(135deg, rgba(200, 0, 0, 0.5), rgba(150, 0, 0, 0.7));
     border-color: rgba(255, 100, 100, 0.4);
+    animation: explode 0.5s ease-out;
+}
+
+@keyframes explode {
+    0% { transform: scale(1); }
+    10% { transform: scale(1.1); }
+    30% { transform: scale(0.9); }
+    50% { transform: scale(1.15); }
+    70% { transform: scale(0.95); }
+    90% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 
 .mines-grid-cell i {
@@ -358,4 +374,99 @@
 
 .pulse-animation {
     animation: pulse-animation 1.5s infinite;
+}
+
+/* Game Stats Section Styling */
+.game-stats-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(20, 30, 50, 0.7);
+    border-radius: 10px;
+    border: 1px solid rgba(100, 200, 255, 0.3);
+}
+
+.game-stats-section h3 {
+    color: #4facfe;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    text-align: center;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(79, 172, 254, 0.3);
+}
+
+.game-setup-content h3 {
+    color: #4facfe;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    text-align: center;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(79, 172, 254, 0.3);
+}
+
+.game-setup-content .stats-item {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+}
+
+.game-setup-content .stats-item span:first-child {
+    font-weight: 500;
+}
+
+.game-setup-content .stats-item span:last-child {
+    color: #4facfe;
+    font-weight: bold;
+}
+
+/* Enhanced Game Setup Content */
+.game-setup-content {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.game-setup-content label {
+    color: #4facfe;
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: block;
+    text-shadow: 0 0 10px rgba(79, 172, 254, 0.3);
+}
+
+.bet-amount-section, .mines-count-section {
+    background: rgba(20, 30, 50, 0.5);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(100, 200, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.mines-btn, .bet-btn {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.mines-btn:hover, .bet-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(100, 200, 255, 0.3);
+}
+
+.mines-btn.active {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    color: #0c1423;
+    box-shadow: 0 0 15px rgba(79, 172, 254, 0.5);
+    border: none;
+}
+
+.game-stats-section {
+    margin-top: 20px;
 } 

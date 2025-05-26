@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Game state
     let gameStarted = false;
+    let gameEnded = false;
+    let minePositions = [];
+    let revealedCells = [];
     
     // Initialize UI
     initUI();
@@ -38,16 +41,19 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.className = 'mines-grid-cell';
             cell.dataset.index = i;
             
-            // Add click event only if game is started
+            // Add click event
             cell.addEventListener('click', () => {
-                if (gameStarted) {
+                if (gameStarted && !gameEnded && !revealedCells.includes(i)) {
                     revealCell(i);
-                } else {
+                } else if (!gameStarted) {
                     // Animate the bet button to indicate user should start game
                     betButton.classList.add('pulse-animation');
                     setTimeout(() => {
                         betButton.classList.remove('pulse-animation');
                     }, 1000);
+                } else if (gameEnded) {
+                    // Show message when clicking after game ended
+                    showMessage('Game has ended. Start a new game to play again!');
                 }
             });
             
@@ -113,11 +119,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        // Reset game state
+        gameStarted = true;
+        gameEnded = false;
+        revealedCells = [];
+        
         // Deduct bet from balance
         updateBalance(-betAmount);
-        
-        // Update game state
-        gameStarted = true;
         
         // Update UI
         minesContainer.classList.remove('game-not-started');
@@ -142,25 +150,37 @@ document.addEventListener('DOMContentLoaded', () => {
         generateMinePositions();
     }
     
-    function endGame() {
+    function endGame(isWin = true) {
         // Handle game end (cashout)
-        const currentWinAmount = calculateCurrentWin();
-        
-        if (currentWinAmount > 0) {
-            // Add win amount to balance
-            updateBalance(currentWinAmount);
+        if (isWin) {
+            const currentWinAmount = calculateCurrentWin();
             
-            // Show win message
-            showMessage(`You won ${currentWinAmount} coins!`);
+            if (currentWinAmount > 0) {
+                // Add win amount to balance
+                updateBalance(currentWinAmount);
+                
+                // Show win message
+                showMessage(`You won ${currentWinAmount} coins!`);
+                
+                // Update game stats
+                updateStats(true, currentWinAmount - getBetAmount());
+            }
         }
         
-        // Reset game state
-        resetGame();
+        // Set game ended flag
+        gameEnded = true;
+        
+        // Reset game state after delay
+        setTimeout(() => {
+            resetGame();
+        }, 1000);
     }
     
     function resetGame() {
         // Reset game state
         gameStarted = false;
+        gameEnded = false;
+        revealedCells = [];
         
         // Update UI
         minesContainer.classList.add('game-not-started');
@@ -180,9 +200,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Reset the grid
         createMinesGrid();
+        
+        // Update stats display
+        updateGameStats();
     }
     
     function revealCell(index) {
+        // Add to revealed cells
+        revealedCells.push(index);
+        
         // Check if cell is a mine or gem
         const isMine = checkIfMine(index);
         
@@ -199,7 +225,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Show all mines
             revealAllMines();
             
+            // Update stats (loss)
+            updateStats(false, -getBetAmount());
+            
             // End game with loss
+            gameEnded = true;
+            
             setTimeout(() => {
                 showMessage('Game Over! You hit a mine!');
                 resetGame();
@@ -287,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function calculateCurrentWin() {
         // Simple calculation for demo purposes
-        return 0; // Replace with actual win calculation
+        return getBetAmount() * 1.5; // 50% profit for demo
     }
     
     function updateGameStats() {
@@ -311,6 +342,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) + '%'
                 : '0%';
         }
+    }
+    
+    function updateStats(isWin, profit) {
+        // Get current stats
+        const stats = getGameStats();
+        
+        // Update stats
+        stats.gamesPlayed++;
+        if (isWin) {
+            stats.gamesWon++;
+        }
+        stats.totalProfit += profit;
+        
+        // Save updated stats
+        localStorage.setItem('minesGameStats', JSON.stringify(stats));
     }
     
     function getGameStats() {
@@ -340,22 +386,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function generateMinePositions() {
-        // Implementation placeholder
-        console.log('Generating mine positions');
+        // Generate random mine positions based on selected mines count
+        const minesCount = parseInt(document.getElementById('minesCount').value) || 3;
+        minePositions = [];
+        
+        while (minePositions.length < minesCount) {
+            const pos = Math.floor(Math.random() * 25);
+            if (!minePositions.includes(pos)) {
+                minePositions.push(pos);
+            }
+        }
+        
+        console.log('Mine positions:', minePositions);
     }
     
     function checkIfMine(index) {
-        // Implementation placeholder - random for demo
-        return Math.random() < 0.2; // 20% chance of being a mine
+        // Check if the index is in minePositions
+        return minePositions.includes(index);
     }
     
     function revealAllMines() {
-        // Implementation placeholder
-        console.log('Revealing all mines');
+        // Reveal all mines except the one that was clicked (already revealed)
+        minePositions.forEach(pos => {
+            if (!revealedCells.includes(pos)) {
+                const cell = document.querySelector(`.mines-grid-cell[data-index="${pos}"]`);
+                if (cell) {
+                    cell.classList.add('revealed-mine');
+                    cell.innerHTML = '<i class="fas fa-bomb"></i>';
+                }
+            }
+        });
     }
     
     function updateAfterGemFound() {
-        // Implementation placeholder
-        console.log('Updating after gem found');
+        // Update multipliers and potential payout
+        const currentPayoutDisplay = document.getElementById('currentPayout');
+        if (currentPayoutDisplay) {
+            const currentWin = calculateCurrentWin();
+            currentPayoutDisplay.textContent = currentWin.toFixed(2);
+        }
     }
 }); 
