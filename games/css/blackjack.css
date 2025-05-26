@@ -91,19 +91,70 @@
     transform: translateY(20px);
     opacity: 0;
     transition: transform 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
 }
 
 .card.dealt {
     transform: translateY(0);
     opacity: 1;
+    animation: card-deal 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .card.hidden-card {
-    background-color: #1a3851;
-    background-image: linear-gradient(45deg, #2a4e6e 25%, transparent 25%, transparent 75%, #2a4e6e 75%, #2a4e6e), 
-                      linear-gradient(45deg, #2a4e6e 25%, transparent 25%, transparent 75%, #2a4e6e 75%, #2a4e6e);
-    background-size: 10px 10px;
-    background-position: 0 0, 5px 5px;
+    background-color: white;
+}
+
+@keyframes card-deal {
+    0% { transform: translateY(20px) scale(0.8); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.card-flip {
+    animation: flip-card 0.5s ease;
+}
+
+@keyframes flip-card {
+    0% { transform: rotateY(0deg); }
+    50% { transform: rotateY(90deg); }
+    100% { transform: rotateY(0deg); }
+}
+
+.card-back {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a3851, #2a4e6e);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-back::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    border: 1px solid rgba(24, 231, 124, 0.3);
+    border-radius: 4px;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(24, 231, 124, 0.1) 10px,
+        rgba(24, 231, 124, 0.1) 20px
+    );
+}
+
+.card-back::after {
+    content: '♠♥♣♦';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    color: rgba(24, 231, 124, 0.7);
+    text-shadow: 0 0 5px rgba(24, 231, 124, 0.5);
 }
 
 .card-inner {
@@ -118,11 +169,17 @@
 .card-value {
     font-size: 1.5rem;
     font-weight: bold;
+    position: absolute;
+    top: 10px;
+    left: 10px;
 }
 
 .card-suit {
-    font-size: 2rem;
-    align-self: flex-end;
+    font-size: 2.5rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .result-message {
@@ -350,6 +407,27 @@
     font-size: 0.9rem;
     margin-top: 5px;
     color: var(--text-color);
+}
+
+/* Win animation */
+.win-animation {
+    animation: win-pulse 0.8s ease-in-out;
+}
+
+@keyframes win-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); filter: brightness(1.5); }
+    100% { transform: scale(1); }
+}
+
+/* Result animation */
+.result-animation {
+    animation: fade-in-scale 0.5s ease-in-out;
+}
+
+@keyframes fade-in-scale {
+    0% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
 }
 
 /* Responsive Adjustments */

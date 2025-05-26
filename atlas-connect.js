@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 
 // Get connection string from environment variable or use a default for testing
 const MONGODB_URI = process.env.MONGODB_URI || 
-  'mongodb+srv://username:password@cluster.mongodb.net/betagames?retryWrites=true&w=majority';
+  'mongodb+srv://betagames:betagames123@cluster0.mongodb.net/betagames?retryWrites=true&w=majority';
 
 console.log('Attempting to connect to MongoDB Atlas...');
 console.log(`Using URI: ${MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//******:******@')}`); // Hide credentials in output

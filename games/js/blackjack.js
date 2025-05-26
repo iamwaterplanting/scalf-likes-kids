@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Create and shuffle a new deck
 function createDeck() {
+    console.log('Creating new deck');
     deck = [];
     
     for (let suit of suits) {
@@ -171,19 +172,45 @@ function setupEventListeners() {
 
 // Add to current bet
 function addToBet(amount) {
-    const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
+    // Make sure we have a valid balance amount
+    const balanceElement = document.querySelector('.balance-amount');
+    if (!balanceElement) {
+        console.error('Balance element not found');
+        return;
+    }
+    
+    // Parse as integer and handle NaN
+    let currentBalance = parseInt(balanceElement.textContent.replace(/,/g, ''));
+    if (isNaN(currentBalance)) {
+        console.error('Invalid balance value:', balanceElement.textContent);
+        currentBalance = 1000; // Set a default balance
+        balanceElement.textContent = currentBalance;
+    }
     
     if (currentBalance >= amount) {
+        // Update bet amount
         currentBet += amount;
         betAmountElement.textContent = currentBet;
         
-        // Update balance
-        document.querySelector('.balance-amount').textContent = currentBalance - amount;
+        // Update balance with proper formatting
+        const newBalance = currentBalance - amount;
+        balanceElement.textContent = newBalance.toLocaleString();
+        
+        // Add animation to chip
+        chipSound.play();
+    } else {
+        showMessage('Not enough balance!', 'error');
     }
 }
 
 // Start a new hand
 function startNewHand() {
+    // Make sure we have a deck
+    if (!deck || deck.length === 0) {
+        console.log('No deck found, creating a new one');
+        createDeck();
+    }
+    
     // Update game state
     gameInProgress = true;
     playerStood = false;
@@ -212,11 +239,17 @@ function startNewHand() {
     standButton.disabled = false;
     
     // Check if double down is possible
-    const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
-    doubleButton.disabled = currentBalance < currentBet;
+    const balanceElement = document.querySelector('.balance-amount');
+    if (balanceElement) {
+        const currentBalance = parseInt(balanceElement.textContent.replace(/,/g, ''));
+        doubleButton.disabled = isNaN(currentBalance) || currentBalance < currentBet;
+    } else {
+        doubleButton.disabled = true;
+    }
     
     // Create a new deck if needed
     if (deck.length < 15) {
+        console.log('Deck running low, creating a new one');
         createDeck();
     }
     
@@ -262,6 +295,7 @@ function startNewHand() {
 function dealCard(hand, handElement, faceUp = true) {
     // Get a card from the deck
     const card = deck.pop();
+    card.faceUp = faceUp; // Store faceUp state in the card object
     hand.push(card);
     
     // Create card element
@@ -276,18 +310,28 @@ function dealCard(hand, handElement, faceUp = true) {
     cardInner.className = 'card-inner';
     
     if (faceUp) {
+        // Set text color based on suit
+        const color = (card.suit === 'hearts' || card.suit === 'diamonds') ? 'red' : 'black';
+        
         // Card value at top left
         const valueElement = document.createElement('div');
         valueElement.className = 'card-value';
         valueElement.textContent = card.value;
+        valueElement.style.color = color;
         
         // Card suit symbol
         const suitElement = document.createElement('div');
-        suitElement.className = `card-suit ${card.suit}`;
+        suitElement.className = `card-suit`;
         suitElement.textContent = suitSymbols[card.suit];
+        suitElement.style.color = color;
         
         cardInner.appendChild(valueElement);
         cardInner.appendChild(suitElement);
+    } else {
+        // Create a card back element
+        const cardBack = document.createElement('div');
+        cardBack.className = 'card-back';
+        cardInner.appendChild(cardBack);
     }
     
     cardElement.appendChild(cardInner);
@@ -312,9 +356,15 @@ function flipCard(cardElement, card) {
     // Add flip animation
     cardElement.classList.add('card-flip');
     
+    // Update card object
+    card.faceUp = true;
+    
     // Wait for half of animation to switch content
     setTimeout(() => {
         cardElement.classList.remove('hidden-card');
+        
+        // Set text color based on suit
+        const color = (card.suit === 'hearts' || card.suit === 'diamonds') ? 'red' : 'black';
         
         // Create card inner content
         const cardInner = cardElement.querySelector('.card-inner');
@@ -324,11 +374,13 @@ function flipCard(cardElement, card) {
         const valueElement = document.createElement('div');
         valueElement.className = 'card-value';
         valueElement.textContent = card.value;
+        valueElement.style.color = color;
         
         // Card suit symbol
         const suitElement = document.createElement('div');
-        suitElement.className = `card-suit ${card.suit}`;
+        suitElement.className = 'card-suit';
         suitElement.textContent = suitSymbols[card.suit];
+        suitElement.style.color = color;
         
         cardInner.appendChild(valueElement);
         cardInner.appendChild(suitElement);
@@ -642,12 +694,33 @@ function showResult(message, type = 'lose') {
 // Payout for regular win (1:1)
 function payoutWin() {
     const winAmount = currentBet * 2; // Return bet + win same amount
-    const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
-    document.querySelector('.balance-amount').textContent = currentBalance + winAmount;
+    
+    // Get balance element
+    const balanceElement = document.querySelector('.balance-amount');
+    if (!balanceElement) {
+        console.error('Balance element not found');
+        return;
+    }
+    
+    // Parse current balance and handle formatting
+    let currentBalance = parseInt(balanceElement.textContent.replace(/,/g, ''));
+    if (isNaN(currentBalance)) {
+        console.error('Invalid balance value:', balanceElement.textContent);
+        currentBalance = winAmount; // Set the win amount as the balance
+    } else {
+        currentBalance += winAmount;
+    }
+    
+    // Update balance with proper formatting
+    balanceElement.textContent = currentBalance.toLocaleString();
+    balanceElement.classList.add('win-animation');
+    setTimeout(() => {
+        balanceElement.classList.remove('win-animation');
+    }, 1000);
     
     // Update total profit
     totalProfit += currentBet;
-    totalProfitElement.textContent = totalProfit;
+    totalProfitElement.textContent = totalProfit.toLocaleString();
     
     // Animate chips
     animateWinningChips();
@@ -658,12 +731,32 @@ function payoutBlackjack() {
     const blackjackPayout = Math.floor(currentBet * 1.5); // Blackjack pays 3:2
     const totalReturn = currentBet + blackjackPayout; // Return original bet + blackjack payout
     
-    const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
-    document.querySelector('.balance-amount').textContent = currentBalance + totalReturn;
+    // Get balance element
+    const balanceElement = document.querySelector('.balance-amount');
+    if (!balanceElement) {
+        console.error('Balance element not found');
+        return;
+    }
+    
+    // Parse current balance and handle formatting
+    let currentBalance = parseInt(balanceElement.textContent.replace(/,/g, ''));
+    if (isNaN(currentBalance)) {
+        console.error('Invalid balance value:', balanceElement.textContent);
+        currentBalance = totalReturn; // Set the win amount as the balance
+    } else {
+        currentBalance += totalReturn;
+    }
+    
+    // Update balance with proper formatting
+    balanceElement.textContent = currentBalance.toLocaleString();
+    balanceElement.classList.add('win-animation');
+    setTimeout(() => {
+        balanceElement.classList.remove('win-animation');
+    }, 1000);
     
     // Update total profit
     totalProfit += blackjackPayout;
-    totalProfitElement.textContent = totalProfit;
+    totalProfitElement.textContent = totalProfit.toLocaleString();
     
     // Animate chips
     animateWinningChips();
@@ -671,8 +764,24 @@ function payoutBlackjack() {
 
 // Return bet on push
 function returnBet() {
-    const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
-    document.querySelector('.balance-amount').textContent = currentBalance + currentBet;
+    // Get balance element
+    const balanceElement = document.querySelector('.balance-amount');
+    if (!balanceElement) {
+        console.error('Balance element not found');
+        return;
+    }
+    
+    // Parse current balance and handle formatting
+    let currentBalance = parseInt(balanceElement.textContent.replace(/,/g, ''));
+    if (isNaN(currentBalance)) {
+        console.error('Invalid balance value:', balanceElement.textContent);
+        currentBalance = currentBet; // Return the bet as the balance
+    } else {
+        currentBalance += currentBet;
+    }
+    
+    // Update balance with proper formatting
+    balanceElement.textContent = currentBalance.toLocaleString();
 }
 
 // Reset game for next hand
