@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameHistoryBody = document.getElementById('gameHistoryBody');
     const resultPointer = document.getElementById('resultPointer');
     const valueIndicator = document.getElementById('valueIndicator');
+    const sliderIndicator = document.getElementById('sliderIndicator');
     const sliderTrack = document.getElementById('sliderTrack');
     
     // Game state
@@ -162,6 +163,9 @@ document.addEventListener('DOMContentLoaded', () => {
             targetNumberSlider.value = value;
             targetNumberDisplay.textContent = value;
             
+            // Position the blue indicator
+            updateSliderIndicator(position);
+            
             // Update game calculations
             updatePotentialWinAndOdds();
         }
@@ -194,6 +198,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Update the blue slider indicator position
+    function updateSliderIndicator(position) {
+        if (sliderIndicator) {
+            sliderIndicator.style.left = `${position}px`;
+        }
+    }
+    
     // Update slider color gradient based on bet type
     function updateSliderColors() {
         // We're using CSS variables that are already set correctly
@@ -206,7 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const sliderWidth = targetNumberSlider.offsetWidth;
         const pointerPosition = (percent / 100) * sliderWidth;
         
-        positionPointer(pointerPosition);
+        // Update the blue indicator position
+        updateSliderIndicator(pointerPosition);
         
         // Hide the value indicator when just adjusting the slider
         if (valueIndicator) {
@@ -737,4 +749,21 @@ document.addEventListener('DOMContentLoaded', () => {
             return `${diffDay}d ago`;
         }
     }
+    
+    // Initialize slider indicator position
+    function initSliderIndicator() {
+        if (sliderIndicator && targetNumberSlider) {
+            const value = parseInt(targetNumberSlider.value);
+            const percent = value / 100;
+            const width = targetNumberSlider.offsetWidth;
+            const position = percent * width;
+            updateSliderIndicator(position);
+        }
+    }
+    
+    // Initialize the indicator after the page loads
+    window.addEventListener('load', initSliderIndicator);
+    
+    // Update indicator on window resize
+    window.addEventListener('resize', initSliderIndicator);
 }); 

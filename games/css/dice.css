@@ -139,9 +139,9 @@
     100% { transform: scale(1); opacity: 1; }
 }
 
-/* Modern Slider Styling */
+/* Slider Styling with appearance matching reference */
 .slider-container {
-    margin: 40px 0;
+    margin: 40px 0 20px;
     position: relative;
     padding: 40px 0 20px;
 }
@@ -159,46 +159,70 @@
     width: 100%;
     height: 24px;
     border-radius: 12px;
-    background: linear-gradient(to right, 
-        var(--dice-gradient-start), 
-        var(--dice-gradient-mid), 
-        var(--dice-gradient-end)
-    );
+    background: #1a2536; /* Dark background */
     outline: none;
     margin: 20px 0;
     position: relative;
     z-index: 5;
-    border: 4px solid #1a1d2e;
-    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.8), inset 0 0 5px rgba(0, 0, 0, 0.5);
+    border: none;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), inset 0 0 3px rgba(0, 0, 0, 0.8);
     cursor: pointer;
+    overflow: hidden; /* For inner gradients */
+}
+
+/* Create the gradient fill effect inside the slider */
+.dice-slider::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, 
+        #ff3a3a 0%,
+        #ff3a3a 10%,
+        #ff3a3a 20%,
+        #ff7e00 40%,
+        #4c9e35 80%,
+        #4c9e35 100%
+    );
+    z-index: -1;
+    border-radius: 12px;
+}
+
+/* Create the blue indicator effect */
+.slider-indicator {
+    position: absolute;
+    width: 10px;
+    height: 24px;
+    background-color: #4a88e5;
+    border-radius: 2px;
+    z-index: 3;
+    top: 60px;
+    transition: left 0.3s ease;
+    box-shadow: 0 0 5px rgba(74, 136, 229, 0.7);
+    pointer-events: none;
 }
 
 .dice-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.8);
+    width: 1px; /* Nearly invisible thumb */
+    height: 24px;
+    background: transparent;
     cursor: pointer;
-    position: relative;
-    z-index: 10;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
-    border: 2px solid #1a1d2e;
+    border: none;
 }
 
 .dice-slider::-moz-range-thumb {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.8);
+    width: 1px; /* Nearly invisible thumb */
+    height: 24px;
+    background: transparent;
     cursor: pointer;
-    position: relative;
-    z-index: 10;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
-    border: 2px solid #1a1d2e;
+    border: none;
 }
 
+/* Improved slider labels */
 .slider-labels {
     display: flex;
     justify-content: space-between;
@@ -208,7 +232,7 @@
     position: relative;
     z-index: 1;
     font-weight: bold;
-    text-shadow: 0 0 5px rgba(0, 255, 76, 0.5);
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
 /* Remove slider track - using dice-slider background instead */
