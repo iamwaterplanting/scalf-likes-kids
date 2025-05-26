@@ -9,6 +9,8 @@ let currentBet = 0;
 let gameInProgress = false;
 let predictionMade = false;
 let currentStreak = 0;
+let currentMultiplier = 1.0;
+let multiplierStep = 0.2; // Amount to increase multiplier on each correct guess
 
 // Game stats
 let gamesPlayed = 0;
@@ -55,10 +57,15 @@ let nextCardElement;
 let predictionResultElement;
 let betAmountElement;
 let currentStreakElement;
+let currentMultiplierElement;
+let potentialWinElement;
 let startButton;
 let higherButton;
 let lowerButton;
+let cashoutButton;
 let newGameButton;
+let placeBetButton;
+let customBetInput;
 let gamesPlayedElement;
 let gamesWonElement;
 let bestStreakElement;
@@ -74,10 +81,15 @@ document.addEventListener('DOMContentLoaded', () => {
     predictionResultElement = document.getElementById('predictionResult');
     betAmountElement = document.getElementById('betAmount');
     currentStreakElement = document.getElementById('currentStreak');
+    currentMultiplierElement = document.getElementById('currentMultiplier');
+    potentialWinElement = document.getElementById('potentialWin');
     startButton = document.getElementById('startButton');
     higherButton = document.getElementById('higherButton');
     lowerButton = document.getElementById('lowerButton');
+    cashoutButton = document.getElementById('cashoutButton');
     newGameButton = document.getElementById('newGameButton');
+    customBetInput = document.getElementById('customBetInput');
+    placeBetButton = document.getElementById('placeBetButton');
     gamesPlayedElement = document.getElementById('gamesPlayed');
     gamesWonElement = document.getElementById('gamesWon');
     bestStreakElement = document.getElementById('bestStreak');
@@ -91,6 +103,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Load game stats from local storage
     loadGameStats();
+    
+    // Initialize potential win amount
+    updatePotentialWin();
     
     console.log('Hi-Lo game initialized');
 });
@@ -137,6 +152,39 @@ function setupEventListeners() {
         });
     });
     
+    // Custom bet input
+    if (placeBetButton && customBetInput) {
+        placeBetButton.addEventListener('click', () => {
+            const betValue = parseInt(customBetInput.value);
+            if (!isNaN(betValue) && betValue > 0) {
+                const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
+                if (currentBalance >= betValue) {
+                    addToBet(betValue);
+                    customBetInput.value = '';
+                } else {
+                    showMessage('Not enough balance!', 'error');
+                }
+            }
+        });
+        
+        // Also handle Enter key
+        customBetInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const betValue = parseInt(customBetInput.value);
+                if (!isNaN(betValue) && betValue > 0) {
+                    const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
+                    if (currentBalance >= betValue) {
+                        addToBet(betValue);
+                        customBetInput.value = '';
+                    } else {
+                        showMessage('Not enough balance!', 'error');
+                    }
+                }
+                e.preventDefault();
+            }
+        });
+    }
+    
     // Start button
     startButton.addEventListener('click', () => {
         if (currentBet > 0 && !gameInProgress) {
@@ -163,6 +211,14 @@ function setupEventListeners() {
         }
     });
     
+    // Cashout button
+    cashoutButton.addEventListener('click', () => {
+        if (gameInProgress) {
+            cashOut();
+            clickSound.play();
+        }
+    });
+    
     // New game button
     newGameButton.addEventListener('click', () => {
         resetGame();
@@ -172,15 +228,50 @@ function setupEventListeners() {
 
 // Add to current bet
 function addToBet(amount) {
-    const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
+    // Check if user is logged in
+    const currentUser = window.BetaAuth?.getCurrentUser();
+    if (!currentUser) {
+        showMessage('Please login to play!', 'error');
+        return;
+    }
+    
+    // Make sure we have a valid balance amount
+    const balanceElement = document.querySelector('.balance-amount');
+    if (!balanceElement) {
+        console.error('Balance element not found');
+        return;
+    }
+    
+    // Parse as integer and handle NaN
+    let currentBalance = parseInt(balanceElement.textContent.replace(/,/g, ''));
+    if (isNaN(currentBalance)) {
+        console.error('Invalid balance value:', balanceElement.textContent);
+        currentBalance = 1000; // Set a default balance
+        balanceElement.textContent = currentBalance;
+    }
     
     if (currentBalance >= amount) {
+        // Update bet amount
         currentBet += amount;
         betAmountElement.textContent = currentBet;
         
-        // Update balance
-        document.querySelector('.balance-amount').textContent = currentBalance - amount;
+        // Update balance in UI and Supabase
+        window.BetaAuth.updateBalance(-amount, 'Hi-Lo Bet');
+        
+        // Update potential win amount
+        updatePotentialWin();
+        
+        // Add animation to chip
+        chipSound.play();
+    } else {
+        showMessage('Not enough balance!', 'error');
     }
+}
+
+// Update the potential win display
+function updatePotentialWin() {
+    const potentialWin = Math.floor(currentBet * currentMultiplier);
+    potentialWinElement.textContent = potentialWin;
 }
 
 // Start a new game
@@ -188,12 +279,18 @@ function startGame() {
     // Update game state
     gameInProgress = true;
     predictionMade = false;
+    currentMultiplier = 1.0;
+    currentMultiplierElement.textContent = currentMultiplier.toFixed(2) + 'x';
     
     // Hide new game button and show prediction buttons
     newGameButton.style.display = 'none';
     startButton.disabled = true;
     higherButton.disabled = false;
     lowerButton.disabled = false;
+    cashoutButton.disabled = true; // Disabled until first prediction
+    
+    // Update potential win
+    updatePotentialWin();
     
     // Reset prediction result
     predictionResultElement.textContent = '';
@@ -274,6 +371,17 @@ function displayCard(cardElement, card) {
     // Remove hidden class if present
     cardElement.classList.remove('hidden');
     
+    // Set card color based on suit
+    if (card.suit === 'hearts' || card.suit === 'diamonds') {
+        valueElement.style.color = '#e61c24';
+        suitElement.style.color = '#e61c24';
+        smallSuitElement.style.color = '#e61c24';
+    } else {
+        valueElement.style.color = '#000000';
+        suitElement.style.color = '#000000';
+        smallSuitElement.style.color = '#000000';
+    }
+    
     // Log for debugging
     console.log('Card displayed:', card.value, 'of', card.suit);
 }
@@ -294,10 +402,13 @@ function makeHigherPrediction() {
         
         if (nextValue > currentValue) {
             // Correct prediction
-            winPrediction();
+            correctPrediction();
+        } else if (nextValue === currentValue) {
+            // Push (tie) - don't lose or win
+            tiePrediction();
         } else {
             // Wrong prediction
-            losePrediction();
+            wrongPrediction();
         }
     }, 1000);
 }
@@ -318,10 +429,13 @@ function makeLowerPrediction() {
         
         if (nextValue < currentValue) {
             // Correct prediction
-            winPrediction();
+            correctPrediction();
+        } else if (nextValue === currentValue) {
+            // Push (tie) - don't lose or win
+            tiePrediction();
         } else {
             // Wrong prediction
-            losePrediction();
+            wrongPrediction();
         }
     }, 1000);
 }
@@ -340,8 +454,8 @@ function revealNextCard() {
     }, 400); // Adjusted timing to match the animation keyframe midpoint
 }
 
-// Win prediction
-function winPrediction() {
+// Handle correct prediction
+function correctPrediction() {
     // Update streak
     currentStreak++;
     currentStreakElement.textContent = currentStreak;
@@ -357,45 +471,60 @@ function winPrediction() {
         
         // Show result message
         setTimeout(() => {
-            predictionResultElement.textContent = 'Correct! You win!';
+            predictionResultElement.textContent = 'Correct!';
             predictionResultElement.className = 'prediction-result show result-win';
             winSound.play();
         }, 300);
         
-        // Payout winnings
+        // Increase multiplier
+        currentMultiplier += multiplierStep;
+        currentMultiplierElement.textContent = currentMultiplier.toFixed(2) + 'x';
+        currentMultiplierElement.classList.add('highlight');
         setTimeout(() => {
-            payoutWin();
-            
-            // Update stats
-            gamesWon++;
-            gamesWonElement.textContent = gamesWon;
-            saveGameStats();
-            
-            // Show new game button
-            newGameButton.style.display = 'block';
+            currentMultiplierElement.classList.remove('highlight');
+        }, 1000);
+        
+        // Update potential win
+        updatePotentialWin();
+        
+        // Prepare for next prediction
+        setTimeout(() => {
+            continueGame();
         }, 1000);
     }, 600);
-    
-    // Game is no longer in progress
-    gameInProgress = false;
 }
 
-// Lose prediction
-function losePrediction() {
-    // Reset streak
-    currentStreak = 0;
-    currentStreakElement.textContent = currentStreak;
-    
+// Handle tie prediction (same card value)
+function tiePrediction() {
+    // Add animation after card is revealed
+    setTimeout(() => {
+        // Show result message
+        predictionResultElement.textContent = 'Push! Same Value';
+        predictionResultElement.className = 'prediction-result show';
+        
+        // Prepare for next prediction
+        setTimeout(() => {
+            continueGame();
+        }, 1000);
+    }, 600);
+}
+
+// Handle wrong prediction
+function wrongPrediction() {
     // Add lose animation after card is revealed
     setTimeout(() => {
         nextCardElement.classList.add('card-lose');
         
         // Show result message
         setTimeout(() => {
-            predictionResultElement.textContent = 'Wrong! You lose!';
+            predictionResultElement.textContent = 'Wrong! Game Over';
             predictionResultElement.className = 'prediction-result show result-lose';
             loseSound.play();
         }, 300);
+        
+        // Reset streak
+        currentStreak = 0;
+        currentStreakElement.textContent = currentStreak;
         
         // Update stats
         saveGameStats();
@@ -406,22 +535,92 @@ function losePrediction() {
         }, 1000);
     }, 600);
     
-    // Game is no longer in progress
+    // Game is over
     gameInProgress = false;
+    
+    // Disable cashout
+    cashoutButton.disabled = true;
 }
 
-// Payout for win (1:1)
-function payoutWin() {
-    const winAmount = currentBet * 2; // Return bet + win same amount
-    const currentBalance = parseInt(document.querySelector('.balance-amount').textContent);
-    document.querySelector('.balance-amount').textContent = currentBalance + winAmount;
+// Continue the game after a correct prediction
+function continueGame() {
+    // Reset for next prediction
+    predictionMade = false;
+    
+    // Enable cashout now that player has at least one correct prediction
+    cashoutButton.disabled = false;
+    
+    // Move next card to current card position
+    currentCard = nextCard;
+    currentCardElement.innerHTML = nextCardElement.innerHTML;
+    
+    // Reset animations
+    currentCardElement.classList.remove('card-reveal', 'card-win', 'card-lose');
+    nextCardElement.classList.remove('card-reveal', 'card-win', 'card-lose');
+    
+    // Clear prediction result
+    predictionResultElement.textContent = '';
+    predictionResultElement.className = 'prediction-result';
+    
+    // Create a new deck if needed
+    if (deck.length < 1) {
+        createDeck();
+    }
+    
+    // Get new next card
+    nextCard = deck.pop();
+    nextCardElement.innerHTML = '<div class="card-inner"></div>';
+    nextCardElement.classList.add('hidden');
+    
+    // Enable prediction buttons
+    higherButton.disabled = false;
+    lowerButton.disabled = false;
+}
+
+// Cash out and take winnings
+function cashOut() {
+    // Calculate winnings
+    const winAmount = Math.floor(currentBet * currentMultiplier);
+    
+    // Get current user
+    const currentUser = window.BetaAuth?.getCurrentUser();
+    if (!currentUser) {
+        console.error('User not logged in');
+        return;
+    }
+    
+    // Update balance in UI and Supabase
+    window.BetaAuth.updateBalance(winAmount, 'Hi-Lo Cashout');
     
     // Update total profit
-    totalProfit += currentBet;
-    totalProfitElement.textContent = totalProfit;
+    const profit = winAmount - currentBet;
+    totalProfit += profit;
+    totalProfitElement.textContent = totalProfit.toLocaleString();
     
-    // Animate chips
+    // Show success message
+    showMessage(`Cashed out ${winAmount} coins!`, 'success');
+    
+    // Play win sound
+    winSound.play();
+    
+    // Update stats
+    gamesWon++;
+    gamesWonElement.textContent = gamesWon;
+    saveGameStats();
+    
+    // Animate winning
     animateWinningChips();
+    
+    // Game is over
+    gameInProgress = false;
+    
+    // Show new game button
+    newGameButton.style.display = 'block';
+    
+    // Disable prediction buttons and cashout
+    higherButton.disabled = true;
+    lowerButton.disabled = true;
+    cashoutButton.disabled = true;
 }
 
 // Reset game for next round
@@ -430,6 +629,8 @@ function resetGame() {
     gameInProgress = false;
     predictionMade = false;
     currentBet = 0;
+    currentMultiplier = 1.0;
+    currentMultiplierElement.textContent = currentMultiplier.toFixed(2) + 'x';
     
     // Reset UI
     currentCardElement.innerHTML = '<div class="card-inner"></div>';
@@ -441,6 +642,7 @@ function resetGame() {
     currentCardElement.classList.remove('card-reveal', 'card-win', 'card-lose');
     
     betAmountElement.textContent = '0';
+    potentialWinElement.textContent = '0';
     predictionResultElement.textContent = '';
     predictionResultElement.className = 'prediction-result';
     
@@ -449,6 +651,7 @@ function resetGame() {
     startButton.disabled = false;
     higherButton.disabled = true;
     lowerButton.disabled = true;
+    cashoutButton.disabled = true;
     
     // Create a new deck if needed
     if (deck.length < 5) {
@@ -517,7 +720,7 @@ function animateWinningChips() {
     const balanceRect = document.querySelector('.balance-amount').getBoundingClientRect();
     
     // Create multiple chips
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
         const floatingChip = document.createElement('div');
         floatingChip.className = 'chips-float chip';
         floatingChip.textContent = '💰';
@@ -549,10 +752,10 @@ function animateWinningChips() {
     
     // Pulse balance
     setTimeout(() => {
-        document.querySelector('.balance').classList.add('pulse-once');
+        document.querySelector('.balance').classList.add('win-animation');
         setTimeout(() => {
-            document.querySelector('.balance').classList.remove('pulse-once');
-        }, 500);
+            document.querySelector('.balance').classList.remove('win-animation');
+        }, 1000);
     }, 600);
 }
 
@@ -583,6 +786,6 @@ function loadGameStats() {
         gamesPlayedElement.textContent = gamesPlayed;
         gamesWonElement.textContent = gamesWon;
         bestStreakElement.textContent = bestStreak;
-        totalProfitElement.textContent = totalProfit;
+        totalProfitElement.textContent = totalProfit.toLocaleString();
     }
 } 

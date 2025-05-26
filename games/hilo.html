@@ -64,6 +64,10 @@
             <div class="game-container">
                 <h1 class="game-title">Hi-Lo</h1>
                 
+                <div class="game-description">
+                    <p>Guess if the next card will be higher or lower than the current card. Build your multiplier and cash out when you're ready!</p>
+                </div>
+                
                 <div class="hilo-table">
                     <div class="card-container">
                         <div class="current-card" id="currentCard">
@@ -80,6 +84,11 @@
                         </div>
                     </div>
                     
+                    <div class="multiplier-container">
+                        <span class="multiplier-label">Current Multiplier:</span>
+                        <span class="multiplier-value" id="currentMultiplier">1.00x</span>
+                    </div>
+                    
                     <div class="prediction-result" id="predictionResult"></div>
                     
                     <div class="current-bet">
@@ -87,12 +96,22 @@
                         <span class="current-bet-amount" id="betAmount">0</span>
                     </div>
                     
+                    <div class="potential-win">
+                        <span class="potential-win-label">Potential Win:</span>
+                        <span class="potential-win-amount" id="potentialWin">0</span>
+                    </div>
+                    
                     <div class="bet-chips" id="betChips">
-                        <div class="chip chip-10" data-value="10">10</div>
-                        <div class="chip chip-25" data-value="25">25</div>
-                        <div class="chip chip-50" data-value="50">50</div>
-                        <div class="chip chip-100" data-value="100">100</div>
-                        <div class="chip chip-500" data-value="500">500</div>
+                        <div class="chip chip-10" data-value="5">5</div>
+                        <div class="chip chip-25" data-value="10">10</div>
+                        <div class="chip chip-50" data-value="25">25</div>
+                        <div class="chip chip-100" data-value="50">50</div>
+                        <div class="chip chip-500" data-value="100">100</div>
+                    </div>
+                    
+                    <div class="custom-bet">
+                        <input type="number" id="customBetInput" placeholder="Enter bet" min="1">
+                        <button id="placeBetButton">Place Bet</button>
                     </div>
                     
                     <div class="game-controls">
@@ -107,6 +126,10 @@
                             
                             <button id="lowerButton" class="action-btn btn-lower" disabled>
                                 <i class="fas fa-arrow-down"></i> Lower
+                            </button>
+                            
+                            <button id="cashoutButton" class="action-btn btn-cashout" disabled>
+                                <i class="fas fa-coins"></i> Cash Out
                             </button>
                         </div>
                         
