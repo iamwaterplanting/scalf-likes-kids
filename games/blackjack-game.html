@@ -733,61 +733,63 @@
 
             <!-- Game Container -->
             <div class="game-container">
-                <h1 class="game-title blackjack-title">Blackjack</h1>
+                <h1 class="game-title blackjack-title">BLACKJACK</h1>
                 
-                <div class="blackjack-table">
-                    <div class="dealer-area">
-                        <span class="area-label">Dealer</span>
-                        <div class="score-display" id="dealerScore">0</div>
-                        <div class="hand" id="dealerHand"></div>
-                    </div>
-                    
-                    <div class="result-message" id="resultMessage"></div>
-                    
-                    <div class="player-area">
-                        <span class="area-label" id="playerLabel">Player</span>
-                        <div class="score-display show" id="playerScore">0</div>
-                        <div class="hand" id="playerHand"></div>
-                    </div>
-                    
-                    <div class="current-bet">
-                        <span class="current-bet-label">Current Bet:</span>
-                        <span class="current-bet-amount" id="betAmount">0</span>
-                    </div>
+                <div class="blackjack-table-wrapper">
+                    <div class="blackjack-table">
+                        <div class="dealer-area">
+                            <span class="area-label">Dealer</span>
+                            <div class="score-display" id="dealerScore">0</div>
+                            <div class="hand" id="dealerHand"></div>
+                        </div>
+                        
+                        <div class="result-message" id="resultMessage"></div>
+                        
+                        <div class="player-area">
+                            <span class="area-label" id="playerLabel">Player</span>
+                            <div class="score-display show" id="playerScore">0</div>
+                            <div class="hand" id="playerHand"></div>
+                        </div>
+                        
+                        <div class="current-bet">
+                            <span class="current-bet-label">Current Bet:</span>
+                            <span class="current-bet-amount" id="betAmount">0</span>
+                        </div>
 
-                    <div class="custom-bet">
-                        <input type="number" id="customBetInput" placeholder="Enter bet" min="1">
-                        <button id="placeBetButton">Place Bet</button>
-                    </div>
-                    
-                    <div class="bet-chips" id="betChips">
-                        <div class="chip chip-10" data-value="10">10</div>
-                        <div class="chip chip-25" data-value="25">25</div>
-                        <div class="chip chip-50" data-value="50">50</div>
-                        <div class="chip chip-100" data-value="100">100</div>
-                        <div class="chip chip-500" data-value="500">500</div>
-                    </div>
-                    
-                    <div class="game-controls">
-                        <button id="dealButton" class="action-btn btn-deal">
-                            <i class="fas fa-play"></i> Deal Cards
-                        </button>
+                        <div class="custom-bet">
+                            <input type="number" id="customBetInput" placeholder="Enter bet" min="1">
+                            <button id="placeBetButton">Place Bet</button>
+                        </div>
                         
-                        <button id="hitButton" class="action-btn btn-hit" disabled>
-                            <i class="fas fa-plus"></i> Hit
-                        </button>
+                        <div class="bet-chips" id="betChips">
+                            <div class="chip chip-10" data-value="10">10</div>
+                            <div class="chip chip-25" data-value="25">25</div>
+                            <div class="chip chip-50" data-value="50">50</div>
+                            <div class="chip chip-100" data-value="100">100</div>
+                            <div class="chip chip-500" data-value="500">500</div>
+                        </div>
                         
-                        <button id="standButton" class="action-btn btn-stand" disabled>
-                            <i class="fas fa-hand"></i> Stand
-                        </button>
-                        
-                        <button id="doubleButton" class="action-btn btn-double" disabled>
-                            <i class="fas fa-arrow-up"></i> Double
-                        </button>
-                        
-                        <button id="newHandButton" class="action-btn btn-new-hand" style="display: none;">
-                            <i class="fas fa-redo"></i> New Hand
-                        </button>
+                        <div class="game-controls">
+                            <button id="dealButton" class="action-btn btn-deal">
+                                <i class="fas fa-play"></i> Deal Cards
+                            </button>
+                            
+                            <button id="hitButton" class="action-btn btn-hit" disabled>
+                                <i class="fas fa-plus"></i> Hit
+                            </button>
+                            
+                            <button id="standButton" class="action-btn btn-stand" disabled>
+                                <i class="fas fa-hand"></i> Stand
+                            </button>
+                            
+                            <button id="doubleButton" class="action-btn btn-double" disabled>
+                                <i class="fas fa-arrow-up"></i> Double
+                            </button>
+                            
+                            <button id="newHandButton" class="action-btn btn-new-hand" style="display: none;">
+                                <i class="fas fa-redo"></i> New Hand
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -876,6 +878,78 @@
     <script src="../js/main.js"></script>
     <script src="../js/admin.js"></script>
     <script src="js/blackjack.js"></script>
+
+    <script>
+    // Update player label with the user's username from BetaAuth
+    function updatePlayerLabel() {
+        try {
+            if (window.BetaAuth && window.BetaAuth.user && window.BetaAuth.user.username) {
+                document.getElementById('playerLabel').textContent = window.BetaAuth.user.username;
+            }
+        } catch (error) {
+            console.error("Error updating player label:", error);
+        }
+    }
+
+    // Run this after DOM content loaded and after BetaAuth is initialized
+    document.addEventListener('DOMContentLoaded', function() {
+        // Wait a short time to ensure BetaAuth is loaded
+        setTimeout(updatePlayerLabel, 500);
+    });
+
+    // When a new hand starts
+    function startNewHand() {
+        // ... existing code ...
+        
+        // Update player label with username
+        updatePlayerLabel();
+        
+        // ... existing code ...
+    }
+
+    // ... existing code ...
+
+    // Fix card positioning and ensure proper hand display
+    function updateCardLayout() {
+        const dealerHand = document.getElementById('dealerHand');
+        const playerHand = document.getElementById('playerHand');
+        
+        if (dealerHand && playerHand) {
+            const dealerCards = dealerHand.querySelectorAll('.card');
+            const playerCards = playerHand.querySelectorAll('.card');
+            
+            // Adjust card positioning based on number of cards
+            const adjustCardSpacing = (cards, container) => {
+                if (cards.length <= 1) return;
+                
+                const containerWidth = container.offsetWidth;
+                const cardWidth = 110; // Card width from CSS
+                const maxOverlap = Math.min(30, (cardWidth * cards.length - containerWidth + 100) / (cards.length - 1));
+                
+                cards.forEach((card, i) => {
+                    if (i > 0) {
+                        card.style.marginLeft = `-${maxOverlap}px`;
+                    } else {
+                        card.style.marginLeft = '0';
+                    }
+                });
+            };
+            
+            adjustCardSpacing(dealerCards, dealerHand);
+            adjustCardSpacing(playerCards, playerHand);
+        }
+    }
+
+    // Update card layout whenever cards are dealt
+    const originalCreateCard = createCard;
+    createCard = function(value, suit, isHidden = false) {
+        const card = originalCreateCard(value, suit, isHidden);
+        setTimeout(updateCardLayout, 100);
+        return card;
+    };
+
+    // ... existing code ...
+    </script>
 
     </body>
 </html> 
