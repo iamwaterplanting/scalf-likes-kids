@@ -734,4 +734,168 @@
 @keyframes history-card-appear {
     0% { transform: scale(0.8); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
+}
+
+/* Special Win Overlay for 8+ streak */
+.special-win-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fade-in 0.5s ease-in-out;
+    backdrop-filter: blur(5px);
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.special-win-overlay.fade-out {
+    animation: fade-out 1s ease-in-out forwards;
+}
+
+.special-win-content {
+    text-align: center;
+    padding: 30px;
+    background: rgba(24, 231, 124, 0.1);
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(24, 231, 124, 0.6);
+    max-width: 80%;
+    animation: scale-in 0.5s ease-out;
+    border: 2px solid rgba(24, 231, 124, 0.6);
+    position: relative;
+    z-index: 101;
+}
+
+.special-win-heading {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    color: #11ff66;
+    text-shadow: 0 0 20px rgba(17, 255, 102, 0.8);
+    animation: glow-pulse 2s infinite alternate;
+    letter-spacing: 2px;
+}
+
+.special-win-desc {
+    font-size: 1.5rem;
+    margin-bottom: 25px;
+    color: #ffffff;
+}
+
+.special-win-multiplier {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #ffda6a;
+    margin-bottom: 15px;
+    text-shadow: 0 0 15px rgba(255, 218, 106, 0.8);
+}
+
+.special-win-bonus {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #ff5e5e;
+    animation: bounce 1s ease infinite;
+    text-shadow: 0 0 15px rgba(255, 94, 94, 0.8);
+}
+
+/* Confetti */
+.confetti {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    z-index: 100;
+    animation: confetti-fall 5s linear forwards;
+    transform: rotate(0deg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Animation keyframes */
+@keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes fade-out {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes scale-in {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes glow-pulse {
+    0% { text-shadow: 0 0 20px rgba(17, 255, 102, 0.6); }
+    100% { text-shadow: 0 0 40px rgba(17, 255, 102, 1); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(calc(100vh)) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+@keyframes confetti-rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Special message styling */
+.game-message.special {
+    background-color: rgba(24, 231, 124, 0.2);
+    color: #11ff66;
+    border: 2px solid #11ff66;
+    font-size: 1.2rem;
+    font-weight: bold;
+    box-shadow: 0 0 20px rgba(17, 255, 102, 0.5);
+    animation: message-glow 2s infinite alternate;
+}
+
+@keyframes message-glow {
+    0% { box-shadow: 0 0 10px rgba(17, 255, 102, 0.5); }
+    100% { box-shadow: 0 0 25px rgba(17, 255, 102, 0.9); }
+}
+
+/* Mobile adjustments for special win screen */
+@media (max-width: 768px) {
+    .special-win-heading {
+        font-size: 2rem;
+    }
+    
+    .special-win-desc {
+        font-size: 1rem;
+    }
+    
+    .special-win-multiplier {
+        font-size: 1.5rem;
+    }
+    
+    .special-win-bonus {
+        font-size: 1.3rem;
+    }
 } 

@@ -13,6 +13,7 @@ let currentMultiplier = 1.0;
 let multiplierStep = 0.5; // Increased multiplier step for faster growth
 let cardHistory = []; // Array to track card history
 let maxHistoryCards = 8; // Maximum number of history cards to show
+let specialAnimationThreshold = 8; // Threshold for special animation
 
 // Game stats
 let gamesPlayed = 0;
@@ -522,6 +523,12 @@ function correctPrediction(predictionChoice) {
         // Update potential win
         updatePotentialWin();
         
+        // Check if player has reached special animation threshold
+        if (currentStreak === specialAnimationThreshold) {
+            // Trigger special animation
+            triggerSpecialAnimation();
+        }
+        
         // Prepare for next prediction
         setTimeout(() => {
             // Add card to history before continuing
@@ -530,6 +537,144 @@ function correctPrediction(predictionChoice) {
             continueGame();
         }, 1000);
     }, 600);
+}
+
+// Trigger special animation for reaching 8+ cards
+function triggerSpecialAnimation() {
+    console.log("Triggering special animation for 8+ streak!");
+    
+    // Create the special win overlay
+    const specialWinOverlay = document.createElement('div');
+    specialWinOverlay.className = 'special-win-overlay';
+    
+    // Create content for the overlay
+    const specialWinContent = document.createElement('div');
+    specialWinContent.className = 'special-win-content';
+    
+    // Add heading
+    const specialWinHeading = document.createElement('h2');
+    specialWinHeading.className = 'special-win-heading';
+    specialWinHeading.textContent = 'LEGENDARY STREAK!';
+    
+    // Add description
+    const specialWinDesc = document.createElement('p');
+    specialWinDesc.className = 'special-win-desc';
+    specialWinDesc.textContent = `You've correctly predicted ${specialAnimationThreshold} cards in a row!`;
+    
+    // Add multiplier info
+    const specialWinMultiplier = document.createElement('div');
+    specialWinMultiplier.className = 'special-win-multiplier';
+    specialWinMultiplier.textContent = `Current Multiplier: ${currentMultiplier.toFixed(2)}x`;
+    
+    // Add bonus message
+    const specialWinBonus = document.createElement('div');
+    specialWinBonus.className = 'special-win-bonus';
+    specialWinBonus.textContent = 'Bonus Multiplier Added!';
+    
+    // Add confetti effect - improved with different shapes
+    for (let i = 0; i < 100; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        
+        // Random position
+        confetti.style.left = `${Math.random() * 100}%`;
+        
+        // Random delay
+        confetti.style.animationDelay = `${Math.random() * 3}s`;
+        
+        // Random color
+        confetti.style.backgroundColor = getRandomColor();
+        
+        // Random shape
+        const shape = Math.floor(Math.random() * 4);
+        if (shape === 0) {
+            // Circle
+            confetti.style.borderRadius = '50%';
+        } else if (shape === 1) {
+            // Rectangle
+            confetti.style.width = `${5 + Math.random() * 15}px`;
+            confetti.style.height = `${5 + Math.random() * 10}px`;
+        } else if (shape === 2) {
+            // Triangle - using clip-path
+            confetti.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+        } else {
+            // Star shape - card suits
+            confetti.innerHTML = getRandomSuit();
+            confetti.style.backgroundColor = 'transparent';
+            confetti.style.color = getRandomColor();
+            confetti.style.fontSize = `${20 + Math.random() * 15}px`;
+            confetti.style.display = 'flex';
+            confetti.style.justifyContent = 'center';
+            confetti.style.alignItems = 'center';
+        }
+        
+        // Random size
+        const size = 10 + Math.random() * 15;
+        confetti.style.width = `${size}px`;
+        confetti.style.height = `${size}px`;
+        
+        // Random rotation speed
+        confetti.style.animation = `confetti-fall ${4 + Math.random() * 4}s linear forwards, confetti-rotate ${1 + Math.random() * 3}s linear infinite`;
+        
+        specialWinOverlay.appendChild(confetti);
+    }
+    
+    // Add all elements to the content
+    specialWinContent.appendChild(specialWinHeading);
+    specialWinContent.appendChild(specialWinDesc);
+    specialWinContent.appendChild(specialWinMultiplier);
+    specialWinContent.appendChild(specialWinBonus);
+    
+    // Add content to overlay
+    specialWinOverlay.appendChild(specialWinContent);
+    
+    // Add overlay to the page
+    document.querySelector('.hilo-table').appendChild(specialWinOverlay);
+    
+    // Add additional bonus to multiplier for the achievement
+    const bonusMultiplier = 2.0;
+    currentMultiplier += bonusMultiplier;
+    currentMultiplierElement.textContent = currentMultiplier.toFixed(2) + 'x';
+    
+    // Update potential win with new multiplier
+    updatePotentialWin();
+    
+    // Show message about the bonus
+    showMessage(`Legendary Streak! +${bonusMultiplier.toFixed(1)}x Bonus!`, 'special');
+    
+    // Play special sound
+    winSound.play();
+    
+    // Remove overlay after animation completes
+    setTimeout(() => {
+        specialWinOverlay.classList.add('fade-out');
+        setTimeout(() => {
+            specialWinOverlay.remove();
+        }, 1000);
+    }, 5000);
+}
+
+// Get random color for confetti
+function getRandomColor() {
+    const colors = [
+        '#ff5e5e', // red
+        '#5e5eff', // blue
+        '#5eff5e', // green
+        '#ffff5e', // yellow
+        '#ff5eff', // pink
+        '#5effff', // cyan
+        '#ff9c5e', // orange
+        '#d15eff', // purple
+        '#ffda6a', // gold
+        '#11ff66'  // neon green
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+}
+
+// Get random card suit symbol
+function getRandomSuit() {
+    const suits = ['♥', '♦', '♣', '♠'];
+    return suits[Math.floor(Math.random() * suits.length)];
 }
 
 // Handle tie prediction (same card value)
@@ -724,7 +869,7 @@ function showMessage(message, type = 'info') {
         setTimeout(() => {
             messageElement.remove();
         }, 500);
-    }, 2000);
+    }, 3000); // Increased duration for special messages
 }
 
 // Animate chip when selected
