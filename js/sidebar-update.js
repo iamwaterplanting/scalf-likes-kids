@@ -1,5 +1,30 @@
 // Apply consistent sidebar styling across all pages
 document.addEventListener('DOMContentLoaded', function() {
+    // Add Chicken Crossroad to all sidebars if it doesn't exist
+    let sidebarNavList = document.querySelector('.main-nav ul');
+    if (sidebarNavList) {
+        // Check if chicken crossroad is already in the nav
+        const chickenNavItem = sidebarNavList.querySelector('a[href="chickencrossroad.html"]');
+        
+        if (!chickenNavItem) {
+            // Create new nav item for Chicken Crossroad
+            const newNavItem = document.createElement('li');
+            const isActive = window.location.href.includes('chickencrossroad.html');
+            if (isActive) {
+                newNavItem.classList.add('active');
+            }
+            
+            // Determine correct path based on current location
+            let chickenPath = "chickencrossroad.html";
+            if (!window.location.href.includes('/games/')) {
+                chickenPath = "games/chickencrossroad.html";
+            }
+            
+            newNavItem.innerHTML = `<a href="${chickenPath}"><i class="fas fa-drumstick-bite"></i> Chicken Crossroad 🐔</a>`;
+            sidebarNavList.appendChild(newNavItem);
+        }
+    }
+    
     // Apply enhanced sidebar styling
     const sidebar = document.querySelector('.sidebar');
     const logo = document.querySelector('.logo');
@@ -12,32 +37,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Center and enhance the logo
         logo.style.textAlign = 'center';
         logo.style.marginBottom = '40px';
-        
-        // Add version tag if not already present
-        if (!logo.querySelector('.version-tag')) {
-            const versionTag = document.createElement('div');
-            versionTag.className = 'version-tag';
-            versionTag.textContent = 'Beta v0.9';
-            logo.appendChild(versionTag);
-            
-            // Add styles for version tag if not present
-            if (!document.querySelector('#version-tag-style')) {
-                const versionStyle = document.createElement('style');
-                versionStyle.id = 'version-tag-style';
-                versionStyle.textContent = `
-                    .version-tag {
-                        font-size: 12px;
-                        color: var(--primary-color);
-                        opacity: 0.8;
-                        margin-top: -5px;
-                        letter-spacing: 1px;
-                        font-weight: 600;
-                        text-shadow: 0 0 10px rgba(24, 231, 124, 0.3);
-                    }
-                `;
-                document.head.appendChild(versionStyle);
-            }
-        }
         
         const logoText = logo.querySelector('h1');
         if (logoText) {
@@ -170,85 +169,5 @@ document.addEventListener('DOMContentLoaded', function() {
     const navList = document.querySelector('.main-nav ul');
     if (navList) {
         navList.style.padding = '0 10px';
-    }
-
-    // Add release banner to game pages if it doesn't exist
-    if (!document.querySelector('.release-banner') && window.location.pathname.includes('/games/')) {
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-            // Create release banner
-            const banner = document.createElement('div');
-            banner.className = 'release-banner';
-            banner.innerHTML = `
-                <i class="fas fa-info-circle"></i> Beta release, official full release will be from May 30 - June 7
-                <button class="close-banner"><i class="fas fa-times"></i></button>
-            `;
-            
-            // Insert banner at the top of main content
-            const firstChild = mainContent.firstChild;
-            mainContent.insertBefore(banner, firstChild);
-            
-            // Add banner styles if not present
-            if (!document.querySelector('#release-banner-style')) {
-                const bannerStyle = document.createElement('style');
-                bannerStyle.id = 'release-banner-style';
-                bannerStyle.textContent = `
-                    .release-banner {
-                        background: linear-gradient(90deg, rgba(24, 231, 124, 0.15), rgba(24, 231, 124, 0.05));
-                        padding: 10px 20px;
-                        border-radius: 5px;
-                        margin-bottom: 20px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        border-left: 4px solid var(--primary-color);
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-                        font-size: 14px;
-                        position: relative;
-                    }
-                    
-                    .release-banner i {
-                        color: var(--primary-color);
-                        margin-right: 10px;
-                    }
-                    
-                    .close-banner {
-                        background: none;
-                        border: none;
-                        color: rgba(255, 255, 255, 0.7);
-                        cursor: pointer;
-                        padding: 0 5px;
-                        transition: color 0.2s;
-                    }
-                    
-                    .close-banner:hover {
-                        color: #fff;
-                    }
-                    
-                    @media (max-width: 768px) {
-                        .release-banner {
-                            font-size: 12px;
-                            padding: 8px 15px;
-                        }
-                    }
-                `;
-                document.head.appendChild(bannerStyle);
-            }
-            
-            // Add close button functionality
-            const closeButton = banner.querySelector('.close-banner');
-            if (closeButton) {
-                closeButton.addEventListener('click', function() {
-                    banner.style.display = 'none';
-                    // Store in localStorage to remember user closed it
-                    localStorage.setItem('release_banner_closed', 'true');
-                });
-                
-                // Check if user previously closed the banner
-                if (localStorage.getItem('release_banner_closed') === 'true') {
-                    banner.style.display = 'none';
-                }
-            }
-        }
     }
 }); 

@@ -14,7 +14,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 newNavItem.classList.add('active');
             }
             
-            newNavItem.innerHTML = `<a href="chickencrossroad.html"><i class="fas fa-drumstick-bite"></i> Chicken Crossroad 🐔</a>`;
+            // Determine correct path based on current location
+            let chickenPath = "chickencrossroad.html";
+            if (!window.location.href.includes('/games/')) {
+                chickenPath = "games/chickencrossroad.html";
+            }
+            
+            newNavItem.innerHTML = `<a href="${chickenPath}"><i class="fas fa-drumstick-bite"></i> Chicken Crossroad 🐔</a>`;
             sidebarNavList.appendChild(newNavItem);
         }
     }
