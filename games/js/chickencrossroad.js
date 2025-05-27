@@ -26,13 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameStarted = false;
     let gameEnded = false;
     let currentLane = 0;
-    let maxLanes = 10;
+    let maxLanes = 20;
     let multiplier = 1.0;
     let intervalId = null;
     let carIntervals = [];
     let crashPoint = null;
     let betAmount = 0;
     let lastTime = 0;
+    let moveChickenTimer = 0;
+    let moveChickenInterval = 2000; // Move chicken every 2 seconds
     
     // Debug mode - set to false in production
     const DEBUG = false;
@@ -136,6 +138,25 @@ document.addEventListener('DOMContentLoaded', () => {
         gameEnded = false;
         currentLane = 0;
         multiplier = 1.0;
+        moveChickenTimer = 0;
+        
+        // Adjust move interval based on difficulty
+        switch(difficulty) {
+            case 'easy':
+                moveChickenInterval = 2500; // Slower movement
+                break;
+            case 'medium':
+                moveChickenInterval = 2000;
+                break;
+            case 'hard':
+                moveChickenInterval = 1500;
+                break;
+            case 'extreme':
+                moveChickenInterval = 1000; // Faster movement
+                break;
+            default:
+                moveChickenInterval = 2000;
+        }
         
         // Clear any existing grid and cars
         clearRoads();
@@ -162,24 +183,25 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update game stats display
         updateGameDisplay();
         
-        // Reset chicken position - center of bottom row
-        const roadWidth = chickenGame.offsetWidth / 5;
-        chickenCharacter.style.bottom = '20px';
-        chickenCharacter.style.left = `${roadWidth * 2 + (roadWidth / 2)}px`;
-        chickenCharacter.dataset.col = '2'; // Center column
+        // Reset chicken position - center of left side
+        const roadHeight = chickenGame.offsetHeight / 5;
+        chickenCharacter.style.top = `${roadHeight * 2 + (roadHeight / 2) - 30}px`; // Center in middle row
+        chickenCharacter.style.left = `0px`;
+        chickenCharacter.dataset.col = '0'; // Start at leftmost column
+        chickenCharacter.dataset.row = '2'; // Middle row
         
         // Generate initial grid
         generateRoads();
         
         // Add starting point indicator
-        const startCell = document.querySelector('.road-cell[data-row="0"][data-col="2"]');
+        const startCell = document.querySelector('.road-cell[data-row="2"][data-col="0"]');
         if (startCell) {
             startCell.classList.add('start-cell');
             
-            // Add arrow pointing up
+            // Add arrow pointing right
             const arrow = document.createElement('div');
             arrow.className = 'start-arrow';
-            arrow.innerHTML = '⬆️';
+            arrow.innerHTML = '➡️';
             startCell.appendChild(arrow);
         }
         
@@ -189,11 +211,33 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Animate chicken at start
         chickenCharacter.classList.add('ready-animation');
-        setTimeout(() => {
-            chickenCharacter.classList.remove('ready-animation');
-        }, 1000);
         
-        debug(`Game started with bet: ${betAmount}, crash point: ${crashPoint}, difficulty: ${difficulty}`);
+        // Add countdown animation
+        const countdown = document.createElement('div');
+        countdown.className = 'countdown';
+        countdown.innerHTML = '3';
+        chickenGame.appendChild(countdown);
+        
+        setTimeout(() => {
+            countdown.innerHTML = '2';
+            setTimeout(() => {
+                countdown.innerHTML = '1';
+                setTimeout(() => {
+                    countdown.innerHTML = 'GO!';
+                    countdown.classList.add('go');
+                    setTimeout(() => {
+                        countdown.remove();
+                        chickenCharacter.classList.remove('ready-animation');
+                        chickenCharacter.classList.add('running-right');
+                        
+                        // Begin automatic movement after countdown
+                        moveChickenTimer = moveChickenInterval;
+                    }, 800);
+                }, 800);
+            }, 800);
+        }, 800);
+        
+        debug(`Game started with bet: ${betAmount}, crash point: ${crashPoint}, difficulty: ${difficulty}, move interval: ${moveChickenInterval}ms`);
     }
     
     function getDifficulty() {
@@ -238,8 +282,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function updateMultiplier(deltaTime) {
-        // Increase multiplier slowly even when not moving
-        const baseIncrease = 0.001;  // Reduced base increase
+        // Increase multiplier slowly over time
+        const baseIncrease = 0.001;
         
         multiplier += baseIncrease * (deltaTime / 50);
         
@@ -251,11 +295,21 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPayout.textContent = (betAmount * multiplier).toFixed(2);
         }
         
-        // Don't automatically move the chicken - player will click to move
+        // Move chicken automatically to the right
+        moveChickenTimer += deltaTime;
+        if (moveChickenTimer >= moveChickenInterval) {
+            moveChickenTimer = 0;
+            
+            // Move chicken to the next column
+            const nextCol = currentLane + 1;
+            if (nextCol < maxLanes) {
+                moveChicken(2, nextCol); // Always stay in middle row (2)
+            }
+        }
         
-        // But still generate roads ahead if needed
-        if (currentLane >= (maxLanes - 5)) {
-            maxLanes += 5;
+        // Generate more road ahead if needed
+        if (currentLane >= (maxLanes - 10)) {
+            maxLanes += 10;
             generateRoads();
         }
     }
@@ -264,52 +318,60 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear any existing roads
         clearRoads();
         
-        // Create road lanes - now they're a grid
-        const roadWidth = chickenGame.offsetWidth / 5; // 5 lanes horizontally
-        const laneHeight = 80;  // Height of each lane in pixels
+        // Create horizontal grid cells
+        const cellWidth = 80;  // Width of each cell in pixels
+        const roadHeight = chickenGame.offsetHeight / 5; // 5 lanes vertically
         
-        for (let row = 0; row < maxLanes; row++) {
-            for (let col = 0; col < 5; col++) {
+        for (let row = 0; row < 5; row++) {
+            for (let col = 0; col < maxLanes; col++) {
                 // Create a grid cell
                 const cell = document.createElement('div');
                 cell.className = 'road-cell';
-                cell.style.bottom = `${row * laneHeight}px`;
-                cell.style.left = `${col * roadWidth}px`;
-                cell.style.width = `${roadWidth}px`;
-                cell.style.height = `${laneHeight}px`;
+                cell.style.top = `${row * roadHeight}px`;
+                cell.style.left = `${col * cellWidth}px`;
+                cell.style.width = `${cellWidth}px`;
+                cell.style.height = `${roadHeight}px`;
                 cell.dataset.row = row;
                 cell.dataset.col = col;
                 
-                // Make it clickable
-                cell.addEventListener('click', () => handleCellClick(row, col));
-                
                 // Add visual elements based on row/col
-                if (row === 0 && col === 2) {
-                    // Starting position has chicken
+                if (col === 0 && row === 2) {
+                    // Starting position
                     cell.classList.add('starting-cell');
                 } else if (row % 2 === 1) {
                     // Road lanes
                     cell.classList.add('road');
                     
-                    // Alternate lane directions for traffic
+                    // Add fence between roads and sidewalk
+                    if (col > 0 && col < maxLanes - 1 && Math.random() < 0.4) {
+                        const fence = document.createElement('div');
+                        fence.className = 'fence';
+                        // Add chance for broken fence
+                        if (Math.random() < 0.2) {
+                            fence.classList.add('broken-fence');
+                        }
+                        cell.appendChild(fence);
+                    }
+                    
+                    // Set traffic direction
                     cell.dataset.direction = row % 4 === 1 ? 'right' : 'left';
                 } else {
                     // Grass/sidewalk
                     cell.classList.add('grass');
                 }
                 
-                // Add multiplier indicators to cells ahead
-                if (row > currentLane && row <= currentLane + 5) {
-                    // Calculate multiplier for this row
-                    const rowMultiplier = 1 + (row * 0.05);
+                // Add multiplier indicators on cells
+                if (col > currentLane && col <= currentLane + 5) {
+                    // Calculate multiplier for this column
+                    const colMultiplier = 1 + (col * 0.05);
                     
-                    // Create multiplier indicator on random cells
-                    if (Math.random() < 0.3) { // 30% chance to show multiplier
+                    // Create multiplier indicator on some cells
+                    if (row === 2 && Math.random() < 0.4) { // 40% chance to show multiplier
                         const multiplierIndicator = document.createElement('div');
                         multiplierIndicator.className = 'multiplier-indicator';
-                        multiplierIndicator.textContent = `${rowMultiplier.toFixed(2)}x`;
+                        multiplierIndicator.textContent = `${colMultiplier.toFixed(2)}x`;
                         cell.appendChild(multiplierIndicator);
-                        cell.dataset.multiplier = rowMultiplier.toFixed(2);
+                        cell.dataset.multiplier = colMultiplier.toFixed(2);
                     }
                 }
                 
@@ -335,29 +397,43 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function moveChicken(row, col) {
         // Calculate new position
-        const roadWidth = chickenGame.offsetWidth / 5;
-        const laneHeight = 80;
-        const newLeft = col * roadWidth + (roadWidth / 2);
-        const newBottom = row * laneHeight;
+        const cellWidth = 80;
+        const roadHeight = chickenGame.offsetHeight / 5;
+        const newLeft = col * cellWidth;
+        const newTop = row * roadHeight;
         
-        // Update chicken position
+        // Store previous position for animation
+        const prevLeft = parseFloat(chickenCharacter.style.left) || 0;
+        
+        // Update chicken position with smooth animation
+        chickenCharacter.style.transition = 'left 0.5s ease-out, top 0.5s ease-out';
         chickenCharacter.style.left = `${newLeft}px`;
-        chickenCharacter.style.bottom = `${newBottom}px`;
+        chickenCharacter.style.top = `${newTop + (roadHeight/2) - 30}px`; // Center in the row
         chickenCharacter.dataset.col = col;
+        chickenCharacter.dataset.row = row;
         
-        // Add jumping animation
-        chickenCharacter.classList.add('jumping');
+        // Add running animation
+        if (newLeft > prevLeft) {
+            chickenCharacter.classList.add('running-right');
+            chickenCharacter.classList.remove('running-left');
+        } else if (newLeft < prevLeft) {
+            chickenCharacter.classList.add('running-left');
+            chickenCharacter.classList.remove('running-right');
+        }
+        
+        // Remove running animation after movement completes
         setTimeout(() => {
-            chickenCharacter.classList.remove('jumping');
-        }, 300);
+            chickenCharacter.classList.remove('running-right', 'running-left');
+            chickenCharacter.style.transition = '';
+        }, 500);
         
-        // Check if moving to a new lane (row)
-        if (row > currentLane) {
-            // Update current lane
-            currentLane = row;
+        // Check if moving to a new column (moving right)
+        if (col > currentLane) {
+            // Update current lane (now using column for progression)
+            currentLane = col;
             
             // Increase multiplier significantly for advancing forward
-            const newMultiplier = 1 + (row * 0.05);
+            const newMultiplier = 1 + (col * 0.05);
             multiplier = Math.max(multiplier, newMultiplier);
             
             // Check for multiplier bonus on this cell
@@ -366,24 +442,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Apply bonus multiplier
                 multiplier = parseFloat(cell.dataset.multiplier);
                 
-                // Show multiplier effect
+                // Show multiplier effect with smooth animation
                 const bonusEffect = document.createElement('div');
                 bonusEffect.className = 'bonus-effect';
                 bonusEffect.textContent = `${multiplier}x`;
                 chickenGame.appendChild(bonusEffect);
-                bonusEffect.style.left = `${newLeft}px`;
-                bonusEffect.style.bottom = `${newBottom + 40}px`;
+                bonusEffect.style.left = `${newLeft + 40}px`;
+                bonusEffect.style.top = `${newTop + 30}px`;
+                
+                // Add sparkle effect
+                for (let i = 0; i < 5; i++) {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'sparkle';
+                    sparkle.style.left = `${newLeft + 40 + (Math.random() * 40 - 20)}px`;
+                    sparkle.style.top = `${newTop + 30 + (Math.random() * 40 - 20)}px`;
+                    sparkle.style.animationDelay = `${Math.random() * 0.5}s`;
+                    chickenGame.appendChild(sparkle);
+                    
+                    setTimeout(() => {
+                        sparkle.remove();
+                    }, 1500);
+                }
                 
                 setTimeout(() => {
                     bonusEffect.remove();
                 }, 1000);
             }
             
-            // Update display
+            // Update display with animation
+            currentMultiplier.classList.add('multiplier-update');
             currentMultiplier.textContent = multiplier.toFixed(2);
+            
             if (currentPayout) {
+                currentPayout.classList.add('payout-update');
                 currentPayout.textContent = (betAmount * multiplier).toFixed(2);
             }
+            
+            setTimeout(() => {
+                currentMultiplier.classList.remove('multiplier-update');
+                if (currentPayout) {
+                    currentPayout.classList.remove('payout-update');
+                }
+            }, 500);
         }
     }
     
@@ -402,12 +502,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function spawnCar() {
-        // Only spawn cars on road cells that are close to the player
+        // Only spawn cars on road cells that are near the chicken
         const visibleRows = [];
-        for (let i = Math.max(0, currentLane - 1); i <= currentLane + 5; i++) {
-            if (i % 2 === 1) { // Only roads have cars (odd rows)
-                visibleRows.push(i);
-            }
+        for (let i = 1; i < 5; i += 2) { // Only roads have cars (odd rows)
+            visibleRows.push(i);
         }
         
         if (visibleRows.length === 0) {
@@ -426,27 +524,52 @@ document.addEventListener('DOMContentLoaded', () => {
         car.className = 'car';
         
         // Position car
-        const roadWidth = chickenGame.offsetWidth;
-        const laneHeight = 80;
-        car.style.bottom = `${rowNumber * laneHeight + 20}px`; // Center in the lane
+        const gameHeight = chickenGame.offsetHeight;
+        const roadHeight = gameHeight / 5;
+        const visibleCols = [Math.max(0, currentLane - 2), currentLane + 6]; // Only show cars near chicken
+        
+        // Generate column position - close to chicken
+        const colPosition = Math.max(0, currentLane - 1 + Math.floor(Math.random() * 7));
+        
+        car.style.top = `${rowNumber * roadHeight + (roadHeight / 2) - 20}px`; // Center in the lane
+        
+        // Randomize car power - stronger cars can break fences
+        const carPower = Math.random();
+        car.dataset.power = carPower.toFixed(2);
         
         if (direction === 'right') {
-            car.style.left = '-80px';  // Start from left side
+            car.style.left = `${colPosition * 80 - 100}px`;  // Start from left side
             car.dataset.speed = (Math.random() * 3) + 5;  // 5-8 pixels per frame
             car.dataset.direction = 'right';
         } else {
-            car.style.left = `${roadWidth}px`;  // Start from right side
+            car.style.left = `${colPosition * 80 + 100}px`;  // Start from right side
             car.classList.add('car-right');
             car.dataset.speed = -((Math.random() * 3) + 5);  // -5 to -8 pixels per frame
             car.dataset.direction = 'left';
         }
         
         car.dataset.row = rowNumber;
+        car.dataset.col = colPosition;
         
-        // Choose random car type
-        const carTypes = ['car', 'truck', 'police']; 
-        const carType = carTypes[Math.floor(Math.random() * carTypes.length)];
+        // Choose random car type with different break-through capabilities
+        const carTypes = ['car', 'truck', 'police', 'monster-truck']; 
+        // Weight toward regular cars
+        let carTypeIndex = Math.floor(Math.random() * 10);
+        if (carTypeIndex > 6) carTypeIndex = 1; // 30% trucks
+        if (carTypeIndex > 8) carTypeIndex = 2; // 10% police
+        if (carTypeIndex > 9) carTypeIndex = 3; // 5% monster truck (strongest)
+        
+        const carType = carTypes[Math.min(carTypeIndex, 3)];
         car.classList.add(carType);
+        
+        // Monster trucks and police cars have higher chance to break fences
+        if (carType === 'monster-truck') {
+            car.dataset.power = '0.9'; // 90% chance to break fence
+        } else if (carType === 'police') {
+            car.dataset.power = '0.7'; // 70% chance to break fence
+        } else if (carType === 'truck') {
+            car.dataset.power = '0.5'; // 50% chance to break fence
+        }
         
         // Randomize car color if it's a normal car
         if (carType === 'car') {
@@ -454,10 +577,18 @@ document.addEventListener('DOMContentLoaded', () => {
             car.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
         }
         
-        // Add car to the game
+        // Add car to the game with smooth entry animation
+        car.style.opacity = '0';
+        car.style.transform = 'scale(0.8)';
         chickenGame.appendChild(car);
         
-        debug(`Spawned ${carType} in row ${rowNumber}, direction: ${direction}`);
+        // Fade in the car
+        setTimeout(() => {
+            car.style.opacity = '1';
+            car.style.transform = 'scale(1)';
+        }, 50);
+        
+        debug(`Spawned ${carType} in row ${rowNumber}, direction: ${direction}, power: ${car.dataset.power}`);
     }
     
     function updateCars() {
@@ -471,9 +602,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const newLeft = currentLeft + speed;
             car.style.left = `${newLeft}px`;
             
-            // Remove car if it's off screen
-            if ((speed > 0 && newLeft > gameWidth + 100) || (speed < 0 && newLeft < -200)) {
-                car.remove();
+            // Check for fence collision
+            checkFenceCollision(car);
+            
+            // Remove car if it's off screen or too far from chicken
+            const carCol = parseInt(car.dataset.col || 0);
+            if ((speed > 0 && newLeft > gameWidth + 100) || 
+                (speed < 0 && newLeft < -200) || 
+                (Math.abs(carCol - currentLane) > 10)) {
+                car.classList.add('exiting');
+                setTimeout(() => {
+                    car.remove();
+                }, 500);
             }
             
             // Check collision with chicken
@@ -483,25 +623,69 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    function isColliding(car, chicken) {
-        // Get car row
+    function checkFenceCollision(car) {
+        // Get car position
+        const carRect = car.getBoundingClientRect();
         const carRow = parseInt(car.dataset.row);
+        const carCol = Math.floor((parseFloat(car.style.left) + 40) / 80); // Approximate column based on position
+        const carPower = parseFloat(car.dataset.power || 0.3);
         
-        // Get chicken position
-        const chickenRow = currentLane;
-        const chickenCol = parseInt(chicken.dataset.col || 2);
+        // Find any fences in the path
+        const fences = document.querySelectorAll(`.fence`);
         
-        // Check if chicken is in this row
-        if (carRow !== chickenRow) {
-            return false;
-        }
-        
-        // Get positions for horizontal check
+        fences.forEach(fence => {
+            const fenceRect = fence.getBoundingClientRect();
+            
+            // Check if car is about to hit fence
+            if (!fence.classList.contains('broken') && 
+                !(carRect.right < fenceRect.left || 
+                  carRect.left > fenceRect.right || 
+                  carRect.bottom < fenceRect.top || 
+                  carRect.top > fenceRect.bottom)) {
+                
+                // Check if car can break fence based on power
+                if (Math.random() < carPower) {
+                    // Break the fence
+                    fence.classList.add('broken');
+                    
+                    // Add breaking animation and sound
+                    const breakEffect = document.createElement('div');
+                    breakEffect.className = 'break-effect';
+                    breakEffect.style.left = `${fenceRect.left + fenceRect.width/2}px`;
+                    breakEffect.style.top = `${fenceRect.top + fenceRect.height/2}px`;
+                    chickenGame.appendChild(breakEffect);
+                    
+                    setTimeout(() => {
+                        breakEffect.remove();
+                    }, 1000);
+                    
+                    // Play break sound
+                    playSound('break');
+                } else {
+                    // Car hit fence but didn't break it
+                    car.classList.add('bounce');
+                    fence.classList.add('shake');
+                    
+                    // Slow down car
+                    const currentSpeed = parseFloat(car.dataset.speed);
+                    car.dataset.speed = (currentSpeed * 0.8).toString();
+                    
+                    setTimeout(() => {
+                        car.classList.remove('bounce');
+                        fence.classList.remove('shake');
+                    }, 300);
+                }
+            }
+        });
+    }
+    
+    function isColliding(car, chicken) {
+        // Get car and chicken positions
         const carRect = car.getBoundingClientRect();
         const chickenRect = chicken.getBoundingClientRect();
         
         // Use tighter collision box for more accurate collision
-        const chickenCollisionMargin = 15; // Pixels to shrink the chicken hitbox
+        const chickenCollisionMargin = 10; // Pixels to shrink the chicken hitbox
         const adjustedChickenRect = {
             left: chickenRect.left + chickenCollisionMargin,
             right: chickenRect.right - chickenCollisionMargin,
@@ -526,7 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const crashEffect = document.createElement('div');
             crashEffect.className = 'crash-effect';
             crashEffect.style.left = `${chickenRect.left + chickenRect.width/2}px`;
-            crashEffect.style.bottom = `${carRow * 80 + 40}px`;
+            crashEffect.style.top = `${chickenRect.top + chickenRect.height/2}px`;
             chickenGame.appendChild(crashEffect);
             
             setTimeout(() => {
