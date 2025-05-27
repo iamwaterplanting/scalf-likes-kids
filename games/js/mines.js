@@ -256,9 +256,15 @@ document.addEventListener('DOMContentLoaded', () => {
             el.style.display = 'flex';
         });
         
-        // Make sure the bet button is visible
+        // Enable all buttons and form controls
+        document.querySelectorAll('.mines-btn, #betAmount, #minesCount').forEach(el => {
+            el.disabled = false;
+        });
+        
+        // Make sure the bet button is visible and enabled
         if (betButton) {
             betButton.style.display = 'block';
+            betButton.disabled = false;
         }
         
         // Remove "started" class from grid
@@ -281,23 +287,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function revealCell(index) {
-        // Add to revealed cells
-        revealedCells.push(index);
+        // Make sure index is a number
+        const numIndex = parseInt(index);
         
-        console.log(`REVEAL CELL: Clicked on cell ${index}`);
+        // Add to revealed cells
+        revealedCells.push(numIndex);
+        
+        console.log(`REVEAL CELL: Clicked on cell ${numIndex}`);
         
         // Check if cell is a mine or gem
-        const isMine = checkIfMine(index);
-        console.log(`REVEAL RESULT: Cell ${index} is ${isMine ? 'a MINE!' : 'a gem'}`);
+        const isMine = checkIfMine(numIndex);
+        console.log(`REVEAL RESULT: Cell ${numIndex} is ${isMine ? 'a MINE!' : 'a gem'}`);
         
-        const cell = document.querySelector(`.mine-cell[data-index="${index}"]`);
+        const cell = document.querySelector(`.mine-cell[data-index="${numIndex}"]`);
         
         if (isMine) {
             // Game over - hit a mine
             cell.classList.add('revealed-mine');
             cell.innerHTML = '<i class="fas fa-bomb mine"></i>'; // Added "mine" class for animations
             
-            console.log(`GAME OVER: Hit a mine at position ${index}`);
+            console.log(`GAME OVER: Hit a mine at position ${numIndex}`);
             
             // Play explosion sound
             playSound('explosion');
@@ -314,23 +323,36 @@ document.addEventListener('DOMContentLoaded', () => {
             // Show game over popup briefly and auto-hide
             gameOverPopup.classList.add('show');
             
+            // Disable further clicks on the grid
+            minesGrid.classList.add('game-ended');
+            
             // Auto-hide popup after 1 second
             setTimeout(() => {
                 hidePopups();
                 resetGame();
-            }, 1000);
+            }, 1500);
         } else {
             // Found a gem!
             cell.classList.add('revealed-gem');
             cell.innerHTML = '<i class="fas fa-gem gem"></i>'; // Added "gem" class for animations
             
-            console.log(`FOUND GEM: Revealed a gem at position ${index}`);
+            console.log(`FOUND GEM: Revealed a gem at position ${numIndex}`);
             
             // Play gem sound
             playSound('gem');
             
             // Update game stats
             updateAfterGemFound();
+            
+            // Check if all non-mine cells have been revealed
+            const totalCells = 25;
+            const minesCount = minePositions.length;
+            const gemCount = totalCells - minesCount;
+            
+            if (revealedCells.filter(cell => !checkIfMine(cell)).length >= gemCount) {
+                // All gems found - auto win!
+                endGame(true);
+            }
         }
     }
     
@@ -488,25 +510,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Direct console logging to help diagnose the issue
         console.log(`CHECKING MINE: Cell ${index} (now ${numIndex}), mine positions: ${minePositions.join(', ')}`);
         
-        // Use a direct approach to check if the index is in minePositions
-        let isMine = false;
-        for (let i = 0; i < minePositions.length; i++) {
-            const minePos = parseInt(minePositions[i]);
-            if (minePos === numIndex) {
-                isMine = true;
-                console.log(`MATCH FOUND: Cell ${numIndex} is a mine!`);
-                break;
-            }
-        }
-        
-        console.log(`RESULT: Cell ${numIndex} is ${isMine ? 'a mine' : 'not a mine'}`);
-        return isMine;
+        // Fix: Simply use includes() to check if the index is in minePositions
+        return minePositions.includes(numIndex);
     }
     
     function revealAllMines() {
-        // Direct console logging
+        // Log for debugging
         console.log(`REVEALING ALL MINES: ${minePositions.join(', ')}`);
-        console.log(`Current revealed cells: ${revealedCells.join(', ')}`);
         
         // Reveal all mines except the one that was clicked (already revealed)
         minePositions.forEach(pos => {
@@ -514,9 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const minePos = parseInt(pos);
             
             // Check if this mine has already been revealed
-            const isRevealed = revealedCells.some(cell => parseInt(cell) === minePos);
-            
-            console.log(`Mine at position ${minePos}: ${isRevealed ? 'already revealed' : 'revealing now'}`);
+            const isRevealed = revealedCells.includes(minePos);
             
             // Only reveal mines that haven't been clicked yet
             if (!isRevealed) {
@@ -524,9 +532,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (cell) {
                     cell.classList.add('revealed-mine');
                     cell.innerHTML = '<i class="fas fa-bomb mine"></i>';
-                    console.log(`Revealed mine at position ${minePos}`);
-                } else {
-                    console.log(`ERROR: Could not find cell for mine at position ${minePos}`);
                 }
             }
         });
@@ -632,7 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear previous mine positions
         minePositions = [];
         
-        // Use a direct approach to generate unique positions
+        // Generate unique positions
         const allPositions = Array.from({ length: 25 }, (_, i) => i);
         
         // Shuffle the array using Fisher-Yates algorithm
@@ -641,36 +646,11 @@ document.addEventListener('DOMContentLoaded', () => {
             [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
         }
         
-        // Take the first N positions as mines
-        minePositions = allPositions.slice(0, minesCount);
+        // Take the first N positions as mines (ensure they're numbers)
+        minePositions = allPositions.slice(0, minesCount).map(Number);
         
-        debug(`Mine positions: ${minePositions.join(', ')}`);
-        
-        // Double-check that we have the correct number of mines
-        if (minePositions.length !== minesCount) {
-            debug(`ERROR: Generated ${minePositions.length} mines instead of ${minesCount}. Fixing...`);
-            
-            // Fix by adding or removing mines
-            if (minePositions.length < minesCount) {
-                // Add more mines from unused positions
-                const unusedPositions = allPositions.filter(p => !minePositions.includes(p));
-                while (minePositions.length < minesCount && unusedPositions.length > 0) {
-                    const pos = unusedPositions.pop();
-                    minePositions.push(pos);
-                }
-            } else {
-                // Remove excess mines
-                minePositions = minePositions.slice(0, minesCount);
-            }
-            
-            debug(`Corrected mine positions: ${minePositions.join(', ')}`);
-        }
-        
-        // Turn on debugging temporarily
-        const DEBUG_MINES = true;
-        if (DEBUG_MINES) {
-            console.log(`MINES DEBUG - Generated mine positions: ${minePositions.join(', ')}`);
-        }
+        // Log mine positions for debugging
+        console.log(`MINES DEBUG - Generated mine positions: ${minePositions.join(', ')}`);
     }
     
     // Update the selected mines button based on the current value
@@ -704,4 +684,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-}); 
+});
