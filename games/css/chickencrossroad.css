@@ -79,28 +79,55 @@
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
 }
 
-/* Road Lanes */
+/* Road Lanes - match the screenshot layout */
 .road-lane {
     position: absolute;
     width: 100%;
-    height: 80px;
-    background-color: var(--road-color);
+    height: 20%;
+    background-color: #2c3e50;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     z-index: 1;
 }
 
-.road-lane::before {
+.lane-marker {
+    position: absolute;
+    width: 2px;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.15);
+    top: 0;
+}
+
+/* Road barrier elements */
+.road-barrier {
+    position: absolute;
+    width: 40px;
+    height: 15px;
+    background-color: #f44;
+    border-radius: 3px;
+    z-index: 5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.road-barrier::before,
+.road-barrier::after {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 0;
-    width: 100%;
-    height: 6px;
-    background: linear-gradient(90deg, var(--line-color) 50%, transparent 50%);
-    background-size: 40px 100%;
-    transform: translateY(-50%);
-    animation: road-lines 3s linear infinite;
+    width: 6px;
+    height: 15px;
+    background-color: #fff;
+    border-radius: 2px;
+    top: -8px;
+}
+
+.road-barrier::before {
+    left: 8px;
+    transform: rotate(-15deg);
+}
+
+.road-barrier::after {
+    right: 8px;
+    transform: rotate(15deg);
 }
 
 /* Road Cell System for Horizontal Layout */
@@ -157,25 +184,91 @@
     animation: bounce 1s infinite;
 }
 
-/* Multiplier indicators */
-.multiplier-indicator {
+/* Multiplier indicators - hexagonal shape */
+.multiplier-hex {
     position: absolute;
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(15, 23, 42, 0.8);
-    color: var(--chicken-primary);
+    background-color: #1a2032;
+    color: #ffffff;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 18px;
     font-weight: bold;
-    border-radius: 50%;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     z-index: 5;
-    border: 2px solid var(--chicken-primary);
-    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+    border: 2px solid #ffa726;
+    transition: all 0.2s ease;
+}
+
+.multiplier-hex.active-multiplier {
+    background-color: #304025;
+    border-color: #4caf50;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+}
+
+.multiplier-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4caf50;
+}
+
+.active-multiplier .multiplier-value {
+    color: #8bc34a;
+}
+
+.multiplier-suffix {
+    font-size: 14px;
+    color: #8bc34a;
+    margin-top: -2px;
+}
+
+.gem-icons {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-image: radial-gradient(circle, rgba(76, 175, 80, 0.3) 10%, transparent 10%),
+                      radial-gradient(circle, rgba(76, 175, 80, 0.2) 15%, transparent 15%);
+    background-size: 20px 20px, 30px 30px;
+    background-position: 0 0, 10px 10px;
+    opacity: 0.5;
+}
+
+.gem-icons.gem-pulse {
+    animation: gem-pulse 0.5s;
+}
+
+@keyframes gem-pulse {
+    0% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 0.5; }
+}
+
+/* Next position indicator */
+.next-indicator {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 15px solid #4caf50;
+    z-index: 6;
+    animation: arrow-bounce 0.8s infinite alternate;
+}
+
+@keyframes arrow-bounce {
+    0% { transform: translateX(-50%) translateY(0); }
+    100% { transform: translateX(-50%) translateY(-10px); }
 }
 
 /* Bonus effect */
@@ -199,102 +292,121 @@
     z-index: 25;
 }
 
-/* Cars */
+/* Cars - matching the screenshot */
 .car {
     position: absolute;
-    height: 40px;
-    width: 80px;
-    background-color: var(--chicken-secondary);
-    border-radius: 8px;
+    height: 50px;
+    width: 90px;
+    background-color: #0a5;
+    border-radius: 5px;
     z-index: 10;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: left 0.05s linear;
 }
 
-.car.bounce {
-    animation: car-bounce 0.3s forwards;
-}
-
-@keyframes car-bounce {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-    100% { transform: translateX(0); }
-}
-
-.car.exiting {
-    opacity: 0;
-    transform: scale(0.8);
-}
-
-.car.monster-truck {
-    height: 60px;
-    width: 100px;
-    background-color: #772222;
-    border-radius: 10px;
-}
-
-.car.monster-truck::before {
+.car::before {
     content: '';
     position: absolute;
-    width: 90px;
-    height: 20px;
-    background-color: #550000;
-    border-radius: 5px;
-    bottom: -5px;
-    left: 5px;
-}
-
-.car.monster-truck::after {
-    content: '';
-    position: absolute;
-    width: 60px;
-    height: 15px;
+    width: 70%;
+    height: 40%;
     background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 3px;
+    top: 10%;
+    left: 15%;
+}
+
+.car::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background-color: #333;
+    border-radius: 50%;
+    bottom: 0;
+    left: 15px;
+    box-shadow: 45px 0 0 #333;
+}
+
+/* Sports car - red like in the screenshot */
+.car.sports-car {
+    height: 45px;
+    width: 100px;
+    background-color: #f00;
+    border-radius: 8px 12px 3px 3px;
+}
+
+.car.sports-car::before {
+    width: 60%;
+    height: 30%;
+    top: 15%;
+    left: 25%;
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Police car */
+.car.police-car {
+    background-color: #000;
+}
+
+.car.police-car::before {
+    background-color: rgba(255, 255, 255, 0.6);
+}
+
+.car.police-car::after {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 10px;
+    background-color: #f00;
     border-radius: 5px;
+    top: 0;
+    left: 30px;
+    box-shadow: 0 0 10px #00f, 0 0 20px rgba(0, 0, 255, 0.5);
+    animation: police-lights 0.5s infinite alternate;
+}
+
+/* Black car */
+.car.black-car {
+    background-color: #222;
+}
+
+.car.black-car::before {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Chicken Character - match the white chicken in the screenshot */
+.chicken-character {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    z-index: 20;
+    transition: all 0.2s ease-out;
+    background: url('../assets/chicken.svg') no-repeat center center, #fff;
+    background-size: 80% 80%;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.chicken-character::before {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #f00;
+    border-radius: 2px;
     top: 10px;
     left: 20px;
 }
 
-/* Chicken Character */
-.chicken-character {
+.chicken-character::after {
+    content: '';
     position: absolute;
-    width: 60px;
-    height: 60px;
-    z-index: 20;
-    transition: all 0.5s ease-out;
-}
-
-.chicken-sprite {
-    width: 100%;
-    height: 100%;
-    background: url('../assets/chicken.svg') no-repeat center center;
-    background-size: contain;
-    transition: transform 0.2s ease;
-}
-
-.chicken-character.running-right .chicken-sprite {
-    animation: chicken-run-right 0.4s infinite steps(4);
-}
-
-.chicken-character.running-left .chicken-sprite {
-    animation: chicken-run-left 0.4s infinite steps(4);
-}
-
-@keyframes chicken-run-right {
-    0% { transform: translateY(0) scaleX(1); }
-    25% { transform: translateY(-2px) scaleX(1.05); }
-    50% { transform: translateY(0) scaleX(1); }
-    75% { transform: translateY(-2px) scaleX(0.95); }
-    100% { transform: translateY(0) scaleX(1); }
-}
-
-@keyframes chicken-run-left {
-    0% { transform: translateY(0) scaleX(-1); }
-    25% { transform: translateY(-2px) scaleX(-1.05); }
-    50% { transform: translateY(0) scaleX(-1); }
-    75% { transform: translateY(-2px) scaleX(-0.95); }
-    100% { transform: translateY(0) scaleX(-1); }
+    width: 4px;
+    height: 6px;
+    background-color: #f90;
+    border-radius: 1px;
+    top: 25px;
+    left: 23px;
 }
 
 /* Multiplier Display */
