@@ -1,5 +1,24 @@
 // Apply consistent sidebar styling across all pages
 document.addEventListener('DOMContentLoaded', function() {
+    // Add Chicken Crossroad to all sidebars if it doesn't exist
+    let sidebarNavList = document.querySelector('.main-nav ul');
+    if (sidebarNavList) {
+        // Check if chicken crossroad is already in the nav
+        const chickenNavItem = sidebarNavList.querySelector('a[href="chickencrossroad.html"]');
+        
+        if (!chickenNavItem) {
+            // Create new nav item for Chicken Crossroad
+            const newNavItem = document.createElement('li');
+            const isActive = window.location.href.includes('chickencrossroad.html');
+            if (isActive) {
+                newNavItem.classList.add('active');
+            }
+            
+            newNavItem.innerHTML = `<a href="chickencrossroad.html"><i class="fas fa-drumstick-bite"></i> Chicken Crossroad 🐔</a>`;
+            sidebarNavList.appendChild(newNavItem);
+        }
+    }
+    
     // Apply enhanced sidebar styling
     const sidebar = document.querySelector('.sidebar');
     const logo = document.querySelector('.logo');

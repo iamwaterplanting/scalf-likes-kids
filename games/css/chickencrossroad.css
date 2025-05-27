@@ -1,0 +1,681 @@
+/* Chicken Crossroad Game - Main Styles */
+:root {
+    --chicken-primary: #ffc107;
+    --chicken-secondary: #f97316;
+    --chicken-danger: #dc2626;
+    --chicken-success: #16a34a;
+    --road-color: #2c3e50;
+    --grass-color: #16a34a;
+    --line-color: #f8fafc;
+}
+
+/* Game Container */
+.chicken-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 30px;
+    background-color: rgba(15, 23, 42, 0.5);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chicken-game-container {
+    display: flex;
+    min-height: 600px;
+}
+
+/* Game Title */
+.chicken-title {
+    text-align: center;
+    margin: 20px 0 30px;
+    position: relative;
+}
+
+.chicken-title h1 {
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--chicken-primary);
+    text-shadow: 0 0 10px rgba(255, 193, 7, 0.5), 0 0 20px rgba(255, 193, 7, 0.3);
+    letter-spacing: 2px;
+    position: relative;
+    display: inline-block;
+}
+
+.chicken-title h1::before,
+.chicken-title h1::after {
+    content: '🐔';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 32px;
+    animation: chicken-bounce 2s infinite alternate;
+}
+
+.chicken-title h1::before {
+    left: -50px;
+}
+
+.chicken-title h1::after {
+    right: -50px;
+}
+
+.title-emoji {
+    margin-left: 10px;
+    display: inline-block;
+    animation: car-drive 3s infinite linear;
+}
+
+/* Game Area */
+.chicken-game {
+    flex: 3;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(to bottom, var(--grass-color), var(--grass-color));
+    height: 600px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Road Lanes */
+.road-lane {
+    position: absolute;
+    width: 100%;
+    height: 80px;
+    background-color: var(--road-color);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    z-index: 1;
+}
+
+.road-lane::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(90deg, var(--line-color) 50%, transparent 50%);
+    background-size: 40px 100%;
+    transform: translateY(-50%);
+    animation: road-lines 3s linear infinite;
+}
+
+/* Cars */
+.car {
+    position: absolute;
+    height: 40px;
+    width: 80px;
+    background-color: var(--chicken-secondary);
+    border-radius: 8px;
+    z-index: 2;
+    transition: transform 0.2s;
+    transform: translateX(-100px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    top: 50%;
+    margin-top: -20px;
+}
+
+.car::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 10px;
+    width: 20px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+}
+
+.car::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 15px;
+    width: 50px;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    filter: blur(4px);
+}
+
+.car-right {
+    transform: scaleX(-1) translateX(-100px);
+}
+
+/* Chicken Character */
+.chicken-character {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
+    z-index: 10;
+    transition: bottom 0.3s ease-out;
+}
+
+.chicken-sprite {
+    width: 100%;
+    height: 100%;
+    background: url('../assets/chicken.svg') no-repeat center center;
+    background-size: contain;
+    animation: chicken-idle 0.6s infinite alternate;
+}
+
+.chicken-character.jumping .chicken-sprite {
+    animation: chicken-jump 0.3s;
+}
+
+.chicken-character.hit .chicken-sprite {
+    animation: chicken-hit 0.5s forwards;
+}
+
+/* Multiplier Display */
+.multiplier-display {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--chicken-primary);
+    text-shadow: 0 0 10px var(--chicken-primary);
+    z-index: 100;
+    box-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
+    border: 2px solid var(--chicken-primary);
+    min-width: 120px;
+    text-align: center;
+}
+
+.multiplier-display span {
+    margin-right: 2px;
+}
+
+/* Sidebar */
+.chicken-sidebar {
+    flex: 1;
+    background-color: rgba(15, 23, 42, 0.8);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chicken-stats {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chicken-stat {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chicken-stat:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.chicken-stat span {
+    display: block;
+    font-size: 14px;
+    color: #a3a3a3;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+}
+
+.stat-value i {
+    color: var(--chicken-primary);
+    margin-right: 5px;
+}
+
+/* Bet Section */
+.bet-amount-section {
+    margin-bottom: 20px;
+}
+
+.bet-amount-section label {
+    display: block;
+    font-size: 14px;
+    color: #a3a3a3;
+    margin-bottom: 8px;
+}
+
+.bet-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 18px;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.bet-shortcuts {
+    display: flex;
+    gap: 8px;
+}
+
+.bet-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 8px 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.bet-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Play Button */
+.play-button {
+    width: 100%;
+    background: linear-gradient(135deg, var(--chicken-primary), var(--chicken-secondary));
+    color: #000;
+    border: none;
+    padding: 15px;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    letter-spacing: 1px;
+}
+
+.play-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(255, 193, 7, 0.4);
+}
+
+.play-button:active {
+    transform: translateY(1px);
+}
+
+/* Cashout Button */
+.cashout-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--chicken-success), #10b981);
+    color: white;
+    border: none;
+    padding: 20px;
+    font-size: 22px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+    letter-spacing: 1px;
+    animation: pulse-cashout 1.5s infinite alternate;
+}
+
+.cashout-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(22, 163, 74, 0.4);
+}
+
+.cashout-btn:active {
+    transform: scale(0.98);
+}
+
+/* Game Stats Section */
+.game-stats-section {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.game-stats-section h3 {
+    font-size: 16px;
+    color: #e5e5e5;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.stats-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.stats-item span:first-child {
+    color: #a3a3a3;
+}
+
+.stats-item span:last-child {
+    color: white;
+    font-weight: 600;
+}
+
+/* Game Description */
+.game-description {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.game-description h3 {
+    font-size: 16px;
+    color: var(--chicken-primary);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.game-description p {
+    color: #e5e5e5;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.game-description ul {
+    color: #d4d4d4;
+    font-size: 13px;
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.game-description li {
+    margin-bottom: 5px;
+}
+
+.game-description li:last-child {
+    margin-bottom: 0;
+}
+
+/* Game Popups */
+.game-over-popup,
+.win-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.game-over-popup.show,
+.win-popup.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.popup-content {
+    background: #1e293b;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    transform: scale(0.9);
+    transition: transform 0.3s;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.game-over-popup.show .popup-content,
+.win-popup.show .popup-content {
+    transform: scale(1);
+}
+
+.popup-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    display: inline-block;
+}
+
+.game-over-popup .popup-icon {
+    color: var(--chicken-danger);
+}
+
+.win-popup .popup-icon {
+    color: var(--chicken-primary);
+}
+
+.popup-content h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.game-over-popup h2 {
+    color: var(--chicken-danger);
+}
+
+.win-popup h2 {
+    color: var(--chicken-success);
+}
+
+.popup-content p {
+    color: #e5e5e5;
+    font-size: 18px;
+    margin-bottom: 25px;
+}
+
+#winAmount {
+    color: var(--chicken-primary);
+    font-weight: 700;
+}
+
+/* Game History */
+.game-history {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: rgba(15, 23, 42, 0.5);
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.game-history h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 20px;
+}
+
+.history-table {
+    overflow-x: auto;
+}
+
+.history-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.history-table th,
+.history-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e5e5e5;
+}
+
+.history-table th {
+    font-weight: 600;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.history-table tr:last-child td {
+    border-bottom: none;
+}
+
+.history-table tr:hover td {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Game State Classes */
+.game-not-started .game-playing-content {
+    display: none !important;
+}
+
+.game-started .game-setup-content {
+    display: none !important;
+}
+
+.game-started .game-playing-content {
+    display: flex !important;
+}
+
+/* Animations */
+@keyframes chicken-idle {
+    0% {
+        transform: translateY(0) rotate(0deg);
+    }
+    100% {
+        transform: translateY(-3px) rotate(3deg);
+    }
+}
+
+@keyframes chicken-jump {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-20px) scale(1.1);
+    }
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes chicken-hit {
+    0% {
+        transform: translateY(0) rotate(0);
+    }
+    25% {
+        transform: translateY(-10px) rotate(20deg);
+    }
+    100% {
+        transform: translateY(5px) rotate(90deg) scale(0.8);
+    }
+}
+
+@keyframes chicken-bounce {
+    0% {
+        transform: translateY(-50%) rotate(0);
+    }
+    100% {
+        transform: translateY(-70%) rotate(10deg);
+    }
+}
+
+@keyframes car-drive {
+    0% {
+        transform: translateX(-30px);
+    }
+    100% {
+        transform: translateX(30px);
+    }
+}
+
+@keyframes road-lines {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 40px 0;
+    }
+}
+
+@keyframes pulse-cashout {
+    0% {
+        box-shadow: 0 0 5px rgba(22, 163, 74, 0.5), 0 0 10px rgba(22, 163, 74, 0.3);
+    }
+    100% {
+        box-shadow: 0 0 15px rgba(22, 163, 74, 0.7), 0 0 30px rgba(22, 163, 74, 0.5);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .chicken-game-container {
+        flex-direction: column;
+    }
+    
+    .chicken-game {
+        height: 500px;
+    }
+    
+    .chicken-sidebar {
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .chicken-title h1 {
+        font-size: 32px;
+    }
+    
+    .chicken-title h1::before,
+    .chicken-title h1::after {
+        font-size: 24px;
+    }
+    
+    .chicken-title h1::before {
+        left: -40px;
+    }
+    
+    .chicken-title h1::after {
+        right: -40px;
+    }
+}
+
+@media (max-width: 576px) {
+    .chicken-title h1 {
+        font-size: 24px;
+    }
+    
+    .chicken-title h1::before,
+    .chicken-title h1::after {
+        display: none;
+    }
+    
+    .play-button, 
+    .cashout-btn {
+        padding: 12px;
+        font-size: 16px;
+    }
+    
+    .multiplier-display {
+        font-size: 24px;
+        padding: 8px 15px;
+    }
+    
+    .chicken-game {
+        height: 400px;
+    }
+} 
