@@ -87,9 +87,36 @@ function updateActivityTable(activities) {
     recentActivities.forEach(activity => {
         const row = document.createElement('tr');
         
-        // User cell
+        // User cell with avatar
         const userCell = document.createElement('td');
-        userCell.textContent = activity.username;
+        userCell.className = 'user-cell';
+        
+        // Create user avatar wrapper
+        const avatarWrapper = document.createElement('div');
+        avatarWrapper.className = 'user-avatar-small';
+        
+        // Create avatar image
+        const avatarImg = document.createElement('img');
+        avatarImg.className = 'avatar-img-small';
+        avatarImg.src = 'assets/default-avatar.svg'; // Default avatar
+        
+        // Try to fetch user avatar
+        fetchUserAvatar(activity.username)
+            .then(avatarUrl => {
+                if (avatarUrl) {
+                    avatarImg.src = avatarUrl;
+                }
+            });
+        
+        // Create username span
+        const usernameSpan = document.createElement('span');
+        usernameSpan.className = 'username-span';
+        usernameSpan.textContent = activity.username;
+        
+        // Assemble user cell
+        avatarWrapper.appendChild(avatarImg);
+        userCell.appendChild(avatarWrapper);
+        userCell.appendChild(usernameSpan);
         
         // Game cell
         const gameCell = document.createElement('td');
@@ -121,6 +148,25 @@ function updateActivityTable(activities) {
         // Append row to table body
         activityBody.appendChild(row);
     });
+}
+
+// Helper function to fetch user avatar
+async function fetchUserAvatar(username) {
+    try {
+        const { data, error } = await window.SupabaseDB
+            .from('users')
+            .select('avatar')
+            .eq('username', username)
+            .single();
+            
+        if (error) throw error;
+        
+        // Return the avatar URL if available
+        return data && data.avatar ? data.avatar : null;
+    } catch (error) {
+        console.error('Error fetching user avatar:', error);
+        return null;
+    }
 }
 
 // Format currency amounts

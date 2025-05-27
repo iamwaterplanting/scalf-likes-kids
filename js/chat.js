@@ -529,15 +529,14 @@ async function fetchUserAvatar(username) {
     try {
         const { data, error } = await window.SupabaseDB
             .from('users')
-            .select('avatar, avatar_url')
+            .select('avatar')
             .eq('username', username)
             .single();
             
         if (error) throw error;
         
         // Return the avatar URL if available
-        return data && (data.avatar || data.avatar_url) ? 
-               (data.avatar || data.avatar_url) : null;
+        return data && data.avatar ? data.avatar : null;
     } catch (error) {
         console.error('Error fetching user avatar:', error);
         return null;

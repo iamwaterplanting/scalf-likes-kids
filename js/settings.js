@@ -161,15 +161,15 @@ async function loadUserData() {
         // Otherwise try to get user profile picture from Supabase
         const { data, error } = await window.SupabaseDB
             .from('users')
-            .select('avatar, avatar_url')
+            .select('avatar')
             .eq('username', currentUser.username)
             .single();
             
         if (error) throw error;
         
-        // Check both avatar and avatar_url fields
-        if (data && (data.avatar || data.avatar_url)) {
-            const avatarUrl = data.avatar || data.avatar_url;
+        // Check avatar field
+        if (data && data.avatar) {
+            const avatarUrl = data.avatar;
             userAvatar.src = avatarUrl;
             
             // Update local user data if different
@@ -205,31 +205,48 @@ async function saveUserProfile(displayName, profilePic) {
     if (profilePic) {
         console.log('Uploading profile picture...');
         
-        // Generate unique file name
-        const fileName = `avatar_${currentUser.username}_${Date.now()}.${profilePic.name.split('.').pop()}`;
-        
-        // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await window.SupabaseDB
-            .storage
-            .from('avatars')
-            .upload(fileName, profilePic);
+        try {
+            // Generate unique file name
+            const fileName = `avatar_${currentUser.username}_${Date.now()}.${profilePic.name.split('.').pop()}`;
             
-        if (uploadError) throw uploadError;
-        
-        // Get public URL
-        const { data: publicURLData } = window.SupabaseDB
-            .storage
-            .from('avatars')
-            .getPublicUrl(fileName);
+            // Try to create the avatars bucket if it doesn't exist
+            try {
+                await window.SupabaseDB
+                    .storage
+                    .createBucket('avatars', { public: true });
+                console.log('Created avatars bucket');
+            } catch (bucketError) {
+                // If error is not "bucket already exists", rethrow it
+                if (!bucketError.message.includes('already exists')) {
+                    console.warn('Bucket creation warning:', bucketError);
+                }
+            }
             
-        const avatarUrl = publicURLData.publicUrl;
-        
-        // Update avatar URL in user profile
-        updateData.avatar_url = avatarUrl;
-        updateData.avatar = avatarUrl; // Also update the 'avatar' field
-        
-        // Update user avatar in UI
-        document.getElementById('userAvatar').src = avatarUrl;
+            // Upload to Supabase Storage
+            const { data: uploadData, error: uploadError } = await window.SupabaseDB
+                .storage
+                .from('avatars')
+                .upload(fileName, profilePic);
+                
+            if (uploadError) throw uploadError;
+            
+            // Get public URL
+            const { data: publicURLData } = window.SupabaseDB
+                .storage
+                .from('avatars')
+                .getPublicUrl(fileName);
+                
+            const avatarUrl = publicURLData.publicUrl;
+            
+            // Update avatar URL in user profile - only use 'avatar' field
+            updateData.avatar = avatarUrl;
+            
+            // Update user avatar in UI
+            document.getElementById('userAvatar').src = avatarUrl;
+        } catch (error) {
+            console.error('Error uploading avatar:', error);
+            throw new Error('Failed to upload avatar: ' + error.message);
+        }
     }
     
     // Only update if we have data to update
