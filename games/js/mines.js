@@ -107,6 +107,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
+        // Debug button to show mines (for development only)
+        const debugMinesBtn = document.getElementById('debugMinesBtn');
+        if (debugMinesBtn) {
+            debugMinesBtn.addEventListener('click', debugShowMines);
+            // Show the debug button if in debug mode
+            if (DEBUG) {
+                debugMinesBtn.style.display = 'block';
+            }
+        }
+        
         // Mine count selection
         const mineButtons = document.querySelectorAll('.mines-btn');
         mineButtons.forEach(btn => {
@@ -198,6 +208,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Log mine positions for debugging
         debug(`Game started with mine positions: ${minePositions.join(', ')}`);
+        
+        // Enable this line to show mines during gameplay (for testing only)
+        setTimeout(debugShowMines, 500);
     }
     
     function endGame(isWin = true) {
@@ -243,6 +256,12 @@ document.addEventListener('DOMContentLoaded', () => {
         gameEnded = false;
         revealedCells = [];
         minePositions = []; // Clear mine positions
+        
+        // Clear any mine indicators (for debug mode)
+        const indicators = document.querySelectorAll('.mine-indicator');
+        indicators.forEach(indicator => {
+            indicator.remove();
+        });
         
         debug("Game reset, mine positions cleared");
         
@@ -475,55 +494,6 @@ document.addEventListener('DOMContentLoaded', () => {
         debug(`Playing ${soundType} sound`);
     }
     
-    function generateMinePositions() {
-        // Generate random mine positions based on selected mines count
-        const minesCountElement = document.getElementById('minesCount');
-        let minesCount = parseInt(minesCountElement.value) || 3;
-        
-        // Force at least 1 mine and at most 24 mines
-        minesCount = Math.max(1, Math.min(24, minesCount));
-        
-        // Log the selected mines count for debugging
-        debug(`Generating ${minesCount} mines`);
-        
-        // Clear previous mine positions
-        minePositions = [];
-        
-        // Use a direct approach to generate unique positions
-        const allPositions = Array.from({ length: 25 }, (_, i) => i);
-        
-        // Shuffle the array using Fisher-Yates algorithm
-        for (let i = allPositions.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
-        }
-        
-        // Take the first N positions as mines
-        minePositions = allPositions.slice(0, minesCount);
-        
-        debug(`Mine positions: ${minePositions.join(', ')}`);
-        
-        // Double-check that we have the correct number of mines
-        if (minePositions.length !== minesCount) {
-            debug(`ERROR: Generated ${minePositions.length} mines instead of ${minesCount}. Fixing...`);
-            
-            // Fix by adding or removing mines
-            if (minePositions.length < minesCount) {
-                // Add more mines from unused positions
-                const unusedPositions = allPositions.filter(p => !minePositions.includes(p));
-                while (minePositions.length < minesCount && unusedPositions.length > 0) {
-                    const pos = unusedPositions.pop();
-                    minePositions.push(pos);
-                }
-            } else {
-                // Remove excess mines
-                minePositions = minePositions.slice(0, minesCount);
-            }
-            
-            debug(`Corrected mine positions: ${minePositions.join(', ')}`);
-        }
-    }
-    
     function checkIfMine(index) {
         // Check if the index is in minePositions
         const numIndex = Number(index);
@@ -665,6 +635,81 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 debug(`No matching button found, defaulted to 3 mines`);
             }
+        }
+    }
+    
+    // Add a debug function to display all mines (for testing only)
+    function debugShowMines() {
+        debug(`Highlighting mines at positions: ${minePositions.join(', ')}`);
+        minePositions.forEach(pos => {
+            const cell = document.querySelector(`.mine-cell[data-index="${pos}"]`);
+            if (cell) {
+                // Create a small bomb indicator
+                if (!cell.querySelector('.mine-indicator')) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'mine-indicator';
+                    indicator.innerHTML = '<i class="fas fa-bomb" style="color: red; font-size: 14px; opacity: 0.7;"></i>';
+                    indicator.style.position = 'absolute';
+                    indicator.style.top = '5px';
+                    indicator.style.right = '5px';
+                    indicator.style.zIndex = '5';
+                    cell.appendChild(indicator);
+                    
+                    // Add a red background
+                    cell.style.backgroundColor = "rgba(255, 0, 0, 0.2)";
+                    cell.style.boxShadow = "0 0 10px rgba(255, 0, 0, 0.5)";
+                }
+                debug(`Highlighted mine at position ${pos}`);
+            }
+        });
+    }
+    
+    function generateMinePositions() {
+        // Generate random mine positions based on selected mines count
+        const minesCountElement = document.getElementById('minesCount');
+        let minesCount = parseInt(minesCountElement.value) || 3;
+        
+        // Force at least 1 mine and at most 24 mines
+        minesCount = Math.max(1, Math.min(24, minesCount));
+        
+        // Log the selected mines count for debugging
+        debug(`Generating ${minesCount} mines`);
+        
+        // Clear previous mine positions
+        minePositions = [];
+        
+        // Use a direct approach to generate unique positions
+        const allPositions = Array.from({ length: 25 }, (_, i) => i);
+        
+        // Shuffle the array using Fisher-Yates algorithm
+        for (let i = allPositions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
+        }
+        
+        // Take the first N positions as mines
+        minePositions = allPositions.slice(0, minesCount);
+        
+        debug(`Mine positions: ${minePositions.join(', ')}`);
+        
+        // Double-check that we have the correct number of mines
+        if (minePositions.length !== minesCount) {
+            debug(`ERROR: Generated ${minePositions.length} mines instead of ${minesCount}. Fixing...`);
+            
+            // Fix by adding or removing mines
+            if (minePositions.length < minesCount) {
+                // Add more mines from unused positions
+                const unusedPositions = allPositions.filter(p => !minePositions.includes(p));
+                while (minePositions.length < minesCount && unusedPositions.length > 0) {
+                    const pos = unusedPositions.pop();
+                    minePositions.push(pos);
+                }
+            } else {
+                // Remove excess mines
+                minePositions = minePositions.slice(0, minesCount);
+            }
+            
+            debug(`Corrected mine positions: ${minePositions.join(', ')}`);
         }
     }
 }); 
