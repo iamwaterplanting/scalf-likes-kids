@@ -58,18 +58,13 @@ function loadRecentActivity() {
     
     console.log('Loading recent activity for game page');
     
-    // If we already have game history loaded, use it
-    if (gameHistory && gameHistory.length > 0) {
-        updateRecentActivityTable(gameHistory);
-    } else {
-        // Otherwise load from Supabase
-        loadGameHistoryForRecentActivity();
-    }
+    // Always load directly from Supabase - never use local data
+    loadGameHistoryForRecentActivity();
 }
 
 // Function to load game history specifically for recent activity
 async function loadGameHistoryForRecentActivity() {
-    console.log('loadGameHistoryForRecentActivity called');
+    console.log('Loading activity data from Supabase');
     try {
         const { data: history, error } = await window.SupabaseDB
             .from('game_history')
@@ -80,7 +75,7 @@ async function loadGameHistoryForRecentActivity() {
         if (error) throw error;
 
         console.log('Fetched recent activity:', history);
-        updateRecentActivityTable(history);
+        updateRecentActivityTable(history || []);
     } catch (error) {
         console.error('Error loading recent activity:', error);
         // Show empty state
