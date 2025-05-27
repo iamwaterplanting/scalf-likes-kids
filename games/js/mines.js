@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let minePositions = [];
     let revealedCells = [];
     
-    // Debug mode - set to false for production
-    const DEBUG = false;
+    // Debug mode - set to true temporarily to diagnose issues
+    const DEBUG = true;
     
     // Initialize UI
     initUI();
@@ -169,7 +169,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Make sure mines count is correctly set from the UI
         const minesCount = parseInt(document.getElementById('minesCount').value) || 3;
-        debug(`Starting game with ${minesCount} mines`);
+        
+        // Log directly to console for debugging
+        console.log(`Starting game with ${minesCount} mines - this should match what's displayed in the UI`);
         
         // Deduct bet from balance
         updateBalance(-betAmount);
@@ -196,8 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Generate mine positions
         generateMinePositions();
         
-        // Log mine positions for debugging
-        debug(`Game started with mine positions: ${minePositions.join(', ')}`);
+        // Add direct console logging of the mine positions
+        console.log(`GAME STARTED with ${minePositions.length} mines at positions: ${minePositions.join(', ')}`);
     }
     
     function endGame(isWin = true) {
@@ -282,9 +284,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add to revealed cells
         revealedCells.push(index);
         
+        console.log(`REVEAL CELL: Clicked on cell ${index}`);
+        
         // Check if cell is a mine or gem
         const isMine = checkIfMine(index);
-        debug(`Cell ${index} is mine: ${isMine}`);
+        console.log(`REVEAL RESULT: Cell ${index} is ${isMine ? 'a MINE!' : 'a gem'}`);
         
         const cell = document.querySelector(`.mine-cell[data-index="${index}"]`);
         
@@ -292,6 +296,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Game over - hit a mine
             cell.classList.add('revealed-mine');
             cell.innerHTML = '<i class="fas fa-bomb mine"></i>'; // Added "mine" class for animations
+            
+            console.log(`GAME OVER: Hit a mine at position ${index}`);
             
             // Play explosion sound
             playSound('explosion');
@@ -317,6 +323,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Found a gem!
             cell.classList.add('revealed-gem');
             cell.innerHTML = '<i class="fas fa-gem gem"></i>'; // Added "gem" class for animations
+            
+            console.log(`FOUND GEM: Revealed a gem at position ${index}`);
             
             // Play gem sound
             playSound('gem');
@@ -401,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalCells = 25;
         
         // Calculate revealed gems (excluding mines)
-        const revealedGems = revealedCells.filter(cell => !minePositions.includes(Number(cell))).length;
+        const revealedGems = revealedCells.filter(cell => !checkIfMine(cell)).length;
         
         // Get current multiplier
         const currentMultiplier = calculateMultiplier(revealedGems, minesCount, totalCells);
@@ -474,26 +482,51 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function checkIfMine(index) {
-        // Check if the index is in minePositions
-        const numIndex = Number(index);
-        const result = minePositions.includes(numIndex);
-        debug(`Checking if ${index} is a mine: ${result} (mine positions: ${minePositions.join(', ')})`);
-        return result;
+        // Make sure index is a number
+        const numIndex = parseInt(index);
+        
+        // Direct console logging to help diagnose the issue
+        console.log(`CHECKING MINE: Cell ${index} (now ${numIndex}), mine positions: ${minePositions.join(', ')}`);
+        
+        // Use a direct approach to check if the index is in minePositions
+        let isMine = false;
+        for (let i = 0; i < minePositions.length; i++) {
+            const minePos = parseInt(minePositions[i]);
+            if (minePos === numIndex) {
+                isMine = true;
+                console.log(`MATCH FOUND: Cell ${numIndex} is a mine!`);
+                break;
+            }
+        }
+        
+        console.log(`RESULT: Cell ${numIndex} is ${isMine ? 'a mine' : 'not a mine'}`);
+        return isMine;
     }
     
     function revealAllMines() {
-        // Reveal all mines except the one that was clicked (already revealed)
-        debug(`Revealing all mines: ${minePositions.join(', ')}`);
+        // Direct console logging
+        console.log(`REVEALING ALL MINES: ${minePositions.join(', ')}`);
+        console.log(`Current revealed cells: ${revealedCells.join(', ')}`);
         
+        // Reveal all mines except the one that was clicked (already revealed)
         minePositions.forEach(pos => {
-            if (!revealedCells.includes(pos)) {
-                const cell = document.querySelector(`.mine-cell[data-index="${pos}"]`);
+            // Convert to number for consistent comparison
+            const minePos = parseInt(pos);
+            
+            // Check if this mine has already been revealed
+            const isRevealed = revealedCells.some(cell => parseInt(cell) === minePos);
+            
+            console.log(`Mine at position ${minePos}: ${isRevealed ? 'already revealed' : 'revealing now'}`);
+            
+            // Only reveal mines that haven't been clicked yet
+            if (!isRevealed) {
+                const cell = document.querySelector(`.mine-cell[data-index="${minePos}"]`);
                 if (cell) {
                     cell.classList.add('revealed-mine');
-                    cell.innerHTML = '<i class="fas fa-bomb mine"></i>'; // Added "mine" class for animations
-                    debug(`Revealed mine at position ${pos}`);
+                    cell.innerHTML = '<i class="fas fa-bomb mine"></i>';
+                    console.log(`Revealed mine at position ${minePos}`);
                 } else {
-                    debug(`ERROR: Could not find cell for mine at position ${pos}`);
+                    console.log(`ERROR: Could not find cell for mine at position ${minePos}`);
                 }
             }
         });
@@ -513,7 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const gemCount = totalCells - minesCount;
         
         // Calculate current revealed gems (excluding mines)
-        const revealedGems = revealedCells.filter(cell => !minePositions.includes(Number(cell))).length;
+        const revealedGems = revealedCells.filter(cell => !checkIfMine(cell)).length;
         
         debug(`Updating multipliers: ${revealedGems} gems revealed, ${minesCount} mines`);
         
@@ -631,6 +664,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             debug(`Corrected mine positions: ${minePositions.join(', ')}`);
+        }
+        
+        // Turn on debugging temporarily
+        const DEBUG_MINES = true;
+        if (DEBUG_MINES) {
+            console.log(`MINES DEBUG - Generated mine positions: ${minePositions.join(', ')}`);
         }
     }
     
