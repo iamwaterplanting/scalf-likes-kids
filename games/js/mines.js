@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Create a 5x5 grid
         for (let i = 0; i < 25; i++) {
             const cell = document.createElement('div');
-            cell.className = 'mines-grid-cell';
+            cell.className = 'mine-cell';
             cell.dataset.index = i;
             
             // Add click event
@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
         revealedCells = [];
         
         // Make sure mines count is correctly set from the UI
-        const minesCount = document.getElementById('minesCount').value;
+        const minesCount = parseInt(document.getElementById('minesCount').value) || 3;
         debug(`Starting game with ${minesCount} mines`);
         
         // Deduct bet from balance
@@ -195,6 +195,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Generate mine positions
         generateMinePositions();
+        
+        // Log mine positions for debugging
+        debug(`Game started with mine positions: ${minePositions.join(', ')}`);
     }
     
     function endGame(isWin = true) {
@@ -211,14 +214,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Add win amount to balance
                 updateBalance(currentWinAmount);
                 
-                // Show win popup
-                winAmount.textContent = currentWinAmount;
+                // Show win popup with the correct amount
+                if (winAmount) {
+                    winAmount.textContent = currentWinAmount.toFixed(2);
+                }
                 winPopup.classList.add('show');
                 
                 // Update game stats
                 updateStats(true, currentWinAmount - getBetAmount());
+                
+                debug(`Game ended with win. Amount: ${currentWinAmount}`);
+            } else {
+                debug(`Game ended with no win amount. Something may be wrong.`);
             }
+        } else {
+            debug(`Game ended with loss.`);
         }
+        
+        // Reset game UI after a short delay
+        setTimeout(() => {
+            resetGame();
+        }, 2000);
     }
     
     function resetGame() {
@@ -272,12 +288,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const isMine = checkIfMine(index);
         debug(`Cell ${index} is mine: ${isMine}`);
         
-        const cell = document.querySelector(`.mines-grid-cell[data-index="${index}"]`);
+        const cell = document.querySelector(`.mine-cell[data-index="${index}"]`);
         
         if (isMine) {
             // Game over - hit a mine
             cell.classList.add('revealed-mine');
-            cell.innerHTML = '<i class="fas fa-bomb"></i>';
+            cell.innerHTML = '<i class="fas fa-bomb mine"></i>';
             
             // Play explosion sound
             playSound('explosion');
@@ -302,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Found a gem!
             cell.classList.add('revealed-gem');
-            cell.innerHTML = '<i class="fas fa-gem"></i>';
+            cell.innerHTML = '<i class="fas fa-gem gem"></i>';
             
             // Play gem sound
             playSound('gem');
@@ -351,7 +367,21 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateBalance(amount) {
         // Use BetaAuth to update balance
         if (window.BetaAuth) {
+            debug(`Updating balance by ${amount} coins`);
             window.BetaAuth.updateBalance(amount, 'Mines Game');
+            
+            // Also update the UI display if available
+            const balanceAmount = document.querySelector('.balance-amount');
+            if (balanceAmount) {
+                // Get current user
+                const user = window.BetaAuth.getCurrentUser();
+                if (user) {
+                    balanceAmount.textContent = user.balance.toFixed(2);
+                    debug(`Updated balance display to ${user.balance.toFixed(2)}`);
+                }
+            }
+        } else {
+            debug('BetaAuth not available, could not update balance');
         }
     }
     
@@ -473,9 +503,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         debug(`Mine positions: ${minePositions.join(', ')}`);
         
-        // Double-check
+        // Double-check that we have the correct number of mines
         if (minePositions.length !== minesCount) {
-            debug(`ERROR: Generated ${minePositions.length} mines instead of ${minesCount}`);
+            debug(`ERROR: Generated ${minePositions.length} mines instead of ${minesCount}. Fixing...`);
             
             // Fix by adding or removing mines
             if (minePositions.length < minesCount) {
@@ -496,8 +526,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function checkIfMine(index) {
         // Check if the index is in minePositions
-        const result = minePositions.includes(Number(index));
-        debug(`Checking if ${index} is a mine: ${result}`);
+        const numIndex = Number(index);
+        const result = minePositions.includes(numIndex);
+        debug(`Checking if ${index} is a mine: ${result} (mine positions: ${minePositions.join(', ')})`);
         return result;
     }
     
@@ -507,10 +538,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         minePositions.forEach(pos => {
             if (!revealedCells.includes(pos)) {
-                const cell = document.querySelector(`.mines-grid-cell[data-index="${pos}"]`);
+                const cell = document.querySelector(`.mine-cell[data-index="${pos}"]`);
                 if (cell) {
                     cell.classList.add('revealed-mine');
-                    cell.innerHTML = '<i class="fas fa-bomb"></i>';
+                    cell.innerHTML = '<i class="fas fa-bomb mine"></i>';
                     debug(`Revealed mine at position ${pos}`);
                 } else {
                     debug(`ERROR: Could not find cell for mine at position ${pos}`);
@@ -612,12 +643,28 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Remove active class from all buttons
         const mineButtons = document.querySelectorAll('.mines-btn');
+        let foundMatch = false;
+        
         mineButtons.forEach(btn => {
             btn.classList.remove('active');
             if (btn.dataset.mines === minesCount) {
                 btn.classList.add('active');
+                foundMatch = true;
                 debug(`Activated button for ${minesCount} mines`);
             }
         });
+        
+        // If no matching button was found, default to 3 mines
+        if (!foundMatch) {
+            const defaultButton = document.querySelector('.mines-btn[data-mines="3"]');
+            if (defaultButton) {
+                defaultButton.classList.add('active');
+                const minesCountInput = document.getElementById('minesCount');
+                if (minesCountInput) {
+                    minesCountInput.value = '3';
+                }
+                debug(`No matching button found, defaulted to 3 mines`);
+            }
+        }
     }
 }); 

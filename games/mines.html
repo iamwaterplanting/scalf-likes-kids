@@ -108,10 +108,10 @@
                             <div class="mines-count-section">
                                 <label>Mines</label>
                                 <div class="mines-selector-buttons">
-                                    <button class="mines-btn" data-mines="1" onclick="document.getElementById('minesCount').value='1';console.log('Mine count set to 1')">1</button>
-                                    <button class="mines-btn active" data-mines="3" onclick="document.getElementById('minesCount').value='3';console.log('Mine count set to 3')">3</button>
-                                    <button class="mines-btn" data-mines="5" onclick="document.getElementById('minesCount').value='5';console.log('Mine count set to 5')">5</button>
-                                    <button class="mines-btn" data-mines="24" onclick="document.getElementById('minesCount').value='24';console.log('Mine count set to 24')">24</button>
+                                    <button class="mines-btn" data-mines="1">1</button>
+                                    <button class="mines-btn active" data-mines="3">3</button>
+                                    <button class="mines-btn" data-mines="5">5</button>
+                                    <button class="mines-btn" data-mines="24">24</button>
                                 </div>
                                 <input type="text" id="minesCount" value="3" style="display:none;">
                             </div>
@@ -451,6 +451,12 @@
             border: 1px solid rgba(24, 231, 124, 0.1);
         }
         
+        /* Fix to ensure mines grid becomes active during gameplay */
+        .mines-grid.game-active .mine-cell {
+            transform: scale(1);
+            transition: transform 0.3s ease;
+        }
+        
         .mine-cell {
             background-color: #1c2639;
             border-radius: 8px;
@@ -463,6 +469,8 @@
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
             position: relative;
             overflow: hidden;
+            width: 100%;
+            height: 100%;
         }
         
         .mine-cell:hover {
@@ -935,6 +943,87 @@
             transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
             transition: all 0.3s ease;
+        }
+        
+        /* Additional fixes for mines animations */
+        .mine-cell {
+            background-color: #1c2639;
+            border-radius: 8px;
+            cursor: pointer;
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .gem {
+            color: var(--primary-color);
+            font-size: 28px;
+            animation: gemGlow 2s infinite alternate, gemSpin 1s ease forwards;
+            filter: drop-shadow(0 0 10px rgba(24, 231, 124, 0.5));
+        }
+        
+        .mine {
+            color: #ff4444;
+            font-size: 28px;
+            animation: mineGlow 1.5s infinite alternate, mineBounce 0.5s ease forwards;
+            filter: drop-shadow(0 0 10px rgba(255, 68, 68, 0.5));
+        }
+        
+        /* Game over/win popups fixes */
+        .game-over-popup, .win-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .game-over-popup.show, .win-popup.show {
+            display: flex;
+        }
+        
+        .popup-content {
+            background-color: #141b2d;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(24, 231, 124, 0.1);
+            animation: popupFadeIn 0.5s ease;
+        }
+        
+        @keyframes popupFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .popup-icon {
+            font-size: 50px;
+            margin-bottom: 20px;
+        }
+        
+        .game-over-popup .popup-icon {
+            color: #ff4444;
+            animation: shake 0.5s ease;
+        }
+        
+        .win-popup .popup-icon {
+            color: var(--primary-color);
+            animation: gemGlow 2s infinite alternate;
         }
     </style>
 </body>
