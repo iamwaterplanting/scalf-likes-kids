@@ -193,10 +193,120 @@
         </div>
     </div>
 
+    <!-- Modals -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="signupModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Sign Up</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Sign Up</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="redeemModal">
+        <div class="modal-content glow-box">
+            <span class="close">&times;</span>
+            <h2>Redeem Code</h2>
+            <form id="redeemForm">
+                <div class="form-group">
+                    <label for="redeemCode">Enter Code</label>
+                    <input type="text" id="redeemCode" required>
+                </div>
+                <button type="submit" class="submit-btn glow-button">Redeem</button>
+            </form>
+        </div>
+    </div>
+
     <!-- JS Files -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="../js/supabase-config.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/ui-common.js"></script>
+    <script src="../js/main.js"></script>
     <script src="js/chickencrossroad.js"></script>
     <script src="../js/sidebar-update.js"></script>
+    
+    <script>
+        // Initialize redeem code functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get DOM elements
+            const redeemButton = document.getElementById('redeemButton');
+            const redeemModal = document.getElementById('redeemModal');
+            const redeemForm = document.getElementById('redeemForm');
+            const redeemClose = redeemModal ? redeemModal.querySelector('.close') : null;
+            
+            if (redeemButton && redeemModal) {
+                // Open modal on button click
+                redeemButton.addEventListener('click', () => {
+                    redeemModal.style.display = 'flex';
+                });
+                
+                // Close modal on X click
+                if (redeemClose) {
+                    redeemClose.addEventListener('click', () => {
+                        redeemModal.style.display = 'none';
+                    });
+                }
+                
+                // Close modal when clicking outside
+                window.addEventListener('click', (e) => {
+                    if (e.target === redeemModal) {
+                        redeemModal.style.display = 'none';
+                    }
+                });
+                
+                // Handle redeem form submission
+                if (redeemForm) {
+                    redeemForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const codeInput = document.getElementById('redeemCode');
+                        if (!codeInput) return;
+                        
+                        const code = codeInput.value.trim();
+                        
+                        if (code && window.processRedeemCode) {
+                            // Process redeem code
+                            window.processRedeemCode(code);
+                            
+                            // Reset form and close modal
+                            redeemForm.reset();
+                            redeemModal.style.display = 'none';
+                        }
+                    });
+                }
+            }
+        });
+    </script>
 </body>
 </html> 
