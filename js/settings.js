@@ -152,17 +152,30 @@ async function loadUserData() {
         // Set profile picture
         const userAvatar = document.getElementById('profilePreview');
         
-        // Try to get user profile picture from Supabase
+        // First check if user has avatar in local data
+        if (currentUser.avatar) {
+            userAvatar.src = currentUser.avatar;
+            return;
+        }
+        
+        // Otherwise try to get user profile picture from Supabase
         const { data, error } = await window.SupabaseDB
             .from('users')
-            .select('avatar_url')
+            .select('avatar, avatar_url')
             .eq('username', currentUser.username)
             .single();
             
         if (error) throw error;
         
-        if (data && data.avatar_url) {
-            userAvatar.src = data.avatar_url;
+        // Check both avatar and avatar_url fields
+        if (data && (data.avatar || data.avatar_url)) {
+            const avatarUrl = data.avatar || data.avatar_url;
+            userAvatar.src = avatarUrl;
+            
+            // Update local user data if different
+            if (currentUser.avatar !== avatarUrl && window.BetaAuth && window.BetaAuth.updateProfile) {
+                await window.BetaAuth.updateProfile({ avatar: avatarUrl });
+            }
         } else {
             userAvatar.src = 'assets/default-avatar.svg';
         }
@@ -213,6 +226,7 @@ async function saveUserProfile(displayName, profilePic) {
         
         // Update avatar URL in user profile
         updateData.avatar_url = avatarUrl;
+        updateData.avatar = avatarUrl; // Also update the 'avatar' field
         
         // Update user avatar in UI
         document.getElementById('userAvatar').src = avatarUrl;
@@ -226,6 +240,11 @@ async function saveUserProfile(displayName, profilePic) {
             .eq('username', currentUser.username);
             
         if (error) throw error;
+        
+        // Update local user data via BetaAuth
+        if (window.BetaAuth && window.BetaAuth.updateProfile) {
+            await window.BetaAuth.updateProfile(updateData);
+        }
     }
     
     return true;
@@ -233,16 +252,35 @@ async function saveUserProfile(displayName, profilePic) {
 
 // Change user password
 async function changePassword(currentPassword, newPassword) {
-    // Supabase doesn't have a direct method to verify current password before changing
-    // We would need to implement this with custom RPC or similar
-    
+    // Verify current password and update to new password
     try {
-        // Update password
-        const { error } = await window.SupabaseDB.auth.updateUser({
-            password: newPassword
-        });
+        const currentUser = window.BetaAuth?.getCurrentUser();
+        if (!currentUser) {
+            throw new Error('No user logged in');
+        }
         
-        if (error) throw error;
+        // Verify current password
+        const { data, error: verifyError } = await window.SupabaseDB
+            .from('users')
+            .select('username')
+            .eq('username', currentUser.username)
+            .eq('password', currentPassword)
+            .single();
+            
+        if (verifyError || !data) {
+            throw new Error('Current password is incorrect');
+        }
+        
+        // Update password in database
+        const { error: updateError } = await window.SupabaseDB
+            .from('users')
+            .update({ password: newPassword })
+            .eq('username', currentUser.username);
+            
+        if (updateError) throw updateError;
+        
+        // Log action
+        console.log('Password changed successfully');
         
         return true;
     } catch (error) {
