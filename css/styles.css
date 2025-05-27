@@ -1012,35 +1012,35 @@ input:checked + .toggle-slider:before {
     position: relative;
 }
 
-/* Add a default user icon when no avatar is present */
-.user-avatar-small::before {
-    content: '\f007';
-    font-family: 'Font Awesome 5 Free';
-    font-weight: 900;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 14px;
-    color: var(--primary-color);
-    opacity: 0.5;
-    display: block;
+/* Update the avatar display to match the screenshot style */
+.activity-table .user-avatar-small {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3eda8b 0%, #2b95d6 100%);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    margin-right: 5px;
 }
 
-/* Hide the default icon when an image is loaded */
-.user-avatar-small img[src]:not([src=""]) + .user-avatar-small::before {
-    display: none;
-}
-
-.avatar-img-small {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border: 1px solid rgba(24, 231, 124, 0.3);
+.activity-table .avatar-img-small {
+    display: none; /* Hide the actual image */
 }
 
 .username-span {
     font-weight: 500;
+    color: #fff;
+    margin-left: 2px;
+}
+
+/* Add a horizontal separator between activity rows */
+.activity-table tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Match the spacing and styling from the screenshot */
+.activity-table td {
+    padding: 12px 8px;
+    vertical-align: middle;
 }
 
 /* Avatar styles for all users across the site */

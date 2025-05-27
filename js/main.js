@@ -600,54 +600,15 @@ function updateRecentActivityTable(activities) {
     recentActivities.forEach(activity => {
         const row = document.createElement('tr');
         
-        // User cell with avatar
+        // User cell with avatar - SIMPLIFIED to match screenshot
         const userCell = document.createElement('td');
         userCell.className = 'user-cell';
         
-        // Create user avatar wrapper
+        // Create user avatar wrapper - simple colored circle
         const avatarWrapper = document.createElement('div');
         avatarWrapper.className = 'user-avatar-small';
         
-        // Create avatar image
-        const avatarImg = document.createElement('img');
-        avatarImg.className = 'avatar-img-small';
-        
-        // Always set the default avatar first
-        avatarImg.src = '../assets/default-avatar.svg';
-        if (window.location.pathname.indexOf('/games/') === 0 || 
-            window.location.pathname.indexOf('/games') === 0) {
-            // We're in a game subfolder
-            avatarImg.src = '../assets/default-avatar.svg';
-        } else {
-            // We're in the main folder
-            avatarImg.src = 'assets/default-avatar.svg';
-        }
-        
-        // Add error handler
-        avatarImg.onerror = function() {
-            // If image fails to load, revert to default with correct path
-            if (window.location.pathname.indexOf('/games/') === 0 || 
-                window.location.pathname.indexOf('/games') === 0) {
-                this.src = '../assets/default-avatar.svg';
-            } else {
-                this.src = 'assets/default-avatar.svg';
-            }
-            console.log('Avatar failed to load, using default');
-        };
-        
-        avatarWrapper.appendChild(avatarImg);
-        
-        // Try to fetch user avatar
-        fetchUserAvatar(activity.username)
-            .then(avatarUrl => {
-                if (avatarUrl) {
-                    avatarImg.src = avatarUrl;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading avatar in activity table:', error);
-                // Default avatar is already set
-            });
+        // No image needed, just the colored circle background
         
         // Create username span
         const usernameSpan = document.createElement('span');
