@@ -46,6 +46,46 @@ function initRealActivity() {
     console.log('initRealActivity called');
     // Load history from Supabase
     loadGameHistory();
+    
+    // Also load the activity in recent activity tables on game pages
+    loadRecentActivity();
+}
+
+// Function to load recent activity on game pages
+function loadRecentActivity() {
+    const recentActivityBody = document.getElementById('recentActivityBody');
+    if (!recentActivityBody) return;
+    
+    console.log('Loading recent activity for game page');
+    
+    // If we already have game history loaded, use it
+    if (gameHistory && gameHistory.length > 0) {
+        updateRecentActivityTable(gameHistory);
+    } else {
+        // Otherwise load from Supabase
+        loadGameHistoryForRecentActivity();
+    }
+}
+
+// Function to load game history specifically for recent activity
+async function loadGameHistoryForRecentActivity() {
+    console.log('loadGameHistoryForRecentActivity called');
+    try {
+        const { data: history, error } = await window.SupabaseDB
+            .from('game_history')
+            .select('*')
+            .order('time', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+
+        console.log('Fetched recent activity:', history);
+        updateRecentActivityTable(history);
+    } catch (error) {
+        console.error('Error loading recent activity:', error);
+        // Show empty state
+        showEmptyRecentActivity();
+    }
 }
 
 // Update the activity table with new data
@@ -539,4 +579,141 @@ document.addEventListener('DOMContentLoaded', function() {
             releaseBanner.style.display = 'none';
         }
     }
-}); 
+});
+
+// Update the recent activity table with new data
+function updateRecentActivityTable(activities) {
+    const activityBody = document.getElementById('recentActivityBody');
+    if (!activityBody) return;
+    
+    // Clear existing rows
+    activityBody.innerHTML = '';
+    
+    if (activities.length === 0) {
+        // Show empty state
+        showEmptyRecentActivity();
+        return;
+    }
+    
+    // Sort activities by time (most recent first)
+    const sortedActivities = [...activities].sort((a, b) => new Date(b.time) - new Date(a.time));
+    
+    // Only show most recent 10 activities
+    const recentActivities = sortedActivities.slice(0, 10);
+    
+    // Add new rows
+    recentActivities.forEach(activity => {
+        const row = document.createElement('tr');
+        
+        // User cell with avatar
+        const userCell = document.createElement('td');
+        userCell.className = 'user-cell';
+        
+        // Create user avatar wrapper
+        const avatarWrapper = document.createElement('div');
+        avatarWrapper.className = 'user-avatar-small';
+        
+        // Create avatar image
+        const avatarImg = document.createElement('img');
+        avatarImg.className = 'avatar-img-small';
+        
+        // Always set the default avatar first
+        avatarImg.src = '../assets/default-avatar.svg';
+        if (window.location.pathname.indexOf('/games/') === 0 || 
+            window.location.pathname.indexOf('/games') === 0) {
+            // We're in a game subfolder
+            avatarImg.src = '../assets/default-avatar.svg';
+        } else {
+            // We're in the main folder
+            avatarImg.src = 'assets/default-avatar.svg';
+        }
+        
+        // Add error handler
+        avatarImg.onerror = function() {
+            // If image fails to load, revert to default with correct path
+            if (window.location.pathname.indexOf('/games/') === 0 || 
+                window.location.pathname.indexOf('/games') === 0) {
+                this.src = '../assets/default-avatar.svg';
+            } else {
+                this.src = 'assets/default-avatar.svg';
+            }
+            console.log('Avatar failed to load, using default');
+        };
+        
+        avatarWrapper.appendChild(avatarImg);
+        
+        // Try to fetch user avatar
+        fetchUserAvatar(activity.username)
+            .then(avatarUrl => {
+                if (avatarUrl) {
+                    avatarImg.src = avatarUrl;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading avatar in activity table:', error);
+                // Default avatar is already set
+            });
+        
+        // Create username span
+        const usernameSpan = document.createElement('span');
+        usernameSpan.className = 'username-span';
+        usernameSpan.textContent = activity.username;
+        
+        // Assemble user cell
+        userCell.appendChild(avatarWrapper);
+        userCell.appendChild(usernameSpan);
+        
+        // Game cell
+        const gameCell = document.createElement('td');
+        gameCell.textContent = activity.game;
+        
+        // Bet cell
+        const betCell = document.createElement('td');
+        betCell.textContent = formatCurrency(activity.bet);
+        
+        // Result cell
+        const resultCell = document.createElement('td');
+        resultCell.textContent = formatCurrency(activity.result);
+        resultCell.style.color = activity.result >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+        
+        // Time cell
+        const timeCell = document.createElement('td');
+        timeCell.textContent = formatTime(new Date(activity.time));
+        
+        // Append cells to row
+        row.appendChild(userCell);
+        row.appendChild(gameCell);
+        row.appendChild(betCell);
+        row.appendChild(resultCell);
+        row.appendChild(timeCell);
+        
+        // Add animation class
+        row.classList.add('fade-in');
+        
+        // Append row to table body
+        activityBody.appendChild(row);
+    });
+}
+
+// Show empty state for recent activity
+function showEmptyRecentActivity() {
+    const activityBody = document.getElementById('recentActivityBody');
+    if (!activityBody) return;
+    
+    const emptyRow = document.createElement('tr');
+    emptyRow.className = 'empty-row';
+    
+    const emptyCell = document.createElement('td');
+    emptyCell.colSpan = 5;
+    emptyCell.className = 'empty-activity';
+    
+    emptyCell.innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-history"></i>
+            <p>No activity yet. Start playing games to see the activity feed!</p>
+        </div>
+    `;
+    
+    emptyRow.appendChild(emptyCell);
+    activityBody.appendChild(emptyRow);
+} 

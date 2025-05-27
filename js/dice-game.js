@@ -659,7 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     outcome: item.outcome || 0,
                     time: new Date(item.time) || new Date()
                 }));
-                
+        
                 // Update the UI
                 updateGameHistoryTable();
             } else {

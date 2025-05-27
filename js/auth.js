@@ -322,12 +322,26 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             e.stopPropagation(); // Prevent event from bubbling up
             
-            // Check if settings modal exists, if not show an alert
-            const settingsModal = document.getElementById('settingsModal');
-            if (settingsModal) {
-                settingsModal.style.display = 'flex';
+            // First, try to load the settings.js module if it's not already loaded
+            if (!window.BetaSettings) {
+                // Check if the script is already in the document
+                let settingsScript = document.querySelector('script[src*="settings.js"]');
+                
+                if (!settingsScript) {
+                    // Load the settings.js script dynamically
+                    settingsScript = document.createElement('script');
+                    settingsScript.src = '/js/settings.js';
+                    document.body.appendChild(settingsScript);
+                    
+                    // Wait for the script to load before showing the modal
+                    settingsScript.onload = function() {
+                        showSettingsModal();
+                    };
+                } else {
+                    showSettingsModal();
+                }
             } else {
-                alert('Profile settings will be available in a future update!');
+                showSettingsModal();
             }
         });
     }
@@ -418,4 +432,19 @@ window.BetaAuth = {
     logToDiscord: (message) => {
         console.log(`[Discord Log] ${message}`);
     }
-}; 
+};
+
+// Helper function to show settings modal
+function showSettingsModal() {
+    // Check if settings modal exists, if not show an alert
+    const settingsModal = document.getElementById('settingsModal');
+    if (settingsModal) {
+        // If BetaSettings exists, use it to load user data
+        if (window.BetaSettings && window.BetaSettings.loadUserData) {
+            window.BetaSettings.loadUserData();
+        }
+        settingsModal.style.display = 'flex';
+    } else {
+        alert('Settings will be available soon. Please try again later!');
+    }
+} 
