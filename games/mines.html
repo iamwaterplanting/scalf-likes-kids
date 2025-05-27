@@ -167,8 +167,6 @@
                         <div class="game-info game-playing-content" style="display: none;">
                             <div class="expires-in">Expires in: 04:55</div>
                             <div class="fairness">Provably Fair</div>
-                            <!-- Debug button - remove in production -->
-                            <button id="debugMinesBtn" style="background-color: #ff4444; color: white; padding: 5px; border-radius: 5px; cursor: pointer; display: none;">Debug Mines</button>
                         </div>
                     </div>
                 </div>
@@ -434,21 +432,21 @@
         
         .mines-game-container {
             display: flex;
-            gap: 30px;
-            margin-bottom: 30px;
+            gap: 25px;
+            margin-bottom: 20px;
         }
         
         .mines-grid {
             background-color: #141b2d;
             border-radius: 12px;
-            padding: 25px;
+            padding: 20px;
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             grid-template-rows: repeat(5, 1fr);
-            gap: 15px;
+            gap: 10px;
             flex: 3;
             aspect-ratio: 1/1;
-            max-width: 550px;
+            max-width: 500px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(24, 231, 124, 0.1);
         }
@@ -561,11 +559,11 @@
         .mines-sidebar {
             background-color: #141b2d;
             border-radius: 12px;
-            padding: 25px;
+            padding: 20px;
             flex: 2;
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 20px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(24, 231, 124, 0.1);
         }

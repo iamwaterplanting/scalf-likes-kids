@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let minePositions = [];
     let revealedCells = [];
     
-    // Debug mode - set to true for console logging
-    const DEBUG = true;
+    // Debug mode - set to false for production
+    const DEBUG = false;
     
     // Initialize UI
     initUI();
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Create a 5x5 grid
         for (let i = 0; i < 25; i++) {
             const cell = document.createElement('div');
-            cell.className = 'mine-cell';
+            cell.className = 'mine-cell'; // Changed to match CSS class
             cell.dataset.index = i;
             
             // Add click event
@@ -105,16 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 hidePopups();
                 resetGame();
             });
-        }
-        
-        // Debug button to show mines (for development only)
-        const debugMinesBtn = document.getElementById('debugMinesBtn');
-        if (debugMinesBtn) {
-            debugMinesBtn.addEventListener('click', debugShowMines);
-            // Show the debug button if in debug mode
-            if (DEBUG) {
-                debugMinesBtn.style.display = 'block';
-            }
         }
         
         // Mine count selection
@@ -208,9 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Log mine positions for debugging
         debug(`Game started with mine positions: ${minePositions.join(', ')}`);
-        
-        // Enable this line to show mines during gameplay (for testing only)
-        setTimeout(debugShowMines, 500);
     }
     
     function endGame(isWin = true) {
@@ -243,11 +230,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             debug(`Game ended with loss.`);
         }
-        
-        // Reset game UI after a short delay
-        setTimeout(() => {
-            resetGame();
-        }, 2000);
     }
     
     function resetGame() {
@@ -256,12 +238,6 @@ document.addEventListener('DOMContentLoaded', () => {
         gameEnded = false;
         revealedCells = [];
         minePositions = []; // Clear mine positions
-        
-        // Clear any mine indicators (for debug mode)
-        const indicators = document.querySelectorAll('.mine-indicator');
-        indicators.forEach(indicator => {
-            indicator.remove();
-        });
         
         debug("Game reset, mine positions cleared");
         
@@ -291,6 +267,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update stats display
         updateGameStats();
+        
+        // Restore the mines count selection functionality
+        updateSelectedMinesButton();
     }
     
     function hidePopups() {
@@ -312,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isMine) {
             // Game over - hit a mine
             cell.classList.add('revealed-mine');
-            cell.innerHTML = '<i class="fas fa-bomb mine"></i>';
+            cell.innerHTML = '<i class="fas fa-bomb mine"></i>'; // Added "mine" class for animations
             
             // Play explosion sound
             playSound('explosion');
@@ -337,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Found a gem!
             cell.classList.add('revealed-gem');
-            cell.innerHTML = '<i class="fas fa-gem gem"></i>';
+            cell.innerHTML = '<i class="fas fa-gem gem"></i>'; // Added "gem" class for animations
             
             // Play gem sound
             playSound('gem');
@@ -422,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalCells = 25;
         
         // Calculate revealed gems (excluding mines)
-        const revealedGems = revealedCells.filter(cell => !minePositions.includes(cell)).length;
+        const revealedGems = revealedCells.filter(cell => !minePositions.includes(Number(cell))).length;
         
         // Get current multiplier
         const currentMultiplier = calculateMultiplier(revealedGems, minesCount, totalCells);
@@ -511,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cell = document.querySelector(`.mine-cell[data-index="${pos}"]`);
                 if (cell) {
                     cell.classList.add('revealed-mine');
-                    cell.innerHTML = '<i class="fas fa-bomb mine"></i>';
+                    cell.innerHTML = '<i class="fas fa-bomb mine"></i>'; // Added "mine" class for animations
                     debug(`Revealed mine at position ${pos}`);
                 } else {
                     debug(`ERROR: Could not find cell for mine at position ${pos}`);
@@ -534,7 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const gemCount = totalCells - minesCount;
         
         // Calculate current revealed gems (excluding mines)
-        const revealedGems = revealedCells.filter(cell => !minePositions.includes(cell)).length;
+        const revealedGems = revealedCells.filter(cell => !minePositions.includes(Number(cell))).length;
         
         debug(`Updating multipliers: ${revealedGems} gems revealed, ${minesCount} mines`);
         
@@ -606,64 +585,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return multiplier;
     }
     
-    // Update the selected mines button based on the current value
-    function updateSelectedMinesButton() {
-        const minesCount = document.getElementById('minesCount').value || '3';
-        debug(`Setting active button for mines count: ${minesCount}`);
-        
-        // Remove active class from all buttons
-        const mineButtons = document.querySelectorAll('.mines-btn');
-        let foundMatch = false;
-        
-        mineButtons.forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.mines === minesCount) {
-                btn.classList.add('active');
-                foundMatch = true;
-                debug(`Activated button for ${minesCount} mines`);
-            }
-        });
-        
-        // If no matching button was found, default to 3 mines
-        if (!foundMatch) {
-            const defaultButton = document.querySelector('.mines-btn[data-mines="3"]');
-            if (defaultButton) {
-                defaultButton.classList.add('active');
-                const minesCountInput = document.getElementById('minesCount');
-                if (minesCountInput) {
-                    minesCountInput.value = '3';
-                }
-                debug(`No matching button found, defaulted to 3 mines`);
-            }
-        }
-    }
-    
-    // Add a debug function to display all mines (for testing only)
-    function debugShowMines() {
-        debug(`Highlighting mines at positions: ${minePositions.join(', ')}`);
-        minePositions.forEach(pos => {
-            const cell = document.querySelector(`.mine-cell[data-index="${pos}"]`);
-            if (cell) {
-                // Create a small bomb indicator
-                if (!cell.querySelector('.mine-indicator')) {
-                    const indicator = document.createElement('div');
-                    indicator.className = 'mine-indicator';
-                    indicator.innerHTML = '<i class="fas fa-bomb" style="color: red; font-size: 14px; opacity: 0.7;"></i>';
-                    indicator.style.position = 'absolute';
-                    indicator.style.top = '5px';
-                    indicator.style.right = '5px';
-                    indicator.style.zIndex = '5';
-                    cell.appendChild(indicator);
-                    
-                    // Add a red background
-                    cell.style.backgroundColor = "rgba(255, 0, 0, 0.2)";
-                    cell.style.boxShadow = "0 0 10px rgba(255, 0, 0, 0.5)";
-                }
-                debug(`Highlighted mine at position ${pos}`);
-            }
-        });
-    }
-    
     function generateMinePositions() {
         // Generate random mine positions based on selected mines count
         const minesCountElement = document.getElementById('minesCount');
@@ -710,6 +631,38 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             debug(`Corrected mine positions: ${minePositions.join(', ')}`);
+        }
+    }
+    
+    // Update the selected mines button based on the current value
+    function updateSelectedMinesButton() {
+        const minesCount = document.getElementById('minesCount').value || '3';
+        debug(`Setting active button for mines count: ${minesCount}`);
+        
+        // Remove active class from all buttons
+        const mineButtons = document.querySelectorAll('.mines-btn');
+        let foundMatch = false;
+        
+        mineButtons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.mines === minesCount) {
+                btn.classList.add('active');
+                foundMatch = true;
+                debug(`Activated button for ${minesCount} mines`);
+            }
+        });
+        
+        // If no matching button was found, default to 3 mines
+        if (!foundMatch) {
+            const defaultButton = document.querySelector('.mines-btn[data-mines="3"]');
+            if (defaultButton) {
+                defaultButton.classList.add('active');
+                const minesCountInput = document.getElementById('minesCount');
+                if (minesCountInput) {
+                    minesCountInput.value = '3';
+                }
+                debug(`No matching button found, defaulted to 3 mines`);
+            }
         }
     }
 }); 
