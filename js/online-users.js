@@ -44,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Get the current user
                 const currentUser = window.BetaAuth?.getCurrentUser();
                 const userData = {
-                    id: sessionId,
                     session_id: sessionId,
                     last_seen: new Date().toISOString(),
                     username: currentUser ? currentUser.username : 'Guest'

@@ -152,30 +152,17 @@ async function loadUserData() {
         // Set profile picture
         const userAvatar = document.getElementById('profilePreview');
         
-        // First check if user has avatar in local data
-        if (currentUser.avatar) {
-            userAvatar.src = currentUser.avatar;
-            return;
-        }
-        
-        // Otherwise try to get user profile picture from Supabase
+        // Try to get user profile picture from Supabase
         const { data, error } = await window.SupabaseDB
             .from('users')
-            .select('avatar')
+            .select('avatar_url')
             .eq('username', currentUser.username)
             .single();
             
         if (error) throw error;
         
-        // Check avatar field
-        if (data && data.avatar) {
-            const avatarUrl = data.avatar;
-            userAvatar.src = avatarUrl;
-            
-            // Update local user data if different
-            if (currentUser.avatar !== avatarUrl && window.BetaAuth && window.BetaAuth.updateProfile) {
-                await window.BetaAuth.updateProfile({ avatar: avatarUrl });
-            }
+        if (data && data.avatar_url) {
+            userAvatar.src = data.avatar_url;
         } else {
             userAvatar.src = 'assets/default-avatar.svg';
         }
@@ -205,31 +192,30 @@ async function saveUserProfile(displayName, profilePic) {
     if (profilePic) {
         console.log('Uploading profile picture...');
         
-        try {
-            // First approach: Try using file input's FileReader result as a data URL
-            const reader = new FileReader();
+        // Generate unique file name
+        const fileName = `avatar_${currentUser.username}_${Date.now()}.${profilePic.name.split('.').pop()}`;
+        
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await window.SupabaseDB
+            .storage
+            .from('avatars')
+            .upload(fileName, profilePic);
             
-            // Create a promise to handle the FileReader's async operation
-            const dataUrlPromise = new Promise((resolve, reject) => {
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = () => reject(new Error('Failed to read file'));
-                reader.readAsDataURL(profilePic);
-            });
+        if (uploadError) throw uploadError;
+        
+        // Get public URL
+        const { data: publicURLData } = window.SupabaseDB
+            .storage
+            .from('avatars')
+            .getPublicUrl(fileName);
             
-            // Get the data URL
-            const dataUrl = await dataUrlPromise;
-            
-            // Use the data URL directly as the avatar
-            updateData.avatar = dataUrl;
-            
-            // Update user avatar in UI
-            document.getElementById('userAvatar').src = dataUrl;
-            
-            console.log('Successfully stored avatar as data URL');
-        } catch (error) {
-            console.error('Error processing avatar:', error);
-            throw new Error('Failed to process avatar: ' + error.message);
-        }
+        const avatarUrl = publicURLData.publicUrl;
+        
+        // Update avatar URL in user profile
+        updateData.avatar_url = avatarUrl;
+        
+        // Update user avatar in UI
+        document.getElementById('userAvatar').src = avatarUrl;
     }
     
     // Only update if we have data to update
@@ -240,11 +226,6 @@ async function saveUserProfile(displayName, profilePic) {
             .eq('username', currentUser.username);
             
         if (error) throw error;
-        
-        // Update local user data via BetaAuth
-        if (window.BetaAuth && window.BetaAuth.updateProfile) {
-            await window.BetaAuth.updateProfile(updateData);
-        }
     }
     
     return true;
@@ -252,35 +233,16 @@ async function saveUserProfile(displayName, profilePic) {
 
 // Change user password
 async function changePassword(currentPassword, newPassword) {
-    // Verify current password and update to new password
+    // Supabase doesn't have a direct method to verify current password before changing
+    // We would need to implement this with custom RPC or similar
+    
     try {
-        const currentUser = window.BetaAuth?.getCurrentUser();
-        if (!currentUser) {
-            throw new Error('No user logged in');
-        }
+        // Update password
+        const { error } = await window.SupabaseDB.auth.updateUser({
+            password: newPassword
+        });
         
-        // Verify current password
-        const { data, error: verifyError } = await window.SupabaseDB
-            .from('users')
-            .select('username')
-            .eq('username', currentUser.username)
-            .eq('password', currentPassword)
-            .single();
-            
-        if (verifyError || !data) {
-            throw new Error('Current password is incorrect');
-        }
-        
-        // Update password in database
-        const { error: updateError } = await window.SupabaseDB
-            .from('users')
-            .update({ password: newPassword })
-            .eq('username', currentUser.username);
-            
-        if (updateError) throw updateError;
-        
-        // Log action
-        console.log('Password changed successfully');
+        if (error) throw error;
         
         return true;
     } catch (error) {

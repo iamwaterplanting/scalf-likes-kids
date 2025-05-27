@@ -210,110 +210,61 @@ function addChatStyles() {
         }
         
         .chat-message {
-            margin-bottom: 12px;
-            display: flex;
-            align-items: flex-start;
-        }
-        
-        .message-avatar {
-            width: 32px;
-            height: 32px;
-            margin-right: 10px;
-            flex-shrink: 0;
-        }
-        
-        .avatar-img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1px solid var(--border-color, #2a2d3e);
-        }
-        
-        .message-content {
-            flex: 1;
-        }
-        
-        .username {
-            font-weight: bold;
-            color: var(--primary-color, #00cc88);
-            margin-bottom: 2px;
-            font-size: 0.9em;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .time {
-            color: var(--text-muted, #8a8d98);
-            font-size: 0.75em;
-            font-weight: normal;
-        }
-        
-        .message-text {
-            background-color: var(--card-bg-light, #22263a);
+            margin-bottom: 10px;
             padding: 8px 12px;
-            border-radius: 10px;
-            color: var(--text-color, #ffffff);
-            font-size: 0.9em;
+            background-color: var(--card-bg-light, #2a2d3e);
+            border-radius: 8px;
             word-break: break-word;
         }
         
-        .system-message .message-text {
-            background-color: rgba(100, 100, 100, 0.2);
-            font-style: italic;
-            color: var(--text-muted, #8a8d98);
+        .chat-message .username {
+            font-weight: bold;
+            color: var(--primary-color, #00cc88);
+            margin-bottom: 3px;
+        }
+        
+        .chat-message .time {
+            font-size: 10px;
+            color: var(--text-light, #8a8d99);
+            margin-left: 5px;
+        }
+        
+        .system-message {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-left: 3px solid var(--primary-color, #00cc88);
+        }
+        
+        .system-message .username {
+            color: #ffcc00;
         }
         
         .chat-form {
-            display: flex;
             padding: 10px;
             border-top: 1px solid var(--border-color, #2a2d3e);
+            display: flex;
         }
         
         .chat-form input {
             flex: 1;
             padding: 8px 12px;
             border-radius: 20px;
-            border: none;
-            background-color: var(--card-bg-light, #22263a);
+            border: 1px solid var(--border-color, #2a2d3e);
+            background-color: var(--card-bg-light, #2a2d3e);
             color: var(--text-color, #ffffff);
-            outline: none;
         }
         
         .chat-form button {
+            margin-left: 8px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: none;
             background-color: var(--primary-color, #00cc88);
             color: white;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            margin-left: 8px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-        
-        /* Custom scrollbar for chat */
-        .chat-body::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .chat-body::-webkit-scrollbar-track {
-            background: var(--card-bg, #1a1d2e);
-        }
-        
-        .chat-body::-webkit-scrollbar-thumb {
-            background-color: var(--border-color, #2a2d3e);
-            border-radius: 6px;
-        }
-        
-        /* Avatar styles for all users across the site */
-        .user-avatar {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
         }
     `;
     
@@ -457,37 +408,7 @@ function addMessageToUI(message) {
     const isOwner = window.BetaAdmin && window.BetaAdmin.isOwner && window.BetaAdmin.isOwner(message.username);
     
     // Check if user is admin
-    const isAdmin = window.BetaAdmin && window.BetaAdmin.adminUsers && window.BetaAdmin.adminUsers.includes(message.username);
-    
-    // Create avatar element
-    const avatarElement = document.createElement('div');
-    avatarElement.className = 'message-avatar';
-    
-    // Create avatar image
-    const avatarImg = document.createElement('img');
-    avatarImg.className = 'avatar-img';
-    
-    // Set default avatar right away
-    avatarImg.src = message.username === 'System' ? 'assets/system-avatar.svg' : 'assets/default-avatar.svg';
-    avatarElement.appendChild(avatarImg);
-    
-    // Get user avatar from database or use default
-    if (message.username !== 'System') {
-        // Try to fetch user avatar
-        fetchUserAvatar(message.username)
-            .then(avatarUrl => {
-                if (avatarUrl) {
-                    avatarImg.src = avatarUrl;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading avatar:', error);
-                // Keep the default avatar if there's an error
-            });
-    }
-    
-    const messageContent = document.createElement('div');
-    messageContent.className = 'message-content';
+    const isAdmin = window.BetaAdmin && window.BetaAdmin.isAdmin && window.BetaAdmin.adminUsers && window.BetaAdmin.adminUsers.includes(message.username);
     
     const usernameSpan = document.createElement('div');
     usernameSpan.className = 'username';
@@ -511,35 +432,13 @@ function addMessageToUI(message) {
     messageText.className = 'message-text';
     messageText.textContent = message.message;
     
-    messageContent.appendChild(usernameSpan);
-    messageContent.appendChild(messageText);
-    
-    li.appendChild(avatarElement);
-    li.appendChild(messageContent);
+    li.appendChild(usernameSpan);
+    li.appendChild(messageText);
     
     chatMessagesList.appendChild(li);
     
     // Scroll to bottom
     scrollToBottom();
-}
-
-// Helper function to fetch user avatar
-async function fetchUserAvatar(username) {
-    try {
-        const { data, error } = await window.SupabaseDB
-            .from('users')
-            .select('avatar')
-            .eq('username', username)
-            .single();
-            
-        if (error) throw error;
-        
-        // Return the avatar URL if available
-        return data && data.avatar ? data.avatar : null;
-    } catch (error) {
-        console.error('Error fetching user avatar:', error);
-        return null;
-    }
 }
 
 // Subscribe to new messages

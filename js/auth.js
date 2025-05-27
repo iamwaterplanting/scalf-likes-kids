@@ -69,11 +69,6 @@ function updateUIForLoggedInUser() {
     }
 }
 
-// Function to refresh user UI after profile update
-function refreshUserUI() {
-    updateUIForLoggedInUser();
-}
-
 // Login function with Supabase
 async function login(username, password) {
     try {
@@ -357,14 +352,5 @@ window.BetaAuth = {
     signup,
     logout,
     updateProfile,
-    updateBalance,
-    refreshUserUI,
-    onAuthStateChange: (callback) => {
-        // Simple auth state change listener
-        // For a real implementation, you would use a more robust event system
-        window._authStateChangeCallback = callback;
-    },
-    logToDiscord: (message) => {
-        console.log(`[Discord Log] ${message}`);
-    }
+    updateBalance
 }; 
