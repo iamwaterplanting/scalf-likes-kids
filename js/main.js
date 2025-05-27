@@ -99,13 +99,8 @@ function updateActivityTable(activities) {
         const avatarImg = document.createElement('img');
         avatarImg.className = 'avatar-img-small';
         
-        // Always set the default avatar first
+        // Set default avatar right away
         avatarImg.src = 'assets/default-avatar.svg';
-        avatarImg.onerror = function() {
-            // If image fails to load, revert to default
-            this.src = 'assets/default-avatar.svg';
-            console.log('Avatar failed to load, using default');
-        };
         avatarWrapper.appendChild(avatarImg);
         
         // Try to fetch user avatar

@@ -5,47 +5,21 @@ const LOCAL_STORAGE_KEY = 'betagames_user';
 let currentUser = null;
 let dropdownVisible = false; // Track if dropdown is visible
 
-// DOM Elements - Initialize as null and populate later
-let loginButton = null;
-let signupButton = null;
-let userProfile = null;
-let usernameDisplay = null;
-let userAvatar = null;
-let logoutButton = null;
-let profileSettings = null;
-let loginModal = null;
-let signupModal = null;
-let loginForm = null;
-let signupForm = null;
-let closeButtons = null;
-let balanceAmount = null;
-let dropdownMenu = null;
-
-// Initialize DOM elements safely
-function initializeElements() {
-    console.log("Initializing auth elements");
-    loginButton = document.getElementById('loginButton');
-    signupButton = document.getElementById('signupButton');
-    userProfile = document.querySelector('.user-profile');
-    usernameDisplay = document.getElementById('username');
-    userAvatar = document.getElementById('userAvatar');
-    logoutButton = document.getElementById('logoutButton');
-    profileSettings = document.getElementById('profileSettings');
-    loginModal = document.getElementById('loginModal');
-    signupModal = document.getElementById('signupModal');
-    loginForm = document.getElementById('loginForm');
-    signupForm = document.getElementById('signupForm');
-    closeButtons = document.querySelectorAll('.close');
-    balanceAmount = document.querySelector('.balance-amount');
-    dropdownMenu = document.querySelector('.dropdown-menu');
-    
-    console.log("Auth elements initialized:", {
-        loginButton: !!loginButton,
-        signupButton: !!signupButton,
-        userProfile: !!userProfile,
-        loginModal: !!loginModal
-    });
-}
+// DOM Elements
+const loginButton = document.getElementById('loginButton');
+const signupButton = document.getElementById('signupButton');
+const userProfile = document.querySelector('.user-profile');
+const usernameDisplay = document.getElementById('username');
+const userAvatar = document.getElementById('userAvatar');
+const logoutButton = document.getElementById('logoutButton');
+const profileSettings = document.getElementById('profileSettings');
+const loginModal = document.getElementById('loginModal');
+const signupModal = document.getElementById('signupModal');
+const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
+const closeButtons = document.querySelectorAll('.close');
+const balanceAmount = document.querySelector('.balance-amount');
+const dropdownMenu = document.querySelector('.dropdown-menu');
 
 // Check if user is already logged in (from localStorage)
 async function checkAuthState() {
@@ -78,35 +52,19 @@ async function checkAuthState() {
 
 // Update UI when user is logged in
 function updateUIForLoggedInUser() {
-    if (!currentUser) return;
-    
-    // Make sure elements are initialized
-    if (!loginButton || !signupButton || !userProfile) {
-        console.warn("Auth UI elements not found, re-initializing");
-        initializeElements();
-        // If still not found, return to prevent errors
-        if (!loginButton || !signupButton || !userProfile) {
-            console.error("Critical auth UI elements still missing after re-initialization");
-            return;
-        }
-    }
-    
-    // Hide login/signup buttons, show profile
-    loginButton.style.display = 'none';
-    signupButton.style.display = 'none';
-    userProfile.style.display = 'flex';
-    
-    // Update username and avatar
-    if (usernameDisplay) {
+    if (currentUser) {
+        // Hide login/signup buttons, show profile
+        loginButton.style.display = 'none';
+        signupButton.style.display = 'none';
+        userProfile.style.display = 'flex';
+        
+        // Update username and avatar
         usernameDisplay.textContent = currentUser.username;
-    }
-    
-    if (userAvatar && currentUser.avatar) {
-        userAvatar.src = currentUser.avatar;
-    }
-    
-    // Update balance - ensure it always shows the actual database balance
-    if (balanceAmount) {
+        if (currentUser.avatar) {
+            userAvatar.src = currentUser.avatar;
+        }
+        
+        // Update balance - ensure it always shows the actual database balance
         balanceAmount.textContent = new Intl.NumberFormat().format(currentUser.balance || 0);
     }
 }
@@ -274,23 +232,14 @@ function toggleDropdown(e) {
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize DOM elements
-    initializeElements();
-    
     // Check auth state on page load
     checkAuthState();
     
     // Login button click
     if (loginButton) {
         loginButton.addEventListener('click', () => {
-            if (loginModal) {
-                loginModal.style.display = 'flex';
-            } else {
-                console.error("Login modal not found");
-            }
+            loginModal.style.display = 'flex';
         });
-    } else {
-        console.error("Login button not found");
     }
     
     // Signup button click
