@@ -206,46 +206,29 @@ async function saveUserProfile(displayName, profilePic) {
         console.log('Uploading profile picture...');
         
         try {
-            // Generate unique file name
-            const fileName = `avatar_${currentUser.username}_${Date.now()}.${profilePic.name.split('.').pop()}`;
+            // First approach: Try using file input's FileReader result as a data URL
+            const reader = new FileReader();
             
-            // Try to create the avatars bucket if it doesn't exist
-            try {
-                await window.SupabaseDB
-                    .storage
-                    .createBucket('avatars', { public: true });
-                console.log('Created avatars bucket');
-            } catch (bucketError) {
-                // If error is not "bucket already exists", rethrow it
-                if (!bucketError.message.includes('already exists')) {
-                    console.warn('Bucket creation warning:', bucketError);
-                }
-            }
+            // Create a promise to handle the FileReader's async operation
+            const dataUrlPromise = new Promise((resolve, reject) => {
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsDataURL(profilePic);
+            });
             
-            // Upload to Supabase Storage
-            const { data: uploadData, error: uploadError } = await window.SupabaseDB
-                .storage
-                .from('avatars')
-                .upload(fileName, profilePic);
-                
-            if (uploadError) throw uploadError;
+            // Get the data URL
+            const dataUrl = await dataUrlPromise;
             
-            // Get public URL
-            const { data: publicURLData } = window.SupabaseDB
-                .storage
-                .from('avatars')
-                .getPublicUrl(fileName);
-                
-            const avatarUrl = publicURLData.publicUrl;
-            
-            // Update avatar URL in user profile - only use 'avatar' field
-            updateData.avatar = avatarUrl;
+            // Use the data URL directly as the avatar
+            updateData.avatar = dataUrl;
             
             // Update user avatar in UI
-            document.getElementById('userAvatar').src = avatarUrl;
+            document.getElementById('userAvatar').src = dataUrl;
+            
+            console.log('Successfully stored avatar as data URL');
         } catch (error) {
-            console.error('Error uploading avatar:', error);
-            throw new Error('Failed to upload avatar: ' + error.message);
+            console.error('Error processing avatar:', error);
+            throw new Error('Failed to process avatar: ' + error.message);
         }
     }
     
