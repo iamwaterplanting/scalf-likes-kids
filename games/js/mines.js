@@ -166,12 +166,16 @@ document.addEventListener('DOMContentLoaded', () => {
         gameStarted = true;
         gameEnded = false;
         revealedCells = [];
+        minePositions = []; // Clear existing mine positions
         
         // Make sure mines count is correctly set from the UI
         const minesCount = parseInt(document.getElementById('minesCount').value) || 3;
         
+        // Generate mine positions FIRST before anything else
+        generateMinePositions();
+        
         // Log directly to console for debugging
-        console.log(`Starting game with ${minesCount} mines - this should match what's displayed in the UI`);
+        console.log(`Starting game with ${minesCount} mines and ${minePositions.length} mine positions: ${minePositions.join(', ')}`);
         
         // Deduct bet from balance
         updateBalance(-betAmount);
@@ -195,8 +199,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add a "started" class to the grid
         minesGrid.classList.add('game-active');
         
-        // Generate mine positions
-        generateMinePositions();
+        // Double check mine positions are set
+        if (minePositions.length === 0) {
+            console.error("Mine positions array is empty! Generating mines again...");
+            generateMinePositions();
+        }
         
         // Add direct console logging of the mine positions
         console.log(`GAME STARTED with ${minePositions.length} mines at positions: ${minePositions.join(', ')}`);
@@ -507,11 +514,22 @@ document.addEventListener('DOMContentLoaded', () => {
         // Make sure index is a number
         const numIndex = parseInt(index);
         
+        // Validate minePositions exists and has elements
+        if (!minePositions || minePositions.length === 0) {
+            console.error("ERROR: Mine positions array is empty or undefined!");
+            // If there are no mines defined, regenerate them
+            generateMinePositions();
+            console.log("Regenerated mine positions: " + minePositions.join(', '));
+        }
+        
         // Direct console logging to help diagnose the issue
         console.log(`CHECKING MINE: Cell ${index} (now ${numIndex}), mine positions: ${minePositions.join(', ')}`);
         
-        // Fix: Simply use includes() to check if the index is in minePositions
-        return minePositions.includes(numIndex);
+        // Use includes with explicit check to see if index is in minePositions
+        const isMine = minePositions.includes(numIndex);
+        console.log(`Cell ${numIndex} is ${isMine ? 'a MINE!' : 'not a mine'}`);
+        
+        return isMine;
     }
     
     function revealAllMines() {
@@ -555,12 +573,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         debug(`Updating multipliers: ${revealedGems} gems revealed, ${minesCount} mines`);
         
+        // Calculate current multiplier outside if blocks so it's available throughout the function
+        const currentMultiplier = calculateMultiplier(revealedGems, minesCount, totalCells);
+        
         // Update multiplier displays
         const multiplierItems = document.querySelectorAll('.multiplier-item');
         
         // Current multiplier
         if (multiplierItems[0]) {
-            const currentMultiplier = calculateMultiplier(revealedGems, minesCount, totalCells);
             multiplierItems[0].querySelector('span').textContent = `× ${currentMultiplier.toFixed(2)}`;
             
             // Set active class only on current multiplier
@@ -649,8 +669,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Take the first N positions as mines (ensure they're numbers)
         minePositions = allPositions.slice(0, minesCount).map(Number);
         
+        // Ensure we have at least one mine by adding a random mine if array is empty
+        if (minePositions.length === 0) {
+            console.error("Failed to generate mines, adding default mine");
+            minePositions.push(Math.floor(Math.random() * 25));
+        }
+        
         // Log mine positions for debugging
-        console.log(`MINES DEBUG - Generated mine positions: ${minePositions.join(', ')}`);
+        console.log(`MINES DEBUG - Generated ${minePositions.length} mine positions: ${minePositions.join(', ')}`);
     }
     
     // Update the selected mines button based on the current value
