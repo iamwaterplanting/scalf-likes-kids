@@ -98,7 +98,10 @@ function updateActivityTable(activities) {
         // Create avatar image
         const avatarImg = document.createElement('img');
         avatarImg.className = 'avatar-img-small';
-        avatarImg.src = 'assets/default-avatar.svg'; // Default avatar
+        
+        // Set default avatar right away
+        avatarImg.src = 'assets/default-avatar.svg';
+        avatarWrapper.appendChild(avatarImg);
         
         // Try to fetch user avatar
         fetchUserAvatar(activity.username)
@@ -106,6 +109,10 @@ function updateActivityTable(activities) {
                 if (avatarUrl) {
                     avatarImg.src = avatarUrl;
                 }
+            })
+            .catch(error => {
+                console.error('Error loading avatar in activity table:', error);
+                // Default avatar is already set
             });
         
         // Create username span
@@ -114,7 +121,6 @@ function updateActivityTable(activities) {
         usernameSpan.textContent = activity.username;
         
         // Assemble user cell
-        avatarWrapper.appendChild(avatarImg);
         userCell.appendChild(avatarWrapper);
         userCell.appendChild(usernameSpan);
         

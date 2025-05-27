@@ -457,7 +457,7 @@ function addMessageToUI(message) {
     const isOwner = window.BetaAdmin && window.BetaAdmin.isOwner && window.BetaAdmin.isOwner(message.username);
     
     // Check if user is admin
-    const isAdmin = window.BetaAdmin && window.BetaAdmin.isAdmin && window.BetaAdmin.adminUsers && window.BetaAdmin.adminUsers.includes(message.username);
+    const isAdmin = window.BetaAdmin && window.BetaAdmin.adminUsers && window.BetaAdmin.adminUsers.includes(message.username);
     
     // Create avatar element
     const avatarElement = document.createElement('div');
@@ -467,25 +467,24 @@ function addMessageToUI(message) {
     const avatarImg = document.createElement('img');
     avatarImg.className = 'avatar-img';
     
+    // Set default avatar right away
+    avatarImg.src = message.username === 'System' ? 'assets/system-avatar.svg' : 'assets/default-avatar.svg';
+    avatarElement.appendChild(avatarImg);
+    
     // Get user avatar from database or use default
-    if (message.username === 'System') {
-        avatarImg.src = 'assets/system-avatar.svg';
-    } else {
+    if (message.username !== 'System') {
         // Try to fetch user avatar
         fetchUserAvatar(message.username)
             .then(avatarUrl => {
                 if (avatarUrl) {
                     avatarImg.src = avatarUrl;
-                } else {
-                    avatarImg.src = 'assets/default-avatar.svg';
                 }
             })
-            .catch(() => {
-                avatarImg.src = 'assets/default-avatar.svg';
+            .catch(error => {
+                console.error('Error loading avatar:', error);
+                // Keep the default avatar if there's an error
             });
     }
-    
-    avatarElement.appendChild(avatarImg);
     
     const messageContent = document.createElement('div');
     messageContent.className = 'message-content';
